@@ -28,10 +28,10 @@ function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 right-0 left-0 ${isScrolled ? "shadow-border-menu" : "shadow-none"}`}
+      className={`fixed top-0 right-0 left-0 ${isScrolled ? "shadow-border-menu bg-bg-menu backdrop-blur-lg" : "shadow-none"} ${isMenuOpen && "bg-bg"}`}
     >
       <div
-        className={`flex items-center justify-between px-6 py-4 ${isMenuOpen ? "bg-bg" : "bg-transparent"} xl:container xl:mx-auto`}
+        className={`flex items-center justify-between px-6 py-4 xl:container xl:mx-auto`}
       >
         <div className="w-32">
           <img src="./logo-arkeo.png" alt="" />
