@@ -1,3 +1,4 @@
+import { Route, Routes } from "react-router-dom";
 import Footer from "./components/layout/Footer";
 import Navbar from "./components/layout/Navbar";
 import AuthorityBar from "./components/sections/AuthorityBar";
@@ -8,8 +9,9 @@ import Portfolio from "./components/sections/Portfolio";
 import Process from "./components/sections/Process";
 import Services from "./components/sections/Services";
 import WhyArkeo from "./components/sections/WhyArkeo";
+import Login from "./pages/Login";
 
-function App() {
+function Home() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -25,6 +27,15 @@ function App() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+    </Routes>
   );
 }
 

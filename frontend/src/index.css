@@ -14,6 +14,8 @@
   --color-surface-hover: #152742;
   --color-border: #1a2e48;
   --color-white: #ffffff;
+  --color-danger: #ff6b6b;
+  --color-good: #2fbf71;
   --color-bg-menu: rgba(6, 12, 22, 0.92);
 
   --font-family-display: "Space Grotesk", sans-serif;
