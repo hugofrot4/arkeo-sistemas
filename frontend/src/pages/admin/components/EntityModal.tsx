@@ -1,0 +1,216 @@
+import { X, Check } from "lucide-react";
+import { useState, type ChangeEvent } from "react";
+import { useAdmin } from "../context";
+import { entityConfig, type EntityConfigItem } from "../entityConfig";
+import { GRADIENT_PRESETS, ICONS } from "../data";
+import { getIconComponent } from "../icons";
+import type { EntityItem, EntityKey } from "../types";
+import {
+  btnOutlineClass,
+  btnPrimaryClass,
+  formInputClass,
+  formLabelClass,
+} from "../ui";
+import { str } from "../utils";
+
+interface GradientValue {
+  from: string;
+  to: string;
+}
+
+function initialValues(cfg: EntityConfigItem, item: EntityItem | null) {
+  const values: Record<string, string> = {};
+  cfg.fields.forEach((f) => {
+    if (f.type === "icon" || f.type === "gradient") return;
+    values[f.key] = item
+      ? str(item[f.key])
+      : f.type === "select"
+        ? (f.options?.[0] ?? "")
+        : "";
+  });
+  return values;
+}
+
+interface EntityModalFormProps {
+  entityKey: EntityKey;
+  item: EntityItem | null;
+}
+
+function EntityModalForm({ entityKey, item }: EntityModalFormProps) {
+  const { closeEntityModal, saveEntityItem } = useAdmin();
+  const cfg = entityConfig[entityKey];
+  const isEdit = item !== null;
+
+  const [values, setValues] = useState(() => initialValues(cfg, item));
+  const [icon, setIcon] = useState(() => (item ? str(item.icon) : ICONS[0]));
+  const [grad, setGrad] = useState<GradientValue>(() =>
+    item
+      ? { from: str(item.gradFrom), to: str(item.gradTo) }
+      : GRADIENT_PRESETS[0],
+  );
+  const [invalidField, setInvalidField] = useState<string | null>(null);
+
+  function handleSave() {
+    const data: Record<string, string> = { ...values };
+    if (cfg.hasIconPicker) data.icon = icon;
+    if (cfg.hasGradientPicker) {
+      data.gradFrom = grad.from;
+      data.gradTo = grad.to;
+    }
+    const requiredField = cfg.fields.find(
+      (f) => f.type === "text" || f.type === "textarea",
+    );
+    const ok = saveEntityItem(entityKey, item?.id ?? null, data);
+    if (!ok && requiredField) {
+      setInvalidField(requiredField.key);
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-300 flex items-center justify-center bg-[rgba(6,12,22,0.78)] p-5 backdrop-blur-sm"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) closeEntityModal();
+      }}
+    >
+      <div className="border-border bg-surface shadow-md max-h-[88vh] w-full max-w-135 overflow-y-auto rounded-2xl border">
+        <div className="border-border bg-surface sticky top-0 z-1 flex items-center justify-between border-b px-6 py-5">
+          <h3 className="text-[1.05rem]">
+            {isEdit ? "Editar " : "Adicionar "}
+            {cfg.label.toLowerCase()}
+          </h3>
+          <button
+            className="text-text-muted hover:bg-surface-hover hover:text-text flex h-8 w-8 items-center justify-center rounded-lg transition"
+            onClick={closeEntityModal}
+            aria-label="Fechar"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {cfg.fields.map((f) => {
+            if (f.type === "icon") {
+              return (
+                <div className="mb-6" key={f.key}>
+                  <label className={formLabelClass}>{f.label}</label>
+                  <div className="grid grid-cols-8 gap-2 max-[480px]:grid-cols-6">
+                    {ICONS.map((ic) => {
+                      const Icon = getIconComponent(ic);
+                      const selected = ic === icon;
+                      return (
+                        <button
+                          key={ic}
+                          type="button"
+                          onClick={() => setIcon(ic)}
+                          className={`border-border text-text-muted flex aspect-square items-center justify-center rounded-lg border bg-white/3 transition-all ${
+                            selected
+                              ? "border-accent bg-accent/15 text-accent"
+                              : "hover:border-accent hover:text-accent"
+                          }`}
+                        >
+                          <Icon size={18} aria-hidden="true" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+            if (f.type === "gradient") {
+              return (
+                <div className="mb-6" key={f.key}>
+                  <label className={formLabelClass}>{f.label}</label>
+                  <div className="flex flex-wrap gap-2.5">
+                    {GRADIENT_PRESETS.map((g, i) => {
+                      const selected = g.from === grad.from && g.to === grad.to;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setGrad(g)}
+                          aria-label={`Cor ${i + 1}`}
+                          className={`h-11 w-11 rounded-lg border-2 transition-all hover:-translate-y-0.5 ${
+                            selected
+                              ? "border-text shadow-[0_0_0_2px_var(--color-bg),0_0_0_4px_var(--color-accent)]"
+                              : "border-transparent"
+                          }`}
+                          style={{
+                            background: `linear-gradient(135deg, ${g.from}, ${g.to})`,
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            }
+
+            const isInvalid = invalidField === f.key;
+            const commonProps = {
+              value: values[f.key] ?? "",
+              onChange: (
+                e: ChangeEvent<
+                  HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+                >,
+              ) => {
+                setValues((prev) => ({ ...prev, [f.key]: e.target.value }));
+                if (invalidField === f.key) setInvalidField(null);
+              },
+              className: `${formInputClass} ${isInvalid ? "border-danger!" : ""}`,
+            };
+
+            return (
+              <div className="mb-6" key={f.key}>
+                <label className={formLabelClass}>{f.label}</label>
+                {f.type === "text" && (
+                  <input type="text" placeholder={f.placeholder} {...commonProps} />
+                )}
+                {f.type === "textarea" && (
+                  <textarea
+                    rows={3}
+                    placeholder={f.placeholder}
+                    {...commonProps}
+                  />
+                )}
+                {f.type === "select" && (
+                  <select {...commonProps}>
+                    {f.options?.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="border-border flex justify-end gap-2.5 border-t px-6 py-4">
+          <button className={btnOutlineClass} onClick={closeEntityModal}>
+            Cancelar
+          </button>
+          <button className={btnPrimaryClass} onClick={handleSave}>
+            <Check size={16} aria-hidden="true" /> Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EntityModal() {
+  const { entityModal } = useAdmin();
+  if (!entityModal) return null;
+
+  return (
+    <EntityModalForm
+      key={`${entityModal.key}-${entityModal.item?.id ?? "new"}`}
+      entityKey={entityModal.key}
+      item={entityModal.item}
+    />
+  );
+}
+
+export default EntityModal;

@@ -8,7 +8,7 @@ import {
   LogIn,
   Mail,
 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const stars = [
@@ -50,7 +50,7 @@ function Login() {
   const [loginError, setLoginError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: FormEvent) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoginError(false);
 
@@ -63,11 +63,11 @@ function Login() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      navigate("/");
+      navigate("/admin");
     }, 900);
   }
 
-  function handleForgotClick(e: React.MouseEvent) {
+  function handleForgotClick(e: MouseEvent<HTMLAnchorElement>) {
     e.preventDefault();
     window.alert("Fluxo de recuperação de senha — a implementar.");
   }
@@ -90,7 +90,7 @@ function Login() {
       />
 
       <div
-        className="pointer-events-none absolute top-[-12%] left-1/2 h-[900px] w-[900px] -translate-x-1/2"
+        className="pointer-events-none absolute top-[-12%] left-1/2 h-225 w-225 -translate-x-1/2"
         style={{
           background:
             "radial-gradient(circle, rgba(61,120,245,0.14) 0%, transparent 65%)",
@@ -119,7 +119,7 @@ function Login() {
         ))}
       </div>
 
-      <div className="relative z-10 w-full max-w-[408px]">
+      <div className="relative z-10 w-full max-w-102">
         <Link
           to="/"
           className="text-text-muted hover:text-text mb-6 inline-flex items-center gap-1.5 text-[0.825rem] whitespace-nowrap transition"
@@ -133,10 +133,10 @@ function Login() {
             boxShadow: "var(--shadow-md), 0 0 80px rgba(61,120,245,0.06)",
           }}
         >
-          <div className="via-accent/20 from-accent absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r to-transparent" />
+          <div className="via-accent/20 from-accent absolute top-0 right-0 left-0 h-0.5 bg-linear-to-r to-transparent" />
 
           <div className="mb-8 flex justify-center">
-            <img src="/logo-arkeo.png" alt="Arkeo Sistemas" className="w-[148px]" />
+            <img src="/logo-arkeo.png" alt="Arkeo Sistemas" className="w-37" />
           </div>
 
           <div className="mb-8 text-center">
@@ -149,7 +149,7 @@ function Login() {
           </div>
 
           {loginError && (
-            <div className="bg-danger/[0.08] border-danger/30 text-danger mb-6 flex items-center gap-2.5 rounded-lg border px-3.5 py-3 text-[0.82rem]">
+            <div className="bg-danger/8 border-danger/30 text-danger mb-6 flex items-center gap-2.5 rounded-lg border px-3.5 py-3 text-[0.82rem]">
               <AlertCircle size={17} className="shrink-0" aria-hidden="true" />
               <span>E-mail ou senha incorretos. Tente novamente.</span>
             </div>
@@ -181,7 +181,7 @@ function Login() {
                     if (emailError) setEmailError(!isValidEmail(e.target.value));
                   }}
                   onBlur={(e) => setEmailError(!isValidEmail(e.target.value))}
-                  className={`text-text placeholder:text-text-muted/55 focus:border-accent focus:bg-accent/5 w-full rounded-lg border bg-white/[0.03] py-3.25 pr-3.5 pl-10.5 text-[0.9rem] outline-none transition ${
+                  className={`text-text placeholder:text-text-muted/55 focus:border-accent focus:bg-accent/5 w-full rounded-lg border bg-white/3 py-3.25 pr-3.5 pl-10.5 text-[0.9rem] outline-none transition ${
                     emailError ? "border-danger" : "border-border"
                   }`}
                 />
@@ -220,7 +220,7 @@ function Login() {
                       setPasswordError(!isValidPassword(e.target.value));
                   }}
                   onBlur={(e) => setPasswordError(!isValidPassword(e.target.value))}
-                  className={`text-text placeholder:text-text-muted/55 focus:border-accent focus:bg-accent/5 w-full rounded-lg border bg-white/[0.03] py-3.25 pr-10.5 pl-10.5 text-[0.9rem] outline-none transition ${
+                  className={`text-text placeholder:text-text-muted/55 focus:border-accent focus:bg-accent/5 w-full rounded-lg border bg-white/3 py-3.25 pr-10.5 pl-10.5 text-[0.9rem] outline-none transition ${
                     passwordError ? "border-danger" : "border-border"
                   }`}
                 />
@@ -228,7 +228,7 @@ function Login() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                  className="text-text-muted hover:text-text absolute right-2 flex h-7.5 w-7.5 items-center justify-center rounded-md transition hover:bg-white/[0.04]"
+                  className="text-text-muted hover:text-text absolute right-2 flex h-7.5 w-7.5 items-center justify-center rounded-md transition hover:bg-white/4"
                 >
                   {showPassword ? (
                     <EyeOff size={17} aria-hidden="true" />
@@ -248,10 +248,10 @@ function Login() {
             <div className="mb-8 flex flex-wrap items-center justify-between gap-2">
               <label className="text-text-muted flex cursor-pointer items-center gap-2 text-[0.825rem] select-none">
                 <span
-                  className={`relative flex h-[17px] w-[17px] shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-all ${
+                  className={`relative flex h-4.25 w-4.25 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-all ${
                     remember
                       ? "border-accent bg-accent"
-                      : "border-border bg-white/[0.03]"
+                      : "border-border bg-white/3"
                   }`}
                 >
                   <input
@@ -261,7 +261,7 @@ function Login() {
                     className="absolute inset-0 cursor-pointer opacity-0"
                   />
                   {remember && (
-                    <span className="border-r-1.75 border-b-1.75 h-2 w-1 translate-y-[-1px] rotate-45 border-white" />
+                    <span className="border-r-1.75 border-b-1.75 h-2 w-1 -translate-y-px rotate-45 border-white" />
                   )}
                 </span>
                 Lembrar de mim
@@ -301,7 +301,7 @@ function Login() {
             <span className="border-border h-px flex-1 border-t" />
           </div>
 
-          <div className="bg-accent/[0.06] border-accent/20 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-[0.78rem] leading-relaxed">
+          <div className="bg-accent/6 border-accent/20 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-[0.78rem] leading-relaxed">
             <Info
               size={15}
               className="text-accent mt-px shrink-0"

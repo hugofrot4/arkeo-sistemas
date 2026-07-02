@@ -9,6 +9,7 @@ import Portfolio from "./components/sections/Portfolio";
 import Process from "./components/sections/Process";
 import Services from "./components/sections/Services";
 import WhyArkeo from "./components/sections/WhyArkeo";
+import Admin from "./pages/admin/Admin";
 import Login from "./pages/Login";
 
 function Home() {
@@ -35,6 +36,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/admin" element={<Admin />} />
     </Routes>
   );
 }
