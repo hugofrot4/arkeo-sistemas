@@ -1,35 +1,54 @@
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { portfolioApi, type PortfolioProject } from "../../lib/api";
 import Reveal from "../ui/Reveal";
 import SectionLabel from "../ui/SectionLabel";
 
-const projects = [
+const defaultProjects: PortfolioProject[] = [
   {
-    gradient: "linear-gradient(135deg, #0D1B2E, #1a3a6e)",
-    icon: "🏋️",
+    id: 1,
     tag: "Landing Page",
     title: "FitPro Academia",
     result: "+40% em matrículas no primeiro mês",
-    delay: "0s",
+    emoji: "🏋️",
+    gradFrom: "#0D1B2E",
+    gradTo: "#1a3a6e",
+    order: 0,
   },
   {
-    gradient: "linear-gradient(135deg, #1a1028, #3d1a5e)",
-    icon: "🍰",
+    id: 2,
     tag: "Site Institucional",
     title: "Sabor & Arte Confeitaria",
     result: "Pedidos online cresceram 3× após lançamento",
-    delay: "0.1s",
+    emoji: "🍰",
+    gradFrom: "#1a1028",
+    gradTo: "#3d1a5e",
+    order: 1,
   },
   {
-    gradient: "linear-gradient(135deg, #082040, #0D4E8F)",
-    icon: "🚚",
+    id: 3,
     tag: "Sistema Web",
     title: "LogiTrack Transportes",
     result: "Redução de 60% em chamadas de suporte",
-    delay: "0.2s",
+    emoji: "🚚",
+    gradFrom: "#082040",
+    gradTo: "#0D4E8F",
+    order: 2,
   },
 ];
 
 function Portfolio() {
+  const [projects, setProjects] = useState<PortfolioProject[]>(
+    defaultProjects,
+  );
+
+  useEffect(() => {
+    portfolioApi
+      .list()
+      .then(setProjects)
+      .catch(() => setProjects(defaultProjects));
+  }, []);
+
   return (
     <section id="projetos" className="scroll-mt-24 py-24">
       <div className="mx-auto max-w-[1200px] px-6">
@@ -49,20 +68,18 @@ function Portfolio() {
         <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project, index) => (
             <Reveal
-              key={project.title}
-              delay={project.delay}
-              className={`border-border bg-surface hover:border-accent/30 overflow-hidden rounded-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-                index === 2
-                  ? "sm:col-span-2 sm:mx-auto sm:max-w-[400px] lg:col-span-1 lg:mx-0 lg:max-w-none"
-                  : ""
-              }`}
+              key={project.id}
+              delay={`${index * 0.1}s`}
+              className="border-border bg-surface hover:border-accent/30 overflow-hidden rounded-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
             >
               <div
-                className="relative flex h-[175px] items-center justify-center text-[2.5rem]"
-                style={{ background: project.gradient }}
+                className="relative flex h-43.75 items-center justify-center text-[2.5rem]"
+                style={{
+                  background: `linear-gradient(135deg, ${project.gradFrom}, ${project.gradTo})`,
+                }}
               >
                 <span className="relative z-10 opacity-75" aria-hidden="true">
-                  {project.icon}
+                  {project.emoji}
                 </span>
               </div>
               <div className="p-6">

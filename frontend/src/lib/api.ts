@@ -23,6 +23,48 @@ export interface Metric {
   order: number;
 }
 
+export interface Service {
+  id: number;
+  icon: string;
+  title: string;
+  desc: string;
+  meta: string;
+  order: number;
+}
+
+export interface ProcessStep {
+  id: number;
+  title: string;
+  desc: string;
+  order: number;
+}
+
+export interface Differential {
+  id: number;
+  icon: string;
+  title: string;
+  desc: string;
+  order: number;
+}
+
+export interface PortfolioProject {
+  id: number;
+  tag: string;
+  title: string;
+  result: string;
+  emoji: string;
+  gradFrom: string;
+  gradTo: string;
+  order: number;
+}
+
+export interface FaqItem {
+  id: number;
+  question: string;
+  answer: string;
+  order: number;
+}
+
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -75,34 +117,37 @@ export function getMe() {
   return request<AuthUser>("/api/auth/me");
 }
 
-export function getMetrics() {
-  return request<Metric[]>("/api/metrics");
+/**
+ * Fábrica de cliente para recursos de lista com o mesmo contrato REST
+ * (listar, criar, editar, excluir, reordenar) — usado por seções do painel
+ * como métricas e serviços.
+ */
+function createListResource<T>(path: string) {
+  return {
+    list: () => request<T[]>(path),
+    create: (data: Record<string, string>) =>
+      request<T>(path, { method: "POST", body: JSON.stringify(data) }),
+    update: (id: number, data: Record<string, string>) =>
+      request<T>(`${path}/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    remove: (id: number) => request<void>(`${path}/${id}`, { method: "DELETE" }),
+    reorder: (ids: number[]) =>
+      request<T[]>(`${path}/reorder`, {
+        method: "PUT",
+        body: JSON.stringify({ ids }),
+      }),
+  };
 }
 
-export function createMetric(data: { number: string; label: string }) {
-  return request<Metric>("/api/metrics", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export function updateMetric(
-  id: number,
-  data: { number: string; label: string },
-) {
-  return request<Metric>(`/api/metrics/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(data),
-  });
-}
-
-export function deleteMetric(id: number) {
-  return request<void>(`/api/metrics/${id}`, { method: "DELETE" });
-}
-
-export function reorderMetrics(ids: number[]) {
-  return request<Metric[]>("/api/metrics/reorder", {
-    method: "PUT",
-    body: JSON.stringify({ ids }),
-  });
-}
+export const metricsApi = createListResource<Metric>("/api/metrics");
+export const servicesApi = createListResource<Service>("/api/services");
+export const processApi = createListResource<ProcessStep>("/api/process");
+export const differentialsApi = createListResource<Differential>(
+  "/api/differentials",
+);
+export const portfolioApi = createListResource<PortfolioProject>(
+  "/api/portfolio",
+);
+export const faqApi = createListResource<FaqItem>("/api/faq");

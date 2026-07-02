@@ -39,3 +39,70 @@ model Metric {
 
   @@index([order])
 }
+
+// Cards de serviço da seção "O que entregamos".
+model Service {
+  id        Int      @id @default(autoincrement())
+  icon      String
+  title     String
+  desc      String
+  meta      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Etapas da seção "Como funciona".
+model ProcessStep {
+  id        Int      @id @default(autoincrement())
+  title     String
+  desc      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Cards da seção "Por que a Arkeo?".
+model Differential {
+  id        Int      @id @default(autoincrement())
+  icon      String
+  title     String
+  desc      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Cards de projeto da seção "Projetos" (portfólio).
+model PortfolioProject {
+  id        Int      @id @default(autoincrement())
+  tag       String
+  title     String
+  result    String
+  emoji     String
+  gradFrom  String
+  gradTo    String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}
+
+// Perguntas e respostas do accordion de FAQ.
+model Faq {
+  id        Int      @id @default(autoincrement())
+  question  String
+  answer    String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}

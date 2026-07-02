@@ -1,35 +1,47 @@
-import { Building2, Clock, Layout, Settings2 } from "lucide-react";
+import { Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import { servicesApi, type Service } from "../../lib/api";
+import { getIconComponent } from "../../lib/icons";
 import Reveal from "../ui/Reveal";
 import SectionLabel from "../ui/SectionLabel";
 
-const services = [
+const defaultServices: Service[] = [
   {
-    icon: Layout,
+    id: 1,
+    icon: "layout",
     title: "Landing Page",
-    description:
-      "Site de alta conversão para capturar leads e vender produtos ou serviços. Design persuasivo e copy focado em resultado.",
+    desc: "Site de alta conversão para capturar leads e vender produtos ou serviços. Design persuasivo e copy focado em resultado.",
     meta: "Entrega em 7–14 dias",
-    delay: "0s",
+    order: 0,
   },
   {
-    icon: Building2,
+    id: 2,
+    icon: "building-2",
     title: "Site Institucional",
-    description:
-      "Presença digital completa com múltiplas páginas, gestão de conteúdo e identidade visual que transmite credibilidade.",
+    desc: "Presença digital completa com múltiplas páginas, gestão de conteúdo e identidade visual que transmite credibilidade.",
     meta: "Entrega em 14–30 dias",
-    delay: "0.1s",
+    order: 1,
   },
   {
-    icon: Settings2,
+    id: 3,
+    icon: "settings-2",
     title: "Sistema Web / App",
-    description:
-      "Aplicações sob medida para automatizar processos, organizar operações e escalar sem contratar mais pessoas.",
+    desc: "Aplicações sob medida para automatizar processos, organizar operações e escalar sem contratar mais pessoas.",
     meta: "Prazo definido no escopo",
-    delay: "0.2s",
+    order: 2,
   },
 ];
 
 function Services() {
+  const [services, setServices] = useState<Service[]>(defaultServices);
+
+  useEffect(() => {
+    servicesApi
+      .list()
+      .then(setServices)
+      .catch(() => setServices(defaultServices));
+  }, []);
+
   return (
     <section id="servicos" className="bg-bg-alt scroll-mt-24 py-24">
       <div className="mx-auto max-w-[1200px] px-6">
@@ -48,26 +60,22 @@ function Services() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service, index) => {
-            const Icon = service.icon;
+            const Icon = getIconComponent(service.icon);
             return (
               <Reveal
-                key={service.title}
-                delay={service.delay}
-                className={`border-border bg-surface hover:bg-surface-hover hover:border-accent/30 group relative overflow-hidden rounded-xl border p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${
-                  index === 2
-                    ? "sm:col-span-2 sm:max-w-[420px] lg:col-span-1 lg:max-w-none"
-                    : ""
-                }`}
+                key={service.id}
+                delay={`${index * 0.1}s`}
+                className="border-border bg-surface hover:bg-surface-hover hover:border-accent/30 group relative overflow-hidden rounded-xl border p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
               >
-                <div className="via-accent/20 from-accent absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <div className="bg-accent/10 text-accent mb-6 flex h-[46px] w-[46px] items-center justify-center rounded-lg">
+                <div className="via-accent/20 from-accent absolute top-0 right-0 left-0 h-0.5 bg-linear-to-r to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="bg-accent/10 text-accent mb-6 flex h-11.5 w-11.5 items-center justify-center rounded-lg">
                   <Icon size={22} aria-hidden="true" />
                 </div>
                 <h3 className="font-family-display mb-2 text-[1.1rem] font-bold text-white">
                   {service.title}
                 </h3>
                 <p className="text-text-muted mb-6 text-[0.9rem] leading-[1.65]">
-                  {service.description}
+                  {service.desc}
                 </p>
                 <div className="text-accent font-family-display flex items-center gap-1.5 text-[0.78rem] font-semibold">
                   <Clock size={13} aria-hidden="true" />

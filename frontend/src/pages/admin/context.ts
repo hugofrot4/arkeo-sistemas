@@ -41,7 +41,7 @@ export interface AdminContextValue {
   heroLoading: boolean;
   heroSaving: boolean;
   saveHero: () => Promise<void>;
-  metricsLoading: boolean;
+  listLoading: Partial<Record<EntityKey, boolean>>;
   updateSettings: (patch: Partial<SiteSettings>) => void;
 
   entityModal: EntityModalState | null;

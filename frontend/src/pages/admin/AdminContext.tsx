@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  createMetric,
-  deleteMetric,
+  differentialsApi,
+  faqApi,
   getHero,
-  getMetrics,
-  reorderMetrics,
+  metricsApi,
+  portfolioApi,
+  processApi,
+  servicesApi,
   updateHero as updateHeroApi,
-  updateMetric,
 } from "../../lib/api";
 import {
   AdminContext,
@@ -27,6 +28,34 @@ import type {
   ViewKey,
 } from "./types";
 
+interface ListApiAdapter {
+  list: () => Promise<EntityItem[]>;
+  create: (data: Record<string, string>) => Promise<EntityItem>;
+  update: (id: number, data: Record<string, string>) => Promise<EntityItem>;
+  remove: (id: number) => Promise<void>;
+  reorder: (ids: number[]) => Promise<EntityItem[]>;
+}
+
+function adaptListApi<T>(api: {
+  list: () => Promise<T[]>;
+  create: (data: Record<string, string>) => Promise<T>;
+  update: (id: number, data: Record<string, string>) => Promise<T>;
+  remove: (id: number) => Promise<void>;
+  reorder: (ids: number[]) => Promise<T[]>;
+}): ListApiAdapter {
+  return api as unknown as ListApiAdapter;
+}
+
+// Seções cujo CRUD já é persistido pela API — as demais continuam em memória.
+const listApis: Partial<Record<EntityKey, ListApiAdapter>> = {
+  metrics: adaptListApi(metricsApi),
+  services: adaptListApi(servicesApi),
+  process: adaptListApi(processApi),
+  differentials: adaptListApi(differentialsApi),
+  faq: adaptListApi(faqApi),
+  portfolio: adaptListApi(portfolioApi),
+};
+
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AdminState>(() => createInitialState());
   const [view, setView] = useState<ViewKey>("dashboard");
@@ -43,7 +72,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const [heroLoading, setHeroLoading] = useState(true);
   const [heroSaving, setHeroSaving] = useState(false);
-  const [metricsLoading, setMetricsLoading] = useState(true);
+  const [listLoading, setListLoading] = useState<
+    Partial<Record<EntityKey, boolean>>
+  >(() =>
+    Object.fromEntries(Object.keys(listApis).map((key) => [key, true])),
+  );
 
   const goToView = useCallback((next: ViewKey) => {
     setView(next);
@@ -78,19 +111,21 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   }, [showToast]);
 
   useEffect(() => {
-    getMetrics()
-      .then((metrics) =>
-        setState((prev) => ({
-          ...prev,
-          metrics: metrics as unknown as EntityItem[],
-        })),
-      )
-      .catch(() =>
-        showToast(
-          "Não foi possível carregar as métricas salvas. Exibindo os valores padrão.",
-        ),
-      )
-      .finally(() => setMetricsLoading(false));
+    (Object.entries(listApis) as [EntityKey, ListApiAdapter][]).forEach(
+      ([key, api]) => {
+        api
+          .list()
+          .then((items) => setState((prev) => ({ ...prev, [key]: items })))
+          .catch(() =>
+            showToast(
+              `Não foi possível carregar "${entityConfig[key].panelTitle}" salvo(a). Exibindo os valores padrão.`,
+            ),
+          )
+          .finally(() =>
+            setListLoading((prev) => ({ ...prev, [key]: false })),
+          );
+      },
+    );
   }, [showToast]);
 
   const saveHero = useCallback(async () => {
@@ -143,22 +178,20 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         return false;
       }
 
-      if (key === "metrics") {
+      const api = listApis[key];
+      if (api) {
         try {
-          const metric = id
-            ? await updateMetric(id, { number: data.number, label: data.label })
-            : await createMetric({ number: data.number, label: data.label });
-          const entityMetric = metric as unknown as EntityItem;
+          const item = id ? await api.update(id, data) : await api.create(data);
           setState((prev) => ({
             ...prev,
-            metrics: id
-              ? prev.metrics.map((m) => (m.id === id ? entityMetric : m))
-              : [...prev.metrics, entityMetric],
+            [key]: id
+              ? prev[key].map((i) => (i.id === id ? item : i))
+              : [...prev[key], item],
           }));
           showToast(
             id
-              ? "Métrica atualizada com sucesso."
-              : "Métrica adicionada com sucesso.",
+              ? `${cfg.label} atualizado com sucesso.`
+              : `${cfg.label} adicionado com sucesso.`,
           );
           setEntityModal(null);
           return true;
@@ -166,7 +199,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           showToast(
             err instanceof Error
               ? err.message
-              : "Não foi possível salvar a métrica.",
+              : `Não foi possível salvar: ${cfg.label.toLowerCase()}.`,
           );
           return false;
         }
@@ -236,16 +269,19 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (key === "metrics") {
+    const api = listApis[key];
+    if (api) {
       try {
-        await deleteMetric(id);
+        await api.remove(id);
         setState((prev) => ({
           ...prev,
-          metrics: prev.metrics.filter((item) => item.id !== id),
+          [key]: prev[key].filter((item) => item.id !== id),
         }));
-        showToast("Métrica excluída.");
+        showToast(`${entityConfig[key].label} excluído.`);
       } catch {
-        showToast("Não foi possível excluir a métrica. Tente novamente.");
+        showToast(
+          `Não foi possível excluir: ${entityConfig[key].label.toLowerCase()}.`,
+        );
       }
       setConfirmDelete(null);
       return;
@@ -268,9 +304,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       [arr[idx], arr[swapWith]] = [arr[swapWith], arr[idx]];
       setState((prev) => ({ ...prev, [key]: arr }));
 
-      if (key === "metrics") {
+      const api = listApis[key];
+      if (api) {
         try {
-          await reorderMetrics(arr.map((item) => item.id));
+          await api.reorder(arr.map((item) => item.id));
         } catch {
           showToast("Não foi possível salvar a nova ordem. Tente novamente.");
         }
@@ -311,7 +348,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     heroLoading,
     heroSaving,
     saveHero,
-    metricsLoading,
+    listLoading,
     updateSettings,
     entityModal,
     openEntityModal,

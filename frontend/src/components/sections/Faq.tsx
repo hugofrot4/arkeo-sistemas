@@ -1,49 +1,64 @@
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { faqApi, type FaqItem } from "../../lib/api";
 import Reveal from "../ui/Reveal";
 import SectionLabel from "../ui/SectionLabel";
 
-const faqs = [
+const defaultFaqs: FaqItem[] = [
   {
+    id: 1,
     question: "Quanto tempo leva para ter meu site pronto?",
     answer:
       "Landing pages ficam prontas em 7 a 14 dias. Sites institucionais levam de 14 a 30 dias. Sistemas e apps têm prazo definido na proposta após levantamento de requisitos. Trabalhamos sempre com datas reais — sem estimativas otimistas que não se cumprem.",
-    delay: "0s",
+    order: 0,
   },
   {
+    id: 2,
     question: "Vocês fazem manutenção após o lançamento?",
     answer:
       "Sim. Oferecemos suporte técnico pós-entrega e planos de manutenção mensal. Você nunca ficará sem apoio depois que seu projeto for ao ar — seja para correções, atualizações de conteúdo ou melhorias.",
-    delay: "0.05s",
+    order: 1,
   },
   {
+    id: 3,
     question: "Preciso de conhecimento técnico para gerenciar o site?",
     answer:
       "Não. Todos os projetos são entregues com treinamento incluso. Sites com CMS têm edição simples — como editar um documento de texto. Para o restante, nossa equipe de suporte está disponível.",
-    delay: "0.1s",
+    order: 2,
   },
   {
+    id: 4,
     question: "Vocês trabalham com contrato?",
     answer:
       "Sempre. Todos os projetos têm contrato com escopo, prazos, valores e condições de pagamento claramente definidos. Isso protege ambos os lados e garante que o combinado será entregue.",
-    delay: "0.15s",
+    order: 3,
   },
   {
+    id: 5,
     question: "Qual é o investimento necessário?",
     answer:
       "Os valores variam conforme o escopo de cada projeto. Após nossa conversa inicial você recebe uma proposta com preço fechado — sem custos ocultos. Fale conosco para uma análise inicial gratuita.",
-    delay: "0.2s",
+    order: 4,
   },
   {
+    id: 6,
     question: "Consigo acompanhar o desenvolvimento em tempo real?",
     answer:
       "Sim. Utilizamos ferramentas de acompanhamento e você recebe atualizações regulares. Em qualquer momento pode falar diretamente com quem está desenvolvendo — sem intermediários, sem burocracia.",
-    delay: "0.25s",
+    order: 5,
   },
 ];
 
 function Faq() {
+  const [faqs, setFaqs] = useState<FaqItem[]>(defaultFaqs);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    faqApi
+      .list()
+      .then(setFaqs)
+      .catch(() => setFaqs(defaultFaqs));
+  }, []);
 
   return (
     <section id="faq" className="bg-bg-alt scroll-mt-24 py-24">
@@ -62,8 +77,8 @@ function Faq() {
             const isOpen = openIndex === index;
             return (
               <Reveal
-                key={faq.question}
-                delay={faq.delay}
+                key={faq.id}
+                delay={`${index * 0.05}s`}
                 className={`border-border bg-surface overflow-hidden rounded-xl border transition-colors duration-300 ${
                   isOpen ? "border-accent/30" : ""
                 }`}
@@ -85,7 +100,7 @@ function Faq() {
                 </button>
                 <div
                   className={`overflow-hidden transition-[max-height] duration-[380ms] ease-in-out ${
-                    isOpen ? "max-h-[260px]" : "max-h-0"
+                    isOpen ? "max-h-65" : "max-h-0"
                   }`}
                 >
                   <div className="text-text-muted px-6 pb-6 text-[0.9rem] leading-[1.75]">

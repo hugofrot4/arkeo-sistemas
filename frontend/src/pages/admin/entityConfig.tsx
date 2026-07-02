@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { HelpCircle } from "lucide-react";
-import { getIconComponent } from "./icons";
+import { getIconComponent } from "../../lib/icons";
 import type { EntityItem, EntityKey } from "./types";
 import { str } from "./utils";
 

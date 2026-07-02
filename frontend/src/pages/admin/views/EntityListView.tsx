@@ -3,7 +3,7 @@ import { createElement } from "react";
 import { useAdmin } from "../context";
 import PanelHeader from "../components/PanelHeader";
 import { entityConfig } from "../entityConfig";
-import { getIconComponent } from "../icons";
+import { getIconComponent } from "../../../lib/icons";
 import type { EntityKey } from "../types";
 import {
   btnPrimaryClass,
@@ -20,11 +20,11 @@ function EntityListView({ entityKey }: { entityKey: EntityKey }) {
     openEntityModal,
     openConfirmDeleteEntity,
     moveItem,
-    metricsLoading,
+    listLoading,
   } = useAdmin();
   const cfg = entityConfig[entityKey];
   const items = state[entityKey];
-  const loading = entityKey === "metrics" && metricsLoading;
+  const loading = listLoading[entityKey] ?? false;
 
   return (
     <div className={panelClass}>

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import { getMetrics, type Metric } from "../../lib/api";
+import { metricsApi, type Metric } from "../../lib/api";
 import Reveal from "../ui/Reveal";
 
 const defaultMetrics: Metric[] = [
@@ -13,7 +13,8 @@ function AuthorityBar() {
   const [metrics, setMetrics] = useState<Metric[]>(defaultMetrics);
 
   useEffect(() => {
-    getMetrics()
+    metricsApi
+      .list()
       .then(setMetrics)
       .catch(() => setMetrics(defaultMetrics));
   }, []);

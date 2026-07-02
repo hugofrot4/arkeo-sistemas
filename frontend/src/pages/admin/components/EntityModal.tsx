@@ -3,7 +3,7 @@ import { useState, type ChangeEvent } from "react";
 import { useAdmin } from "../context";
 import { entityConfig, type EntityConfigItem } from "../entityConfig";
 import { GRADIENT_PRESETS, ICONS } from "../data";
-import { getIconComponent } from "../icons";
+import { getIconComponent } from "../../../lib/icons";
 import type { EntityItem, EntityKey } from "../types";
 import {
   btnOutlineClass,
