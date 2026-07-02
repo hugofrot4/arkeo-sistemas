@@ -28,11 +28,9 @@ function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 right-0 left-0 ${isScrolled ? "shadow-border-menu bg-bg-menu backdrop-blur-lg" : "shadow-none"} ${isMenuOpen && "bg-bg"}`}
+      className={`fixed top-0 right-0 left-0 z-50 ${isScrolled ? "shadow-border-menu bg-bg-menu backdrop-blur-lg" : "shadow-none"} ${isMenuOpen && "bg-bg"}`}
     >
-      <div
-        className={`flex items-center justify-between px-6 py-4 xl:container xl:mx-auto`}
-      >
+      <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4">
         <div className="w-32">
           <img src="./logo-arkeo.png" alt="" />
         </div>
