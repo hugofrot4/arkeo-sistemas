@@ -36,6 +36,7 @@ export const entityConfig: Record<EntityKey, EntityConfigItem> = {
     panelDescription:
       "Faixa compacta exibida logo abaixo do hero, com números de impacto (ex: projetos entregues, anos de experiência).",
     emptyIcon: "bar-chart-3",
+    maxItems: 4,
     fields: [
       {
         key: "number",

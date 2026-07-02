@@ -14,10 +14,17 @@ import {
 } from "../ui";
 
 function EntityListView({ entityKey }: { entityKey: EntityKey }) {
-  const { state, tryAddEntity, openEntityModal, openConfirmDeleteEntity, moveItem } =
-    useAdmin();
+  const {
+    state,
+    tryAddEntity,
+    openEntityModal,
+    openConfirmDeleteEntity,
+    moveItem,
+    metricsLoading,
+  } = useAdmin();
   const cfg = entityConfig[entityKey];
   const items = state[entityKey];
+  const loading = entityKey === "metrics" && metricsLoading;
 
   return (
     <div className={panelClass}>
@@ -35,7 +42,11 @@ function EntityListView({ entityKey }: { entityKey: EntityKey }) {
         }
       />
 
-      {items.length === 0 ? (
+      {loading ? (
+        <p className="text-text-muted py-6 text-center text-[0.875rem]">
+          Carregando...
+        </p>
+      ) : items.length === 0 ? (
         <div className="text-text-muted py-10 text-center">
           {createElement(getIconComponent(cfg.emptyIcon), {
             size: 30,

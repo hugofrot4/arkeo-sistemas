@@ -27,3 +27,15 @@ model AdminUser {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// Itens da "barra de autoridade" (métricas de credibilidade abaixo do hero).
+model Metric {
+  id        Int      @id @default(autoincrement())
+  number    String
+  label     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}

@@ -49,8 +49,9 @@ function EntityModalForm({ entityKey, item }: EntityModalFormProps) {
       : GRADIENT_PRESETS[0],
   );
   const [invalidField, setInvalidField] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  function handleSave() {
+  async function handleSave() {
     const data: Record<string, string> = { ...values };
     if (cfg.hasIconPicker) data.icon = icon;
     if (cfg.hasGradientPicker) {
@@ -60,7 +61,9 @@ function EntityModalForm({ entityKey, item }: EntityModalFormProps) {
     const requiredField = cfg.fields.find(
       (f) => f.type === "text" || f.type === "textarea",
     );
-    const ok = saveEntityItem(entityKey, item?.id ?? null, data);
+    setSaving(true);
+    const ok = await saveEntityItem(entityKey, item?.id ?? null, data);
+    setSaving(false);
     if (!ok && requiredField) {
       setInvalidField(requiredField.key);
     }
@@ -191,8 +194,13 @@ function EntityModalForm({ entityKey, item }: EntityModalFormProps) {
           <button className={btnOutlineClass} onClick={closeEntityModal}>
             Cancelar
           </button>
-          <button className={btnPrimaryClass} onClick={handleSave}>
-            <Check size={16} aria-hidden="true" /> Salvar
+          <button
+            className={btnPrimaryClass}
+            disabled={saving}
+            onClick={handleSave}
+          >
+            <Check size={16} aria-hidden="true" />
+            {saving ? "Salvando..." : "Salvar"}
           </button>
         </div>
       </div>

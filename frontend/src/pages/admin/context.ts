@@ -41,6 +41,7 @@ export interface AdminContextValue {
   heroLoading: boolean;
   heroSaving: boolean;
   saveHero: () => Promise<void>;
+  metricsLoading: boolean;
   updateSettings: (patch: Partial<SiteSettings>) => void;
 
   entityModal: EntityModalState | null;
@@ -50,16 +51,16 @@ export interface AdminContextValue {
     key: EntityKey,
     id: number | null,
     data: Record<string, string>,
-  ) => boolean;
+  ) => Promise<boolean>;
   tryAddEntity: (key: EntityKey) => void;
 
   confirmDelete: ConfirmDeleteState | null;
   openConfirmDeleteEntity: (key: EntityKey, id: number) => void;
   openConfirmDeleteMessage: (id: number) => void;
   closeConfirmDelete: () => void;
-  confirmDeleteOk: () => void;
+  confirmDeleteOk: () => Promise<void>;
 
-  moveItem: (key: EntityKey, id: number, dir: "up" | "down") => void;
+  moveItem: (key: EntityKey, id: number, dir: "up" | "down") => Promise<void>;
 
   messageDetailId: number | null;
   openMessageDetail: (id: number) => void;

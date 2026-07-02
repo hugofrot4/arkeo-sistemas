@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { getHero, updateHero as updateHeroApi } from "../../lib/api";
+import {
+  createMetric,
+  deleteMetric,
+  getHero,
+  getMetrics,
+  reorderMetrics,
+  updateHero as updateHeroApi,
+  updateMetric,
+} from "../../lib/api";
 import {
   AdminContext,
   type AdminContextValue,
@@ -35,6 +43,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const [heroLoading, setHeroLoading] = useState(true);
   const [heroSaving, setHeroSaving] = useState(false);
+  const [metricsLoading, setMetricsLoading] = useState(true);
 
   const goToView = useCallback((next: ViewKey) => {
     setView(next);
@@ -66,6 +75,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         ),
       )
       .finally(() => setHeroLoading(false));
+  }, [showToast]);
+
+  useEffect(() => {
+    getMetrics()
+      .then((metrics) =>
+        setState((prev) => ({
+          ...prev,
+          metrics: metrics as unknown as EntityItem[],
+        })),
+      )
+      .catch(() =>
+        showToast(
+          "Não foi possível carregar as métricas salvas. Exibindo os valores padrão.",
+        ),
+      )
+      .finally(() => setMetricsLoading(false));
   }, [showToast]);
 
   const saveHero = useCallback(async () => {
@@ -109,13 +134,42 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   );
 
   const saveEntityItem = useCallback(
-    (key: EntityKey, id: number | null, data: Record<string, string>) => {
+    async (key: EntityKey, id: number | null, data: Record<string, string>) => {
       const cfg = entityConfig[key];
       const requiredField = cfg.fields.find(
         (f) => f.type === "text" || f.type === "textarea",
       );
       if (requiredField && !data[requiredField.key]?.trim()) {
         return false;
+      }
+
+      if (key === "metrics") {
+        try {
+          const metric = id
+            ? await updateMetric(id, { number: data.number, label: data.label })
+            : await createMetric({ number: data.number, label: data.label });
+          const entityMetric = metric as unknown as EntityItem;
+          setState((prev) => ({
+            ...prev,
+            metrics: id
+              ? prev.metrics.map((m) => (m.id === id ? entityMetric : m))
+              : [...prev.metrics, entityMetric],
+          }));
+          showToast(
+            id
+              ? "Métrica atualizada com sucesso."
+              : "Métrica adicionada com sucesso.",
+          );
+          setEntityModal(null);
+          return true;
+        } catch (err) {
+          showToast(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível salvar a métrica.",
+          );
+          return false;
+        }
       }
 
       setState((prev) => {
@@ -168,37 +222,61 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const closeConfirmDelete = useCallback(() => setConfirmDelete(null), []);
 
-  const confirmDeleteOk = useCallback(() => {
+  const confirmDeleteOk = useCallback(async () => {
     if (!confirmDelete) return;
     const { key, id } = confirmDelete;
+
     if (key === "__messages") {
       setState((prev) => ({
         ...prev,
         messages: prev.messages.filter((m) => m.id !== id),
       }));
       showToast("Mensagem excluída.");
-    } else {
-      setState((prev) => ({
-        ...prev,
-        [key]: prev[key].filter((item) => item.id !== id),
-      }));
-      showToast(`${entityConfig[key].label} excluído.`);
+      setConfirmDelete(null);
+      return;
     }
+
+    if (key === "metrics") {
+      try {
+        await deleteMetric(id);
+        setState((prev) => ({
+          ...prev,
+          metrics: prev.metrics.filter((item) => item.id !== id),
+        }));
+        showToast("Métrica excluída.");
+      } catch {
+        showToast("Não foi possível excluir a métrica. Tente novamente.");
+      }
+      setConfirmDelete(null);
+      return;
+    }
+
+    setState((prev) => ({
+      ...prev,
+      [key]: prev[key].filter((item) => item.id !== id),
+    }));
+    showToast(`${entityConfig[key].label} excluído.`);
     setConfirmDelete(null);
   }, [confirmDelete, showToast]);
 
   const moveItem = useCallback(
-    (key: EntityKey, id: number, dir: "up" | "down") => {
-      setState((prev) => {
-        const arr = [...prev[key]];
-        const idx = arr.findIndex((i) => i.id === id);
-        const swapWith = dir === "up" ? idx - 1 : idx + 1;
-        if (idx < 0 || swapWith < 0 || swapWith >= arr.length) return prev;
-        [arr[idx], arr[swapWith]] = [arr[swapWith], arr[idx]];
-        return { ...prev, [key]: arr };
-      });
+    async (key: EntityKey, id: number, dir: "up" | "down") => {
+      const arr = [...state[key]];
+      const idx = arr.findIndex((i) => i.id === id);
+      const swapWith = dir === "up" ? idx - 1 : idx + 1;
+      if (idx < 0 || swapWith < 0 || swapWith >= arr.length) return;
+      [arr[idx], arr[swapWith]] = [arr[swapWith], arr[idx]];
+      setState((prev) => ({ ...prev, [key]: arr }));
+
+      if (key === "metrics") {
+        try {
+          await reorderMetrics(arr.map((item) => item.id));
+        } catch {
+          showToast("Não foi possível salvar a nova ordem. Tente novamente.");
+        }
+      }
     },
-    [],
+    [state, showToast],
   );
 
   const openMessageDetail = useCallback(
@@ -233,6 +311,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     heroLoading,
     heroSaving,
     saveHero,
+    metricsLoading,
     updateSettings,
     entityModal,
     openEntityModal,
