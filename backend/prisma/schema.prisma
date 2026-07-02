@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Singleton row (id always 1) — content of the landing page's Hero section.
+model Hero {
+  id           Int      @id @default(1)
+  badge        String
+  h1Line1      String
+  h1Accent     String
+  subtitle     String
+  ctaPrimary   String
+  ctaSecondary String
+  updatedAt    DateTime @updatedAt
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
