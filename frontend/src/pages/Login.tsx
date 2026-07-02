@@ -3,13 +3,13 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-  Info,
   Lock,
   LogIn,
   Mail,
 } from "lucide-react";
 import { useState, type FormEvent, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { login, setToken } from "../lib/api";
 
 const stars = [
   { top: "10%", left: "10%", fontSize: "0.7rem", duration: "9s", delay: "0s" },
@@ -35,7 +35,7 @@ const stars = [
 
 const isValidEmail = (value: string) =>
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-const isValidPassword = (value: string) => value.trim().length >= 4;
+const isPasswordFilled = (value: string) => value.trim().length > 0;
 
 function Login() {
   const navigate = useNavigate();
@@ -50,21 +50,26 @@ function Login() {
   const [loginError, setLoginError] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoginError(false);
 
     const emailOk = isValidEmail(email);
-    const passwordOk = isValidPassword(password);
+    const passwordOk = isPasswordFilled(password);
     setEmailError(!emailOk);
     setPasswordError(!passwordOk);
     if (!emailOk || !passwordOk) return;
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { token } = await login(email, password);
+      setToken(token);
       navigate("/admin");
-    }, 900);
+    } catch {
+      setLoginError(true);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleForgotClick(e: MouseEvent<HTMLAnchorElement>) {
@@ -217,9 +222,9 @@ function Login() {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (passwordError)
-                      setPasswordError(!isValidPassword(e.target.value));
+                      setPasswordError(!isPasswordFilled(e.target.value));
                   }}
-                  onBlur={(e) => setPasswordError(!isValidPassword(e.target.value))}
+                  onBlur={(e) => setPasswordError(!isPasswordFilled(e.target.value))}
                   className={`text-text placeholder:text-text-muted/55 focus:border-accent focus:bg-accent/5 w-full rounded-lg border bg-white/3 py-3.25 pr-10.5 pl-10.5 text-[0.9rem] outline-none transition ${
                     passwordError ? "border-danger" : "border-border"
                   }`}
@@ -292,27 +297,6 @@ function Login() {
               )}
             </button>
           </form>
-
-          <div className="my-8 flex items-center gap-3">
-            <span className="border-border h-px flex-1 border-t" />
-            <span className="text-text-muted text-[0.72rem] tracking-[0.08em] uppercase">
-              Protótipo
-            </span>
-            <span className="border-border h-px flex-1 border-t" />
-          </div>
-
-          <div className="bg-accent/6 border-accent/20 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-[0.78rem] leading-relaxed">
-            <Info
-              size={15}
-              className="text-accent mt-px shrink-0"
-              aria-hidden="true"
-            />
-            <div className="text-text-muted">
-              <strong className="text-text">Acesso de demonstração:</strong>{" "}
-              use qualquer senha com 4+ caracteres para entrar. Este é um
-              protótipo — não há autenticação real.
-            </div>
-          </div>
         </div>
 
         <p className="text-text-muted mt-6 text-center text-[0.78rem]">

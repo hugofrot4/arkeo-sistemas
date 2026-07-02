@@ -1,4 +1,5 @@
 import { Route, Routes } from "react-router-dom";
+import RequireAuth from "./components/auth/RequireAuth";
 import Footer from "./components/layout/Footer";
 import Navbar from "./components/layout/Navbar";
 import AuthorityBar from "./components/sections/AuthorityBar";
@@ -36,7 +37,14 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/admin" element={<Admin />} />
+      <Route
+        path="/admin"
+        element={
+          <RequireAuth>
+            <Admin />
+          </RequireAuth>
+        }
+      />
     </Routes>
   );
 }

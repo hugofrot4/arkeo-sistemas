@@ -1,5 +1,17 @@
 import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getHero, type HeroContent } from "../../lib/api";
 import Button from "../ui/Button";
+
+const defaultHero: HeroContent = {
+  badge: "Desenvolvimento acelerado com IA",
+  h1Line1: "Seu site. Seu sistema.",
+  h1Accent: "Sua vantagem.",
+  subtitle:
+    "Desenvolvemos sites e sistemas web personalizados para pequenas e médias empresas que querem crescer com presença digital profissional — sem precisar de equipe técnica interna.",
+  ctaPrimary: "Quero um orçamento",
+  ctaSecondary: "Ver projetos",
+};
 
 const stars = [
   { top: "12%", left: "8%", fontSize: "0.75rem", duration: "9s", delay: "0s" },
@@ -25,6 +37,14 @@ const stars = [
 ];
 
 function Hero() {
+  const [hero, setHero] = useState<HeroContent>(defaultHero);
+
+  useEffect(() => {
+    getHero()
+      .then(setHero)
+      .catch(() => setHero(defaultHero));
+  }, []);
+
   return (
     <section className="relative flex items-center overflow-hidden pt-25 pb-16 md:min-h-screen md:pt-30 md:pb-20">
       <div
@@ -79,33 +99,31 @@ function Hero() {
             aria-label="Destaque"
           >
             <span aria-hidden="true">✦</span>
-            Desenvolvimento acelerado com IA
+            {hero.badge}
           </div>
 
           <h1 className="font-family-display mb-6 text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.15] font-bold text-white">
-            Seu site. Seu sistema.
+            {hero.h1Line1}
             <br />
-            <span className="text-accent">Sua vantagem.</span>
+            <span className="text-accent">{hero.h1Accent}</span>
           </h1>
 
           <p className="text-text-muted mb-12 max-w-[520px] text-[1.1rem] leading-[1.75]">
-            Desenvolvemos sites e sistemas web personalizados para pequenas e
-            médias empresas que querem crescer com presença digital profissional
-            — sem precisar de equipe técnica interna.
+            {hero.subtitle}
           </p>
 
           <div className="flex flex-wrap gap-4">
             <Button anchor="#contato">
               <span className="inline-flex items-center gap-2">
                 <ArrowRight size={18} aria-hidden="true" />
-                Quero um orçamento
+                {hero.ctaPrimary}
               </span>
             </Button>
             <a
               href="#projetos"
               className="border-border text-text hover:border-accent hover:text-accent font-family-display inline-flex items-center rounded-lg border-[1.5px] px-6.5 py-3.25 text-[0.925rem] font-semibold transition"
             >
-              Ver projetos
+              {hero.ctaSecondary}
             </a>
           </div>
         </div>

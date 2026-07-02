@@ -10,8 +10,16 @@ import {
 } from "../ui";
 
 function Hero() {
-  const { state, updateHero, showToast } = useAdmin();
+  const { state, updateHero, heroLoading, heroSaving, saveHero } = useAdmin();
   const hero = state.hero;
+
+  if (heroLoading) {
+    return (
+      <div className={`${panelClass} mb-0 text-text-muted text-[0.875rem]`}>
+        Carregando conteúdo do Hero...
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
@@ -113,13 +121,15 @@ function Hero() {
 
         <button
           className={btnPrimaryClass}
-          onClick={() => showToast("Seção Hero atualizada com sucesso.")}
+          disabled={heroSaving}
+          onClick={() => saveHero()}
         >
-          <Check size={16} aria-hidden="true" /> Salvar alterações
+          <Check size={16} aria-hidden="true" />
+          {heroSaving ? "Salvando..." : "Salvar alterações"}
         </button>
         <p className={formHintClass}>
-          As alterações já ficam salvas automaticamente — este botão apenas
-          confirma o envio.
+          A pré-visualização atualiza em tempo real; clique em salvar para
+          gravar as alterações no site.
         </p>
       </div>
 

@@ -38,6 +38,9 @@ export interface AdminContextValue {
   showToast: (message: string) => void;
 
   updateHero: (patch: Partial<HeroContent>) => void;
+  heroLoading: boolean;
+  heroSaving: boolean;
+  saveHero: () => Promise<void>;
   updateSettings: (patch: Partial<SiteSettings>) => void;
 
   entityModal: EntityModalState | null;

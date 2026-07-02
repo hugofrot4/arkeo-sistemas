@@ -1,4 +1,5 @@
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { getHero, updateHero as updateHeroApi } from "../../lib/api";
 import {
   AdminContext,
   type AdminContextValue,
@@ -32,6 +33,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     useState<ConfirmDeleteState | null>(null);
   const [messageDetailId, setMessageDetailId] = useState<number | null>(null);
 
+  const [heroLoading, setHeroLoading] = useState(true);
+  const [heroSaving, setHeroSaving] = useState(false);
+
   const goToView = useCallback((next: ViewKey) => {
     setView(next);
     setSidebarOpen(false);
@@ -52,6 +56,30 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const updateHero = useCallback((patch: Partial<HeroContent>) => {
     setState((prev) => ({ ...prev, hero: { ...prev.hero, ...patch } }));
   }, []);
+
+  useEffect(() => {
+    getHero()
+      .then((hero) => setState((prev) => ({ ...prev, hero })))
+      .catch(() =>
+        showToast(
+          "Não foi possível carregar o conteúdo do Hero salvo. Exibindo os valores padrão.",
+        ),
+      )
+      .finally(() => setHeroLoading(false));
+  }, [showToast]);
+
+  const saveHero = useCallback(async () => {
+    setHeroSaving(true);
+    try {
+      const saved = await updateHeroApi(state.hero);
+      setState((prev) => ({ ...prev, hero: saved }));
+      showToast("Seção Hero atualizada com sucesso.");
+    } catch {
+      showToast("Não foi possível salvar a seção Hero. Tente novamente.");
+    } finally {
+      setHeroSaving(false);
+    }
+  }, [state.hero, showToast]);
 
   const updateSettings = useCallback((patch: Partial<SiteSettings>) => {
     setState((prev) => ({
@@ -202,6 +230,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     toasts,
     showToast,
     updateHero,
+    heroLoading,
+    heroSaving,
+    saveHero,
     updateSettings,
     entityModal,
     openEntityModal,

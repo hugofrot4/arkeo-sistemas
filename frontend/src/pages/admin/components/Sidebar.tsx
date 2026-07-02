@@ -14,8 +14,12 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { clearToken, getMe } from "../../../lib/api";
 import { useAdmin, viewMeta } from "../context";
 import { iconBtnClass } from "../ui";
+import { initials } from "../utils";
 import type { ViewKey } from "../types";
 
 interface NavItem {
@@ -65,6 +69,19 @@ function MessageBadge() {
 
 function Sidebar() {
   const { sidebarOpen, closeSidebar } = useAdmin();
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState("Admin Arkeo");
+
+  useEffect(() => {
+    getMe()
+      .then((user) => setUserName(user.name))
+      .catch(() => {});
+  }, []);
+
+  function handleLogout() {
+    clearToken();
+    navigate("/login");
+  }
 
   return (
     <>
@@ -125,11 +142,11 @@ function Sidebar() {
           </a>
           <div className="flex items-center gap-2.5 rounded-lg p-1.5">
             <div className="from-accent to-accent-dark flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-linear-to-br text-[0.8rem] font-bold text-white">
-              AS
+              {initials(userName)}
             </div>
             <div className="min-w-0">
               <div className="text-text truncate text-[0.825rem] font-semibold">
-                Admin Arkeo
+                {userName}
               </div>
               <div className="text-text-muted text-[0.72rem]">
                 Administrador
@@ -137,6 +154,7 @@ function Sidebar() {
             </div>
             <button
               className={`${iconBtnClass} ml-auto`}
+              onClick={handleLogout}
               aria-label="Sair"
               title="Sair"
             >
