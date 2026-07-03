@@ -168,6 +168,8 @@ O backend já está pronto para deploy no [Render](https://render.com) (plano fr
 - Configure as env vars da tabela acima (usando a connection string do Postgres gratuito do Render em `DATABASE_URL`, e gerando um `JWT_SECRET` novo e aleatório).
 - No frontend, aponte `VITE_API_URL` para a URL pública do serviço do backend no Render antes de gerar o build de produção.
 
+⚠️ **O Postgres free do Render expira 30 dias após a criação e é excluído permanentemente** (dados e tudo). Antes desse prazo, migre para um plano pago do Render ou para outro Postgres free sem essa política (ex: Neon, Supabase) — veja a data exata de expiração no dashboard do banco.
+
 ## Roadmap
 
 - Sem fluxo de "esqueci minha senha" (o link existe na UI mas ainda só mostra um alerta).
