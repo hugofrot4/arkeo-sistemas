@@ -42,7 +42,11 @@ export interface AdminContextValue {
   heroSaving: boolean;
   saveHero: () => Promise<void>;
   listLoading: Partial<Record<EntityKey, boolean>>;
+  messagesLoading: boolean;
   updateSettings: (patch: Partial<SiteSettings>) => void;
+  settingsLoading: boolean;
+  settingsSaving: boolean;
+  saveSettings: () => Promise<void>;
 
   entityModal: EntityModalState | null;
   openEntityModal: (key: EntityKey, item: EntityItem | null) => void;
@@ -65,7 +69,7 @@ export interface AdminContextValue {
   messageDetailId: number | null;
   openMessageDetail: (id: number) => void;
   closeMessageDetail: () => void;
-  updateMessageStatus: (id: number, status: MessageStatus) => void;
+  updateMessageStatus: (id: number, status: MessageStatus) => Promise<void>;
 }
 
 export const AdminContext = createContext<AdminContextValue | null>(null);

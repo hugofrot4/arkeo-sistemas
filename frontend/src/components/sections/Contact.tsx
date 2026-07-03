@@ -1,16 +1,34 @@
 import { Send } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createMessage, getSettings, type SiteSettings } from "../../lib/api";
 import Reveal from "../ui/Reveal";
 import SectionLabel from "../ui/SectionLabel";
 
-const WHATSAPP_LINK =
-  "https://wa.me/5511999999999?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20da%20Arkeo%20Sistemas.";
+const defaultSettings: SiteSettings = {
+  siteName: "Arkeo Sistemas",
+  tagline: "Precisão em cada linha de código.",
+  copy: "© 2026 Arkeo Sistemas. Todos os direitos reservados.",
+  whatsapp: "+55 11 99999-9999",
+  email: "contato@arkeosistemas.com.br",
+  waMessage:
+    "Olá, gostaria de saber mais sobre os serviços da Arkeo Sistemas.",
+  instagram: "",
+  linkedin: "",
+  github: "",
+};
 
 const SELECT_ARROW_STYLE = {
   backgroundImage:
     "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237A90AD' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E\")",
   backgroundRepeat: "no-repeat",
   backgroundPosition: "right 14px center",
+};
+
+const SERVICE_LABELS: Record<string, string> = {
+  landing: "Landing Page",
+  institucional: "Site Institucional",
+  sistema: "Sistema Web / App",
+  outro: "Outro / Não sei ainda",
 };
 
 type FieldName = "name" | "whatsapp" | "service";
@@ -31,6 +49,18 @@ function Contact() {
     service: false,
   });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
+  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
+
+  useEffect(() => {
+    getSettings()
+      .then(setSettings)
+      .catch(() => setSettings(defaultSettings));
+  }, []);
+
+  const whatsappDigits = settings.whatsapp.replace(/\D/g, "");
+  const whatsappLink = `https://wa.me/${whatsappDigits}?text=${encodeURIComponent(settings.waMessage)}`;
 
   const checkField = (field: FieldName, value: string) => {
     const hasError = value.trim() === "";
@@ -66,7 +96,7 @@ function Contact() {
               análise inicial gratuita.
             </p>
             <a
-              href={WHATSAPP_LINK}
+              href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#25D366" }}
@@ -108,13 +138,29 @@ function Contact() {
             ) : (
               <form
                 noValidate
-                onSubmit={(event) => {
+                onSubmit={async (event) => {
                   event.preventDefault();
+                  setSubmitError(false);
                   const isNameValid = checkField("name", name);
                   const isWhatsappValid = checkField("whatsapp", whatsapp);
                   const isServiceValid = checkField("service", service);
-                  if (isNameValid && isWhatsappValid && isServiceValid) {
+                  if (!isNameValid || !isWhatsappValid || !isServiceValid) {
+                    return;
+                  }
+
+                  setSubmitting(true);
+                  try {
+                    await createMessage({
+                      name,
+                      whatsapp,
+                      service: SERVICE_LABELS[service] ?? service,
+                      message,
+                    });
                     setSubmitted(true);
+                  } catch {
+                    setSubmitError(true);
+                  } finally {
+                    setSubmitting(false);
                   }
                 }}
               >
@@ -229,12 +275,20 @@ function Contact() {
                   />
                 </div>
 
+                {submitError && (
+                  <p className="text-danger mb-4 text-[0.82rem]">
+                    Não foi possível enviar sua mensagem. Tente novamente ou
+                    use o WhatsApp.
+                  </p>
+                )}
+
                 <button
                   type="submit"
-                  className="bg-accent shadow-accent hover:bg-accent-dark hover:shadow-accent-hover font-family-display mt-1 flex w-full items-center justify-center gap-2 rounded-lg py-4 text-[0.975rem] font-semibold text-white transition"
+                  disabled={submitting}
+                  className="bg-accent shadow-accent hover:bg-accent-dark hover:shadow-accent-hover font-family-display mt-1 flex w-full items-center justify-center gap-2 rounded-lg py-4 text-[0.975rem] font-semibold text-white transition disabled:cursor-default disabled:opacity-75"
                 >
                   <Send size={17} aria-hidden="true" />
-                  Enviar mensagem
+                  {submitting ? "Enviando..." : "Enviar mensagem"}
                 </button>
               </form>
             )}

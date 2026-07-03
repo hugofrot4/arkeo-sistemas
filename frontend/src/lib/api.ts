@@ -52,9 +52,7 @@ export interface PortfolioProject {
   tag: string;
   title: string;
   result: string;
-  emoji: string;
-  gradFrom: string;
-  gradTo: string;
+  image: string;
   order: number;
 }
 
@@ -63,6 +61,30 @@ export interface FaqItem {
   question: string;
   answer: string;
   order: number;
+}
+
+export type MessageStatus = "novo" | "contato" | "convertido" | "descartado";
+
+export interface Message {
+  id: number;
+  name: string;
+  whatsapp: string;
+  service: string;
+  message: string;
+  status: MessageStatus;
+  date: string;
+}
+
+export interface SiteSettings {
+  siteName: string;
+  tagline: string;
+  copy: string;
+  whatsapp: string;
+  email: string;
+  waMessage: string;
+  instagram: string;
+  linkedin: string;
+  github: string;
 }
 
 export function getToken(): string | null {
@@ -151,3 +173,41 @@ export const portfolioApi = createListResource<PortfolioProject>(
   "/api/portfolio",
 );
 export const faqApi = createListResource<FaqItem>("/api/faq");
+
+export function createMessage(data: {
+  name: string;
+  whatsapp: string;
+  service: string;
+  message?: string;
+}) {
+  return request<Message>("/api/messages", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function getMessages() {
+  return request<Message[]>("/api/messages");
+}
+
+export function updateMessageStatus(id: number, status: MessageStatus) {
+  return request<Message>(`/api/messages/${id}/status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function deleteMessage(id: number) {
+  return request<void>(`/api/messages/${id}`, { method: "DELETE" });
+}
+
+export function getSettings() {
+  return request<SiteSettings>("/api/settings");
+}
+
+export function updateSettings(data: SiteSettings) {
+  return request<SiteSettings>("/api/settings", {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}

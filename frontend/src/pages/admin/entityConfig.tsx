@@ -7,7 +7,7 @@ import { str } from "./utils";
 export interface FieldConfig {
   key: string;
   label: string;
-  type: "text" | "textarea" | "select" | "icon" | "gradient";
+  type: "text" | "textarea" | "select" | "icon" | "image";
   placeholder?: string;
   options?: string[];
 }
@@ -19,7 +19,6 @@ export interface EntityConfigItem {
   panelDescription: string;
   emptyIcon: string;
   hasIconPicker?: boolean;
-  hasGradientPicker?: boolean;
   maxItems?: number;
   fields: FieldConfig[];
   renderIcon: (item: EntityItem, idx: number) => ReactNode;
@@ -123,7 +122,6 @@ export const entityConfig: Record<EntityKey, EntityConfigItem> = {
     panelTitle: "Portfólio",
     panelDescription: 'Cards de projetos exibidos na seção "Projetos" da landing page.',
     emptyIcon: "folder-kanban",
-    hasGradientPicker: true,
     fields: [
       {
         key: "tag",
@@ -138,15 +136,18 @@ export const entityConfig: Record<EntityKey, EntityConfigItem> = {
         type: "text",
         placeholder: "ex: +40% em matrículas no primeiro mês",
       },
-      {
-        key: "emoji",
-        label: "Emoji ilustrativo",
-        type: "text",
-        placeholder: "🏋️",
-      },
-      { key: "grad", label: "Cor do card", type: "gradient" },
+      { key: "image", label: "Imagem do projeto", type: "image" },
     ],
-    renderIcon: (item) => <span>{str(item.emoji)}</span>,
+    renderIcon: (item) =>
+      str(item.image) ? (
+        <img
+          src={str(item.image)}
+          alt=""
+          className="h-full w-full rounded-lg object-cover"
+        />
+      ) : (
+        <span className="text-text-muted text-[0.7rem]">Sem imagem</span>
+      ),
     title: (item) => str(item.title),
     desc: (item) => `${str(item.tag)} — ${str(item.result)}`,
   },

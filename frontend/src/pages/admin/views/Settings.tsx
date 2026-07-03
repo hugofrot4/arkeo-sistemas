@@ -19,8 +19,17 @@ const palette = [
 ];
 
 function Settings() {
-  const { state, updateSettings, showToast } = useAdmin();
+  const { state, updateSettings, settingsLoading, settingsSaving, saveSettings } =
+    useAdmin();
   const s = state.settings;
+
+  if (settingsLoading) {
+    return (
+      <div className={`${panelClass} mb-0 text-text-muted text-[0.875rem]`}>
+        Carregando configurações...
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
@@ -156,9 +165,11 @@ function Settings() {
 
         <button
           className={btnPrimaryClass}
-          onClick={() => showToast("Configurações salvas com sucesso.")}
+          disabled={settingsSaving}
+          onClick={() => saveSettings()}
         >
-          <Check size={16} aria-hidden="true" /> Salvar configurações
+          <Check size={16} aria-hidden="true" />
+          {settingsSaving ? "Salvando..." : "Salvar configurações"}
         </button>
       </div>
 

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { AiFillGithub, AiFillLinkedin, AiFillInstagram } from "react-icons/ai";
+import { getSettings, type SiteSettings } from "../../lib/api";
 
 const linksItems = [
   { title: "Serviços", anchor: "#servicos" },
@@ -8,20 +10,41 @@ const linksItems = [
   { title: "Contato", anchor: "#contato" },
 ];
 
-const socialItems = [
-  { icon: <AiFillGithub />, label: "GitHub", href: "#" },
-  { icon: <AiFillLinkedin />, label: "LinkedIn", href: "#" },
-  { icon: <AiFillInstagram />, label: "Instagram", href: "#" },
-];
+const defaultSettings: SiteSettings = {
+  siteName: "Arkeo Sistemas",
+  tagline: "Precisão em cada linha de código.",
+  copy: "© 2026 Arkeo Sistemas. Todos os direitos reservados.",
+  whatsapp: "+55 11 99999-9999",
+  email: "contato@arkeosistemas.com.br",
+  waMessage:
+    "Olá, gostaria de saber mais sobre os serviços da Arkeo Sistemas.",
+  instagram: "",
+  linkedin: "",
+  github: "",
+};
 
 function Footer() {
+  const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
+
+  useEffect(() => {
+    getSettings()
+      .then(setSettings)
+      .catch(() => setSettings(defaultSettings));
+  }, []);
+
+  const socialItems = [
+    { icon: <AiFillGithub />, label: "GitHub", href: settings.github },
+    { icon: <AiFillLinkedin />, label: "LinkedIn", href: settings.linkedin },
+    { icon: <AiFillInstagram />, label: "Instagram", href: settings.instagram },
+  ].filter((item) => item.href.trim() !== "");
+
   return (
     <footer className="border-border border-t pt-16 pb-8">
       <div className="mx-auto max-w-[1200px] px-6">
         <div className="border-border flex flex-col gap-8 border-b pb-12 xl:flex-row xl:justify-between">
           <div className="text-text-muted text-sm italic">
             <img className="mb-4 w-28.75" src="./logo-arkeo.png" alt="" />
-            <p>Precisão em cada linha de código.</p>
+            <p>{settings.tagline}</p>
           </div>
 
           <div className="flex flex-col gap-8 xl:flex-row xl:gap-16">
@@ -42,30 +65,32 @@ function Footer() {
                 ))}
               </ul>
             </div>
-            <div>
-              <p className="text-text-muted font-family-display mb-4 text-[0.72rem] font-bold tracking-widest uppercase">
-                redes sociais
-              </p>
-              <ul className="flex gap-2">
-                {socialItems.map((item) => (
-                  <li key={`social-${item.label}`}>
-                    <a
-                      href={item.href}
-                      aria-label={item.label}
-                      className="border-border bg-surface flex h-9 w-9 items-center justify-center rounded-lg border transition hover:border-[rgba(61,120,245,0.3)] hover:bg-[rgba(61,120,245,0.1)]"
-                    >
-                      {item.icon}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            {socialItems.length > 0 && (
+              <div>
+                <p className="text-text-muted font-family-display mb-4 text-[0.72rem] font-bold tracking-widest uppercase">
+                  redes sociais
+                </p>
+                <ul className="flex gap-2">
+                  {socialItems.map((item) => (
+                    <li key={`social-${item.label}`}>
+                      <a
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={item.label}
+                        className="border-border bg-surface flex h-9 w-9 items-center justify-center rounded-lg border transition hover:border-[rgba(61,120,245,0.3)] hover:bg-[rgba(61,120,245,0.1)]"
+                      >
+                        {item.icon}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-center gap-4 pt-4 xl:flex-row xl:justify-between">
-          <p className="text-text-muted text-[0.78rem]">
-            © 2026 Arkeo Sistemas. Todos os direitos reservados.
-          </p>
+          <p className="text-text-muted text-[0.78rem]">{settings.copy}</p>
           <span className="text-accent text-[0.7rem] tracking-[4px]">
             ✦ ✦ ✦
           </span>

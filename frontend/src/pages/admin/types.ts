@@ -1,3 +1,11 @@
+import type { Message, SiteSettings } from "../../lib/api";
+
+export type {
+  Message as MessageItem,
+  MessageStatus,
+  SiteSettings,
+} from "../../lib/api";
+
 export type EntityKey =
   | "metrics"
   | "services"
@@ -20,35 +28,6 @@ export interface EntityItem {
   [key: string]: string | number;
 }
 
-export type MessageStatus = "novo" | "contato" | "convertido" | "descartado";
-
-export interface MessageItem {
-  id: number;
-  name: string;
-  whatsapp: string;
-  service: string;
-  message: string;
-  date: string;
-  status: MessageStatus;
-}
-
-export interface LeadDay {
-  day: string;
-  value: number;
-}
-
-export interface SiteSettings {
-  siteName: string;
-  tagline: string;
-  copy: string;
-  whatsapp: string;
-  email: string;
-  waMessage: string;
-  instagram: string;
-  linkedin: string;
-  github: string;
-}
-
 export interface AdminState {
   hero: HeroContent;
   metrics: EntityItem[];
@@ -57,8 +36,7 @@ export interface AdminState {
   differentials: EntityItem[];
   portfolio: EntityItem[];
   faq: EntityItem[];
-  messages: MessageItem[];
-  leadsLast7Days: LeadDay[];
+  messages: Message[];
   settings: SiteSettings;
 }
 

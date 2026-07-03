@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAdmin } from "../context";
+import { getLast7DaysLeadCounts } from "../utils";
 
 interface TooltipState {
   x: number;
@@ -10,7 +11,10 @@ interface TooltipState {
 
 function LeadsChart() {
   const { state } = useAdmin();
-  const data = state.leadsLast7Days;
+  const data = useMemo(
+    () => getLast7DaysLeadCounts(state.messages),
+    [state.messages],
+  );
   const max = Math.max(...data.map((d) => d.value), 1);
   const maxIdx = data.reduce(
     (best, d, i) => (d.value > data[best].value ? i : best),

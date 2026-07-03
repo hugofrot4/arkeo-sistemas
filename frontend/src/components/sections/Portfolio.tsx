@@ -4,15 +4,18 @@ import { portfolioApi, type PortfolioProject } from "../../lib/api";
 import Reveal from "../ui/Reveal";
 import SectionLabel from "../ui/SectionLabel";
 
+function placeholderImage(from: string, to: string, emoji: string) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${from}"/><stop offset="100%" stop-color="${to}"/></linearGradient></defs><rect width="400" height="300" fill="url(#g)"/><text x="200" y="168" font-size="90" text-anchor="middle">${emoji}</text></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 const defaultProjects: PortfolioProject[] = [
   {
     id: 1,
     tag: "Landing Page",
     title: "FitPro Academia",
     result: "+40% em matrículas no primeiro mês",
-    emoji: "🏋️",
-    gradFrom: "#0D1B2E",
-    gradTo: "#1a3a6e",
+    image: placeholderImage("#0D1B2E", "#1a3a6e", "🏋️"),
     order: 0,
   },
   {
@@ -20,9 +23,7 @@ const defaultProjects: PortfolioProject[] = [
     tag: "Site Institucional",
     title: "Sabor & Arte Confeitaria",
     result: "Pedidos online cresceram 3× após lançamento",
-    emoji: "🍰",
-    gradFrom: "#1a1028",
-    gradTo: "#3d1a5e",
+    image: placeholderImage("#1a1028", "#3d1a5e", "🍰"),
     order: 1,
   },
   {
@@ -30,9 +31,7 @@ const defaultProjects: PortfolioProject[] = [
     tag: "Sistema Web",
     title: "LogiTrack Transportes",
     result: "Redução de 60% em chamadas de suporte",
-    emoji: "🚚",
-    gradFrom: "#082040",
-    gradTo: "#0D4E8F",
+    image: placeholderImage("#082040", "#0D4E8F", "🚚"),
     order: 2,
   },
 ];
@@ -72,15 +71,12 @@ function Portfolio() {
               delay={`${index * 0.1}s`}
               className="border-border bg-surface hover:border-accent/30 overflow-hidden rounded-xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-md"
             >
-              <div
-                className="relative flex h-43.75 items-center justify-center text-[2.5rem]"
-                style={{
-                  background: `linear-gradient(135deg, ${project.gradFrom}, ${project.gradTo})`,
-                }}
-              >
-                <span className="relative z-10 opacity-75" aria-hidden="true">
-                  {project.emoji}
-                </span>
+              <div className="bg-bg-alt h-43.75 overflow-hidden">
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  className="h-full w-full object-cover"
+                />
               </div>
               <div className="p-6">
                 <span className="text-accent bg-accent/10 mb-2 inline-block rounded-full px-2.5 py-0.5 text-[0.68rem] font-semibold tracking-[0.1em] uppercase">

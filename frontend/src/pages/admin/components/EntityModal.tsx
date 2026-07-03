@@ -1,8 +1,8 @@
-import { X, Check } from "lucide-react";
+import { X, Check, Upload } from "lucide-react";
 import { useState, type ChangeEvent } from "react";
 import { useAdmin } from "../context";
 import { entityConfig, type EntityConfigItem } from "../entityConfig";
-import { GRADIENT_PRESETS, ICONS } from "../data";
+import { ICONS } from "../data";
 import { getIconComponent } from "../../../lib/icons";
 import type { EntityItem, EntityKey } from "../types";
 import {
@@ -13,15 +13,21 @@ import {
 } from "../ui";
 import { str } from "../utils";
 
-interface GradientValue {
-  from: string;
-  to: string;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 function initialValues(cfg: EntityConfigItem, item: EntityItem | null) {
   const values: Record<string, string> = {};
   cfg.fields.forEach((f) => {
-    if (f.type === "icon" || f.type === "gradient") return;
+    if (f.type === "icon") return;
     values[f.key] = item
       ? str(item[f.key])
       : f.type === "select"
@@ -37,27 +43,36 @@ interface EntityModalFormProps {
 }
 
 function EntityModalForm({ entityKey, item }: EntityModalFormProps) {
-  const { closeEntityModal, saveEntityItem } = useAdmin();
+  const { closeEntityModal, saveEntityItem, showToast } = useAdmin();
   const cfg = entityConfig[entityKey];
   const isEdit = item !== null;
 
   const [values, setValues] = useState(() => initialValues(cfg, item));
   const [icon, setIcon] = useState(() => (item ? str(item.icon) : ICONS[0]));
-  const [grad, setGrad] = useState<GradientValue>(() =>
-    item
-      ? { from: str(item.gradFrom), to: str(item.gradTo) }
-      : GRADIENT_PRESETS[0],
-  );
   const [invalidField, setInvalidField] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  async function handleImageChange(
+    field: string,
+    e: ChangeEvent<HTMLInputElement>,
+  ) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      showToast("Imagem muito grande. O tamanho máximo é 2MB.");
+      return;
+    }
+
+    const dataUrl = await readFileAsDataUrl(file);
+    setValues((prev) => ({ ...prev, [field]: dataUrl }));
+    if (invalidField === field) setInvalidField(null);
+  }
 
   async function handleSave() {
     const data: Record<string, string> = { ...values };
     if (cfg.hasIconPicker) data.icon = icon;
-    if (cfg.hasGradientPicker) {
-      data.gradFrom = grad.from;
-      data.gradTo = grad.to;
-    }
     const requiredField = cfg.fields.find(
       (f) => f.type === "text" || f.type === "textarea",
     );
@@ -120,31 +135,34 @@ function EntityModalForm({ entityKey, item }: EntityModalFormProps) {
                 </div>
               );
             }
-            if (f.type === "gradient") {
+
+            if (f.type === "image") {
+              const currentImage = values[f.key];
               return (
                 <div className="mb-6" key={f.key}>
                   <label className={formLabelClass}>{f.label}</label>
-                  <div className="flex flex-wrap gap-2.5">
-                    {GRADIENT_PRESETS.map((g, i) => {
-                      const selected = g.from === grad.from && g.to === grad.to;
-                      return (
-                        <button
-                          key={i}
-                          type="button"
-                          onClick={() => setGrad(g)}
-                          aria-label={`Cor ${i + 1}`}
-                          className={`h-11 w-11 rounded-lg border-2 transition-all hover:-translate-y-0.5 ${
-                            selected
-                              ? "border-text shadow-[0_0_0_2px_var(--color-bg),0_0_0_4px_var(--color-accent)]"
-                              : "border-transparent"
-                          }`}
-                          style={{
-                            background: `linear-gradient(135deg, ${g.from}, ${g.to})`,
-                          }}
-                        />
-                      );
-                    })}
-                  </div>
+                  {currentImage && (
+                    <img
+                      src={currentImage}
+                      alt=""
+                      className="border-border mb-3 h-32 w-full rounded-lg border object-cover"
+                    />
+                  )}
+                  <label
+                    className={`${btnOutlineClass} w-full cursor-pointer`}
+                  >
+                    <Upload size={15} aria-hidden="true" />
+                    {currentImage ? "Trocar imagem" : "Selecionar imagem"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageChange(f.key, e)}
+                    />
+                  </label>
+                  <p className="text-text-muted mt-1.5 text-[0.72rem]">
+                    PNG ou JPG, até 2MB.
+                  </p>
                 </div>
               );
             }

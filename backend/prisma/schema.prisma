@@ -85,9 +85,7 @@ model PortfolioProject {
   tag       String
   title     String
   result    String
-  emoji     String
-  gradFrom  String
-  gradTo    String
+  image     String   @db.Text
   order     Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -105,4 +103,33 @@ model Faq {
   updatedAt DateTime @updatedAt
 
   @@index([order])
+}
+
+// Leads recebidos pelo formulário de contato do site.
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  whatsapp  String
+  service   String
+  message   String
+  status    String   @default("novo")
+  date      DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
+
+// Singleton row (id always 1) — identidade, contato e redes sociais do site.
+model Settings {
+  id         Int      @id @default(1)
+  siteName   String
+  tagline    String
+  copy       String
+  whatsapp   String
+  email      String
+  waMessage  String
+  instagram  String
+  linkedin   String
+  github     String
+  updatedAt  DateTime @updatedAt
 }

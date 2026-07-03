@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  deleteMessage as deleteMessageApi,
   differentialsApi,
   faqApi,
   getHero,
+  getMessages,
+  getSettings,
   metricsApi,
   portfolioApi,
   processApi,
   servicesApi,
   updateHero as updateHeroApi,
+  updateMessageStatus as updateMessageStatusApi,
+  updateSettings as updateSettingsApi,
 } from "../../lib/api";
 import {
   AdminContext,
@@ -72,6 +77,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const [heroLoading, setHeroLoading] = useState(true);
   const [heroSaving, setHeroSaving] = useState(false);
+  const [messagesLoading, setMessagesLoading] = useState(true);
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const [listLoading, setListLoading] = useState<
     Partial<Record<EntityKey, boolean>>
   >(() =>
@@ -128,6 +136,26 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     );
   }, [showToast]);
 
+  useEffect(() => {
+    getMessages()
+      .then((messages) => setState((prev) => ({ ...prev, messages })))
+      .catch(() =>
+        showToast("Não foi possível carregar as mensagens recebidas."),
+      )
+      .finally(() => setMessagesLoading(false));
+  }, [showToast]);
+
+  useEffect(() => {
+    getSettings()
+      .then((settings) => setState((prev) => ({ ...prev, settings })))
+      .catch(() =>
+        showToast(
+          "Não foi possível carregar as configurações salvas. Exibindo os valores padrão.",
+        ),
+      )
+      .finally(() => setSettingsLoading(false));
+  }, [showToast]);
+
   const saveHero = useCallback(async () => {
     setHeroSaving(true);
     try {
@@ -147,6 +175,19 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       settings: { ...prev.settings, ...patch },
     }));
   }, []);
+
+  const saveSettings = useCallback(async () => {
+    setSettingsSaving(true);
+    try {
+      const saved = await updateSettingsApi(state.settings);
+      setState((prev) => ({ ...prev, settings: saved }));
+      showToast("Configurações salvas com sucesso.");
+    } catch {
+      showToast("Não foi possível salvar as configurações. Tente novamente.");
+    } finally {
+      setSettingsSaving(false);
+    }
+  }, [state.settings, showToast]);
 
   const openEntityModal = useCallback(
     (key: EntityKey, item: EntityItem | null) => {
@@ -260,11 +301,16 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     const { key, id } = confirmDelete;
 
     if (key === "__messages") {
-      setState((prev) => ({
-        ...prev,
-        messages: prev.messages.filter((m) => m.id !== id),
-      }));
-      showToast("Mensagem excluída.");
+      try {
+        await deleteMessageApi(id);
+        setState((prev) => ({
+          ...prev,
+          messages: prev.messages.filter((m) => m.id !== id),
+        }));
+        showToast("Mensagem excluída.");
+      } catch {
+        showToast("Não foi possível excluir a mensagem. Tente novamente.");
+      }
       setConfirmDelete(null);
       return;
     }
@@ -323,14 +369,17 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const closeMessageDetail = useCallback(() => setMessageDetailId(null), []);
 
   const updateMessageStatus = useCallback(
-    (id: number, status: MessageStatus) => {
-      setState((prev) => ({
-        ...prev,
-        messages: prev.messages.map((m) =>
-          m.id === id ? { ...m, status } : m,
-        ),
-      }));
-      showToast("Status do lead atualizado.");
+    async (id: number, status: MessageStatus) => {
+      try {
+        const updated = await updateMessageStatusApi(id, status);
+        setState((prev) => ({
+          ...prev,
+          messages: prev.messages.map((m) => (m.id === id ? updated : m)),
+        }));
+        showToast("Status do lead atualizado.");
+      } catch {
+        showToast("Não foi possível atualizar o status. Tente novamente.");
+      }
     },
     [showToast],
   );
@@ -349,7 +398,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     heroSaving,
     saveHero,
     listLoading,
+    messagesLoading,
     updateSettings,
+    settingsLoading,
+    settingsSaving,
+    saveSettings,
     entityModal,
     openEntityModal,
     closeEntityModal,

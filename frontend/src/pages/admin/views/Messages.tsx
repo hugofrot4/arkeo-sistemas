@@ -25,6 +25,7 @@ function Messages() {
     openMessageDetail,
     openConfirmDeleteMessage,
     updateMessageStatus,
+    messagesLoading,
   } = useAdmin();
   const [filter, setFilter] = useState<MessageStatus | "all">("all");
   const [search, setSearch] = useState("");
@@ -71,7 +72,11 @@ function Messages() {
         </div>
       </div>
 
-      {list.length === 0 ? (
+      {messagesLoading ? (
+        <p className="text-text-muted py-10 text-center text-[0.875rem]">
+          Carregando...
+        </p>
+      ) : list.length === 0 ? (
         <div className="text-text-muted py-10 text-center">
           <Inbox size={34} className="mx-auto mb-2.5" aria-hidden="true" />
           <p className="text-[0.875rem]">

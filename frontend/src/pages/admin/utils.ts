@@ -1,4 +1,4 @@
-import type { MessageStatus } from "./types";
+import type { MessageItem, MessageStatus } from "./types";
 
 export function str(value: string | number | undefined): string {
   return value == null ? "" : String(value);
@@ -29,6 +29,29 @@ export function formatDate(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+const WEEKDAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+function dayKey(d: Date) {
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+export function getLast7DaysLeadCounts(messages: MessageItem[]) {
+  const today = new Date();
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - (6 - i));
+    return { key: dayKey(d), day: WEEKDAY_LABELS[d.getDay()], value: 0 };
+  });
+
+  messages.forEach((m) => {
+    const key = dayKey(new Date(m.date));
+    const bucket = days.find((d) => d.key === key);
+    if (bucket) bucket.value++;
+  });
+
+  return days.map(({ day, value }) => ({ day, value }));
 }
 
 export const statusMeta: Record<
