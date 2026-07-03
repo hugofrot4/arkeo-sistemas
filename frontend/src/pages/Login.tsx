@@ -47,12 +47,12 @@ function Login() {
 
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
-  const [loginError, setLoginError] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoginError(false);
+    setLoginError(null);
 
     const emailOk = isValidEmail(email);
     const passwordOk = isPasswordFilled(password);
@@ -65,8 +65,14 @@ function Login() {
       const { token } = await login(email, password);
       setToken(token);
       navigate("/admin");
-    } catch {
-      setLoginError(true);
+    } catch (err) {
+      setLoginError(
+        err instanceof TypeError
+          ? "Não foi possível conectar ao servidor. Verifique sua conexão ou tente novamente em instantes."
+          : err instanceof Error
+            ? err.message
+            : "E-mail ou senha incorretos. Tente novamente.",
+      );
     } finally {
       setLoading(false);
     }
@@ -156,7 +162,7 @@ function Login() {
           {loginError && (
             <div className="bg-danger/8 border-danger/30 text-danger mb-6 flex items-center gap-2.5 rounded-lg border px-3.5 py-3 text-[0.82rem]">
               <AlertCircle size={17} className="shrink-0" aria-hidden="true" />
-              <span>E-mail ou senha incorretos. Tente novamente.</span>
+              <span>{loginError}</span>
             </div>
           )}
 
