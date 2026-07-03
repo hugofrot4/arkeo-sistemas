@@ -1,11 +1,13 @@
 # Arkeo Sistemas
 
-Site institucional e painel administrativo da Arkeo Sistemas — uma landing page para captação de leads e um painel de admin para editar o conteúdo da página sem precisar mexer em código.
+Site institucional e painel administrativo da Arkeo Sistemas — uma landing page para captação de leads e um painel de admin para editar todo o conteúdo da página sem precisar mexer em código.
 
 O projeto é um monorepo simples com dois pacotes independentes:
 
 - **`frontend/`** — React 19 + Vite + TypeScript + Tailwind CSS v4. Landing page pública, tela de login e painel admin (SPA com React Router).
-- **`backend/`** — Node.js + Express + TypeScript + Prisma + PostgreSQL. API REST que autentica o admin e persiste o conteúdo editável do site.
+- **`backend/`** — Node.js + Express + TypeScript + Prisma + PostgreSQL. API REST que autentica o admin e persiste todo o conteúdo editável do site.
+
+Todo o conteúdo da landing page (Hero, barra de autoridade, serviços, processo, diferenciais, portfólio, FAQ, mensagens recebidas e configurações gerais) é editado pelo painel admin e persistido de verdade no banco — nada roda só em memória.
 
 ## Stack
 
@@ -18,16 +20,25 @@ O projeto é um monorepo simples com dois pacotes independentes:
 
 ```
 arkeo-sistemas/
-├── frontend/           # SPA React (site público + login + painel admin)
+├── frontend/
 │   └── src/
-│       ├── components/ # Navbar, Footer, seções da home, guarda de rota (auth)
-│       ├── pages/      # Login.tsx, admin/ (Dashboard, Hero, Serviços, Mensagens...)
-│       └── lib/api.ts  # Cliente HTTP para a API do backend
-└── backend/            # API Express
-    ├── prisma/         # schema.prisma, migrations, seed.ts
+│       ├── components/
+│       │   ├── auth/       # RequireAuth (guarda de rota do /admin)
+│       │   ├── layout/     # Navbar, Footer
+│       │   └── sections/   # Hero, AuthorityBar, Services, Process, WhyArkeo, Portfolio, Faq, Contact
+│       ├── pages/
+│       │   ├── Login.tsx
+│       │   └── admin/      # AdminContext, Dashboard e as views de cada seção do painel
+│       └── lib/
+│           ├── api.ts      # Cliente HTTP para toda a API do backend
+│           └── icons.ts    # Mapa de ícones (lucide) usado pelo admin e pelo site público
+└── backend/
+    ├── prisma/             # schema.prisma, migrations, seed.ts
     └── src/
-        ├── routes/     # auth.routes.ts, hero.routes.ts
-        └── middleware/ # requireAuth.ts (proteção via JWT)
+        ├── routes/         # auth, hero, metrics, services, process, differentials,
+        │                   # portfolio, faq, messages, settings
+        ├── middleware/      # requireAuth.ts (proteção via JWT)
+        └── lib/             # prisma client, jwt
 ```
 
 ## Pré-requisitos
@@ -58,7 +69,7 @@ psql "postgresql://arkeo:arkeo123@localhost:5432/arkeo_dev" -c "select 1;"
 cd backend
 cp .env.example .env   # ajuste DATABASE_URL, JWT_SECRET etc. se necessário
 npm install
-npm run prisma:migrate # cria as tabelas (Hero, AdminUser)
+npm run prisma:migrate # cria todas as tabelas
 npm run seed           # cria o usuário admin inicial (lê ADMIN_EMAIL/ADMIN_PASSWORD do .env)
 npm run dev             # sobe a API em http://localhost:4000
 ```
@@ -76,9 +87,11 @@ npm run dev             # sobe o site em http://localhost:5173
 
 ### 4. Testando
 
-- `http://localhost:5173/` — landing page pública (o conteúdo do Hero vem da API).
+- `http://localhost:5173/` — landing page pública (todo o conteúdo vem da API; se ela estiver fora do ar, cada seção cai para um conteúdo padrão local).
 - `http://localhost:5173/login` — login do admin. Use as credenciais definidas em `ADMIN_EMAIL`/`ADMIN_PASSWORD` no `.env` do backend (padrão: `admin@arkeosistemas.com.br` / `admin1234`).
 - `http://localhost:5173/admin` — painel administrativo (protegido: redireciona para `/login` se não houver sessão válida).
+
+Na primeira chamada, cada seção de conteúdo se auto-inicializa no banco com os valores padrão (não precisa rodar nenhum seed além do usuário admin).
 
 ## Variáveis de ambiente
 
@@ -123,15 +136,28 @@ npm run dev             # sobe o site em http://localhost:5173
 
 ## API
 
-Todas as rotas ficam sob o prefixo `/api`. Rotas marcadas com 🔒 exigem um header `Authorization: Bearer <token>` obtido no login.
+Todas as rotas ficam sob o prefixo `/api`. Rotas marcadas com 🔒 exigem um header `Authorization: Bearer <token>` obtido no login. As seções de conteúdo em lista (métricas, serviços, processo, diferenciais, portfólio, FAQ) seguem todas o mesmo contrato REST.
 
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | `/health` | Health check |
 | POST | `/api/auth/login` | Autentica com `{ email, password }`, retorna `{ token, user }` |
 | GET | `/api/auth/me` 🔒 | Retorna os dados do usuário autenticado |
-| GET | `/api/hero` | Retorna o conteúdo atual da seção Hero |
-| PUT | `/api/hero` 🔒 | Atualiza o conteúdo da seção Hero |
+| GET | `/api/hero` | Conteúdo atual da seção Hero |
+| PUT | `/api/hero` 🔒 | Atualiza a seção Hero |
+| GET | `/api/settings` | Identidade, contato e redes sociais do site |
+| PUT | `/api/settings` 🔒 | Atualiza as configurações |
+| GET | `/api/{metrics,services,process,differentials,portfolio,faq}` | Lista os itens da seção |
+| POST | `/api/{...}` 🔒 | Cria um item |
+| PUT | `/api/{...}/:id` 🔒 | Atualiza um item |
+| DELETE | `/api/{...}/:id` 🔒 | Exclui um item |
+| PUT | `/api/{...}/reorder` 🔒 | Reordena os itens (`{ ids: number[] }` na nova ordem) |
+| POST | `/api/messages` | Recebe um lead do formulário de contato público |
+| GET | `/api/messages` 🔒 | Lista os leads recebidos |
+| PUT | `/api/messages/:id/status` 🔒 | Atualiza o status de um lead |
+| DELETE | `/api/messages/:id` 🔒 | Exclui um lead |
+
+**Imagens do portfólio:** cada projeto tem um campo `image` com a imagem convertida para base64 (data URI), salva direto na linha do banco — sem serviço externo de storage. Limite de 2MB por imagem (validado no cliente e no servidor); por isso o `express.json()` do backend aceita corpos de até 5MB.
 
 ## Deploy
 
@@ -144,5 +170,5 @@ O backend já está pronto para deploy no [Render](https://render.com) (plano fr
 
 ## Roadmap
 
-- Autenticação real está implementada apenas para o login e para a rota de escrita do Hero — as demais seções do painel (Serviços, Processo, Portfólio, FAQ, Mensagens, Configurações) ainda operam só em memória no frontend e precisam do mesmo tratamento (rota na API + proteção por JWT).
-- Sem fluxo de "esqueci minha senha" (o link existe na UI mas ainda não está implementado).
+- Sem fluxo de "esqueci minha senha" (o link existe na UI mas ainda só mostra um alerta).
+- Imagens do portfólio ficam salvas como base64 no Postgres — simples e funciona no Render free sem disco persistente, mas não é a solução mais escalável para muitas imagens grandes; migrar para um storage externo (Cloudinary, S3/R2) é o próximo passo natural se o portfólio crescer muito.
