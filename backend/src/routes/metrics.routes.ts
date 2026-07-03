@@ -4,7 +4,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 const MAX_METRICS = 4;
 
-const DEFAULT_METRICS = [
+export const DEFAULT_METRICS = [
   { number: "+20", label: "Projetos entregues" },
   { number: "6", label: "Anos de experiência" },
   { number: "100%", label: "Remoto e ágil" },
@@ -14,13 +14,6 @@ const DEFAULT_METRICS = [
 export const metricsRouter = Router();
 
 metricsRouter.get("/", async (_req, res) => {
-  const existing = await prisma.metric.count();
-  if (existing === 0) {
-    await prisma.metric.createMany({
-      data: DEFAULT_METRICS.map((m, order) => ({ ...m, order })),
-    });
-  }
-
   const metrics = await prisma.metric.findMany({ orderBy: { order: "asc" } });
   res.json(metrics);
 });

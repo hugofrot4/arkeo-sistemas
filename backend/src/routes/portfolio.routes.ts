@@ -4,12 +4,12 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 const MAX_IMAGE_LENGTH = 3_000_000; // ~2MB de arquivo original em base64
 
-function placeholderImage(from: string, to: string, emoji: string) {
+export function placeholderImage(from: string, to: string, emoji: string) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="${from}"/><stop offset="100%" stop-color="${to}"/></linearGradient></defs><rect width="400" height="300" fill="url(#g)"/><text x="200" y="168" font-size="90" text-anchor="middle">${emoji}</text></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-const DEFAULT_PROJECTS = [
+export const DEFAULT_PROJECTS = [
   {
     tag: "Landing Page",
     title: "FitPro Academia",
@@ -50,13 +50,6 @@ function isValidBody(body: unknown): body is {
 export const portfolioRouter = Router();
 
 portfolioRouter.get("/", async (_req, res) => {
-  const existing = await prisma.portfolioProject.count();
-  if (existing === 0) {
-    await prisma.portfolioProject.createMany({
-      data: DEFAULT_PROJECTS.map((p, order) => ({ ...p, order })),
-    });
-  }
-
   const projects = await prisma.portfolioProject.findMany({
     orderBy: { order: "asc" },
   });

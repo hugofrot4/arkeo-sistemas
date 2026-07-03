@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
-const DEFAULT_FAQS = [
+export const DEFAULT_FAQS = [
   {
     question: "Quanto tempo leva para ter meu site pronto?",
     answer:
@@ -38,13 +38,6 @@ const DEFAULT_FAQS = [
 export const faqRouter = Router();
 
 faqRouter.get("/", async (_req, res) => {
-  const existing = await prisma.faq.count();
-  if (existing === 0) {
-    await prisma.faq.createMany({
-      data: DEFAULT_FAQS.map((f, order) => ({ ...f, order })),
-    });
-  }
-
   const faqs = await prisma.faq.findMany({ orderBy: { order: "asc" } });
   res.json(faqs);
 });

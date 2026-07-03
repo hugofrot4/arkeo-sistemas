@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
-const DEFAULT_DIFFERENTIALS = [
+export const DEFAULT_DIFFERENTIALS = [
   {
     icon: "zap",
     title: "IA no processo — mais velocidade, menos custo",
@@ -38,13 +38,6 @@ const DEFAULT_DIFFERENTIALS = [
 export const differentialsRouter = Router();
 
 differentialsRouter.get("/", async (_req, res) => {
-  const existing = await prisma.differential.count();
-  if (existing === 0) {
-    await prisma.differential.createMany({
-      data: DEFAULT_DIFFERENTIALS.map((d, order) => ({ ...d, order })),
-    });
-  }
-
   const differentials = await prisma.differential.findMany({
     orderBy: { order: "asc" },
   });

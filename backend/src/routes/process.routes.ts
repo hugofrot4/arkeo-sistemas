@@ -4,7 +4,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 const MAX_STEPS = 6;
 
-const DEFAULT_STEPS = [
+export const DEFAULT_STEPS = [
   {
     title: "Conversa",
     desc: "Entendemos seu negócio, suas dores e o que você quer resolver. Sem formulários longos, sem burocracia.",
@@ -26,13 +26,6 @@ const DEFAULT_STEPS = [
 export const processRouter = Router();
 
 processRouter.get("/", async (_req, res) => {
-  const existing = await prisma.processStep.count();
-  if (existing === 0) {
-    await prisma.processStep.createMany({
-      data: DEFAULT_STEPS.map((s, order) => ({ ...s, order })),
-    });
-  }
-
   const steps = await prisma.processStep.findMany({
     orderBy: { order: "asc" },
   });

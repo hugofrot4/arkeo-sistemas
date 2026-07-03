@@ -2,7 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
-const DEFAULT_SERVICES = [
+export const DEFAULT_SERVICES = [
   {
     icon: "layout",
     title: "Landing Page",
@@ -26,13 +26,6 @@ const DEFAULT_SERVICES = [
 export const servicesRouter = Router();
 
 servicesRouter.get("/", async (_req, res) => {
-  const existing = await prisma.service.count();
-  if (existing === 0) {
-    await prisma.service.createMany({
-      data: DEFAULT_SERVICES.map((s, order) => ({ ...s, order })),
-    });
-  }
-
   const services = await prisma.service.findMany({
     orderBy: { order: "asc" },
   });
