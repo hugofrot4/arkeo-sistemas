@@ -78,8 +78,8 @@ function Sidebar() {
       .catch(() => {});
   }, []);
 
-  function handleLogout() {
-    clearToken();
+  async function handleLogout() {
+    await clearToken();
     navigate("/login");
   }
 

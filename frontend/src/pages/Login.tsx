@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useState, type FormEvent, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login, setToken } from "../lib/api";
+import { login } from "../lib/api";
 
 const stars = [
   { top: "10%", left: "10%", fontSize: "0.7rem", duration: "9s", delay: "0s" },
@@ -62,8 +62,7 @@ function Login() {
 
     setLoading(true);
     try {
-      const { token } = await login(email, password);
-      setToken(token);
+      await login(email, password);
       navigate("/admin");
     } catch (err) {
       setLoginError(

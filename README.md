@@ -2,10 +2,10 @@
 
 Site institucional e painel administrativo da Arkeo Sistemas — uma landing page para captação de leads e um painel de admin para editar todo o conteúdo da página sem precisar mexer em código.
 
-O projeto é um monorepo simples com dois pacotes independentes:
+O projeto é um frontend React que fala direto com o [Supabase](https://supabase.com) — sem servidor próprio no meio:
 
 - **`frontend/`** — React 19 + Vite + TypeScript + Tailwind CSS v4. Landing page pública, tela de login e painel admin (SPA com React Router).
-- **`backend/`** — Node.js + Express + TypeScript + Prisma + PostgreSQL. API REST que autentica o admin e persiste todo o conteúdo editável do site.
+- **`supabase/`** — schema do banco (Postgres), Row Level Security e funções SQL, versionados como migrations e aplicados via Supabase CLI.
 
 Todo o conteúdo da landing page (Hero, barra de autoridade, serviços, processo, diferenciais, portfólio, FAQ, mensagens recebidas e configurações gerais) é editado pelo painel admin e persistido de verdade no banco — nada roda só em memória.
 
@@ -13,8 +13,10 @@ Todo o conteúdo da landing page (Hero, barra de autoridade, serviços, processo
 
 | Camada     | Tecnologias |
 |------------|-------------|
-| Frontend   | React 19, Vite, TypeScript, Tailwind CSS v4, React Router, lucide-react |
-| Backend    | Node.js, Express, TypeScript, Prisma ORM, PostgreSQL, JWT (jsonwebtoken), bcryptjs |
+| Frontend   | React 19, Vite, TypeScript, Tailwind CSS v4, React Router, lucide-react, `@supabase/supabase-js` |
+| Backend    | [Supabase](https://supabase.com): Postgres + PostgREST (API REST automática) + Supabase Auth + Row Level Security |
+
+Não existe servidor Node próprio: o frontend lê e escreve direto nas tabelas do Supabase, autenticado via Supabase Auth, e a segurança é garantida por Row Level Security — não por um backend intermediário.
 
 ## Estrutura do repositório
 
@@ -30,100 +32,63 @@ arkeo-sistemas/
 │       │   ├── Login.tsx
 │       │   └── admin/      # AdminContext, Dashboard e as views de cada seção do painel
 │       └── lib/
-│           ├── api.ts      # Cliente HTTP para toda a API do backend
+│           ├── supabase.ts # Cliente do Supabase (createClient)
+│           ├── api.ts      # Camada de acesso a dados: mapeia os nomes de campo do
+│           │                # frontend (camelCase) para as colunas do Supabase (snake_case)
 │           └── icons.ts    # Mapa de ícones (lucide) usado pelo admin e pelo site público
-└── backend/
-    ├── prisma/             # schema.prisma, migrations, seed.ts
-    └── src/
-        ├── routes/         # auth, hero, metrics, services, process, differentials,
-        │                   # portfolio, faq, messages, settings
-        ├── middleware/      # requireAuth.ts (proteção via JWT)
-        └── lib/             # prisma client, jwt
+└── supabase/
+    └── migrations/          # Schema, RLS policies, funções de reorder e seeds — versionados em SQL
 ```
 
 ## Pré-requisitos
 
 - Node.js 20+ (testado com Node 24)
-- PostgreSQL 14+ rodando localmente (ou acessível via connection string)
+- Uma conta e um projeto no [Supabase](https://supabase.com) (free tier)
+- [Supabase CLI](https://supabase.com/docs/guides/local-development/cli/getting-started) (`npx supabase`, não precisa instalar globalmente)
 
 ## Como rodar localmente
 
-### 1. Banco de dados
+### 1. Projeto Supabase
 
-Crie um usuário e um banco para o projeto (ajuste usuário/senha como preferir):
-
-```bash
-sudo -u postgres psql -c "CREATE USER arkeo WITH PASSWORD 'arkeo123' CREATEDB;"
-sudo -u postgres psql -c "CREATE DATABASE arkeo_dev OWNER arkeo;"
-```
-
-Teste a conexão:
+Crie um projeto em [supabase.com](https://supabase.com) e aplique as migrations deste repositório:
 
 ```bash
-psql "postgresql://arkeo:arkeo123@localhost:5432/arkeo_dev" -c "select 1;"
+npx supabase login
+npx supabase link --project-ref <seu-project-ref>   # em Project Settings → General
+npx supabase db push                                 # aplica supabase/migrations/*.sql
 ```
 
-### 2. Backend
+Crie o usuário admin em **Authentication → Users → Add user** (marque "Auto Confirm User").
 
-```bash
-cd backend
-cp .env.example .env   # ajuste DATABASE_URL, JWT_SECRET etc. se necessário
-npm install
-npm run prisma:migrate # cria todas as tabelas
-npm run seed           # cria o usuário admin inicial (lê ADMIN_EMAIL/ADMIN_PASSWORD do .env)
-npm run dev             # sobe a API em http://localhost:4000
-```
+Pegue a `Project URL` e a `anon public` key em **Project Settings → API**.
 
-### 3. Frontend
-
-Em outro terminal:
+### 2. Frontend
 
 ```bash
 cd frontend
-cp .env.example .env   # aponta VITE_API_URL para a API local
+cp .env.example .env   # preencha VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY
 npm install
 npm run dev             # sobe o site em http://localhost:5173
 ```
 
-### 4. Testando
+### 3. Testando
 
-- `http://localhost:5173/` — landing page pública (todo o conteúdo vem da API; se ela estiver fora do ar, cada seção cai para um conteúdo padrão local).
-- `http://localhost:5173/login` — login do admin. Use as credenciais definidas em `ADMIN_EMAIL`/`ADMIN_PASSWORD` no `.env` do backend (padrão: `admin@arkeosistemas.com.br` / `admin1234`).
+- `http://localhost:5173/` — landing page pública (todo o conteúdo vem do Supabase; se a leitura falhar, cada seção cai para um conteúdo padrão local).
+- `http://localhost:5173/login` — login do admin. Use as credenciais do usuário criado no Supabase Auth.
 - `http://localhost:5173/admin` — painel administrativo (protegido: redireciona para `/login` se não houver sessão válida).
 
-Na primeira chamada, cada seção de conteúdo se auto-inicializa no banco com os valores padrão (não precisa rodar nenhum seed além do usuário admin).
+A migration inicial já popula todas as tabelas com o conteúdo padrão — não precisa rodar nenhum seed manual além de criar o usuário admin.
 
 ## Variáveis de ambiente
-
-### `backend/.env`
-
-| Variável | Descrição |
-|---|---|
-| `DATABASE_URL` | Connection string do PostgreSQL |
-| `PORT` | Porta da API (padrão `4000`) |
-| `CORS_ORIGIN` | Origem(s) permitida(s) para CORS, separadas por vírgula |
-| `JWT_SECRET` | Segredo usado para assinar os tokens de sessão — troque em produção |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME` | Usados apenas por `npm run seed` para criar o admin inicial |
 
 ### `frontend/.env`
 
 | Variável | Descrição |
 |---|---|
-| `VITE_API_URL` | URL base da API do backend |
+| `VITE_SUPABASE_URL` | URL do projeto Supabase (`https://xxxxx.supabase.co`) |
+| `VITE_SUPABASE_ANON_KEY` | Chave pública (`anon`/`publishable`) do projeto — segura para expor no cliente, a segurança real é via Row Level Security |
 
 ## Scripts disponíveis
-
-### `backend/`
-
-| Script | O que faz |
-|---|---|
-| `npm run dev` | Sobe a API em modo desenvolvimento (hot reload via `tsx watch`) |
-| `npm run build` | Compila TypeScript para `dist/` |
-| `npm start` | Roda a API compilada (`dist/index.js`) — uso em produção |
-| `npm run prisma:migrate` | Cria/aplica migrations em desenvolvimento |
-| `npm run prisma:deploy` | Aplica migrations pendentes em produção |
-| `npm run prisma:studio` | Abre uma UI para inspecionar/editar os dados |
-| `npm run seed` | Cria (ou atualiza) o usuário admin inicial |
 
 ### `frontend/`
 
@@ -134,43 +99,35 @@ Na primeira chamada, cada seção de conteúdo se auto-inicializa no banco com o
 | `npm run lint` | Roda o ESLint |
 | `npm run preview` | Serve o build de produção localmente |
 
-## API
+## Banco de dados e API
 
-Todas as rotas ficam sob o prefixo `/api`. Rotas marcadas com 🔒 exigem um header `Authorization: Bearer <token>` obtido no login. As seções de conteúdo em lista (métricas, serviços, processo, diferenciais, portfólio, FAQ) seguem todas o mesmo contrato REST.
+Não existe mais um contrato de API próprio: o [PostgREST](https://postgrest.org) do Supabase expõe cada tabela automaticamente. `frontend/src/lib/api.ts` é a única camada que fala com o Supabase — ela traduz os nomes de campo do frontend (camelCase) para as colunas do banco (snake_case) e expõe funções por seção (`getHero`, `metricsApi`, `servicesApi` etc.), usadas por todo o resto do app.
 
-| Método | Rota | Descrição |
+**Tabelas** (todas com Row Level Security habilitado — ver `supabase/migrations/`):
+
+| Tabela | Leitura | Escrita |
 |---|---|---|
-| GET | `/health` | Health check |
-| POST | `/api/auth/login` | Autentica com `{ email, password }`, retorna `{ token, user }` |
-| GET | `/api/auth/me` 🔒 | Retorna os dados do usuário autenticado |
-| GET | `/api/hero` | Conteúdo atual da seção Hero |
-| PUT | `/api/hero` 🔒 | Atualiza a seção Hero |
-| GET | `/api/settings` | Identidade, contato e redes sociais do site |
-| PUT | `/api/settings` 🔒 | Atualiza as configurações |
-| GET | `/api/{metrics,services,process,differentials,portfolio,faq}` | Lista os itens da seção |
-| POST | `/api/{...}` 🔒 | Cria um item |
-| PUT | `/api/{...}/:id` 🔒 | Atualiza um item |
-| DELETE | `/api/{...}/:id` 🔒 | Exclui um item |
-| PUT | `/api/{...}/reorder` 🔒 | Reordena os itens (`{ ids: number[] }` na nova ordem) |
-| POST | `/api/messages` | Recebe um lead do formulário de contato público |
-| GET | `/api/messages` 🔒 | Lista os leads recebidos |
-| PUT | `/api/messages/:id/status` 🔒 | Atualiza o status de um lead |
-| DELETE | `/api/messages/:id` 🔒 | Exclui um lead |
+| `hero`, `settings` | pública | autenticado |
+| `metrics` (máx. 4), `services`, `process_steps` (máx. 6), `differentials`, `portfolio_projects`, `faq` | pública | autenticado |
+| `messages` (leads do formulário de contato) | autenticado | `insert` público, `update`/`delete` autenticado |
 
-**Imagens do portfólio:** cada projeto tem um campo `image` com a imagem convertida para base64 (data URI), salva direto na linha do banco — sem serviço externo de storage. Limite de 2MB por imagem (validado no cliente e no servidor); por isso o `express.json()` do backend aceita corpos de até 5MB.
+**Reordenação**: cada tabela de lista tem uma função SQL (`reorder_metrics`, `reorder_services` etc.) que atualiza a ordem de todos os itens numa única transação, chamada via `.rpc()` — só usuários autenticados podem executá-la.
+
+**Autenticação**: feita pelo Supabase Auth (`supabase.auth.signInWithPassword`). Não existe tabela de usuário nem JWT próprio — a sessão é gerenciada pelo `supabase-js` no `localStorage`.
+
+**Imagens do portfólio:** cada projeto tem um campo `image` com a imagem convertida para base64 (data URI), salva direto na linha do banco — sem serviço externo de storage. Limite de ~2MB por imagem, validado no cliente e reforçado por uma constraint no banco (`portfolio_projects_image_length`).
 
 ## Deploy
 
-O backend já está pronto para deploy no [Render](https://render.com) (plano free):
+Só o frontend precisa de hospedagem — é um site estático (build do Vite). Pode ir para Render (Static Site), Vercel, Netlify ou qualquer host de arquivos estáticos:
 
-- **Build command:** `npm install && npm run build`
-- **Start command:** `npx prisma migrate deploy && npm start`
-- Configure as env vars da tabela acima (usando a connection string do Postgres gratuito do Render em `DATABASE_URL`, e gerando um `JWT_SECRET` novo e aleatório).
-- No frontend, aponte `VITE_API_URL` para a URL pública do serviço do backend no Render antes de gerar o build de produção.
+- **Build command:** `npm install && npm run build` (dentro de `frontend/`)
+- **Publish directory:** `frontend/dist`
+- Configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` nas env vars de build do host.
 
-⚠️ **O Postgres free do Render expira 30 dias após a criação e é excluído permanentemente** (dados e tudo). Antes desse prazo, migre para um plano pago do Render ou para outro Postgres free sem essa política (ex: Neon, Supabase) — veja a data exata de expiração no dashboard do banco.
+O banco, autenticação e API já ficam hospedados pelo Supabase — não há nada para colocar no ar além do site.
 
 ## Roadmap
 
-- Sem fluxo de "esqueci minha senha" (o link existe na UI mas ainda só mostra um alerta).
-- Imagens do portfólio ficam salvas como base64 no Postgres — simples e funciona no Render free sem disco persistente, mas não é a solução mais escalável para muitas imagens grandes; migrar para um storage externo (Cloudinary, S3/R2) é o próximo passo natural se o portfólio crescer muito.
+- Sem fluxo de "esqueci minha senha" (o link existe na UI mas ainda só mostra um alerta) — dá pra usar `supabase.auth.resetPasswordForEmail` quando for implementar.
+- Imagens do portfólio ficam salvas como base64 no Postgres — simples e funciona bem para poucas imagens, mas não é a solução mais escalável; migrar para o Supabase Storage é o próximo passo natural se o portfólio crescer muito.
