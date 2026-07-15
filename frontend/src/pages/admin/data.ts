@@ -182,5 +182,7 @@ export function createInitialState(): AdminState {
       linkedin: "",
       github: "",
     },
+    xpEvents: [],
+    achievementsUnlocked: [],
   };
 }

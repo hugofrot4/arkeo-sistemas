@@ -12,6 +12,9 @@ import { useAdmin } from "../context";
 import LeadsChart from "../components/LeadsChart";
 import PanelHeader from "../components/PanelHeader";
 import StatusBadge from "../components/StatusBadge";
+import AchievementsWidget from "../gamification/AchievementsWidget";
+import LevelBadge from "../gamification/LevelBadge";
+import StreakIndicator from "../gamification/StreakIndicator";
 import { btnOutlineClass, btnSmClass, panelClass } from "../ui";
 import { formatRelative, initials } from "../utils";
 import type { ViewKey } from "../types";
@@ -59,6 +62,17 @@ function Dashboard() {
           value={state.portfolio.length}
           label="Projetos no portfólio"
         />
+      </div>
+
+      <div className={panelClass}>
+        <PanelHeader tag="Progressão" title="Seu nível como gestor(a) da Arkeo" />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <LevelBadge />
+            <StreakIndicator />
+          </div>
+          <AchievementsWidget />
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.3fr_1fr]">

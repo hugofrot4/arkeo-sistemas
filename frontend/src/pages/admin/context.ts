@@ -70,6 +70,17 @@ export interface AdminContextValue {
   openMessageDetail: (id: number) => void;
   closeMessageDetail: () => void;
   updateMessageStatus: (id: number, status: MessageStatus) => Promise<void>;
+
+  newLeadModalOpen: boolean;
+  openNewLeadModal: () => void;
+  closeNewLeadModal: () => void;
+  createLead: (data: {
+    name: string;
+    whatsapp: string;
+    service: string;
+    message: string;
+    status: MessageStatus;
+  }) => Promise<boolean>;
 }
 
 export const AdminContext = createContext<AdminContextValue | null>(null);

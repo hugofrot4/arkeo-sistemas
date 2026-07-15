@@ -1,6 +1,7 @@
 import { Check, Upload } from "lucide-react";
 import { useAdmin } from "../context";
 import PanelHeader from "../components/PanelHeader";
+import { formatBrPhoneWithCountryCode } from "../../../lib/phone";
 import {
   btnBlockClass,
   btnOutlineClass,
@@ -87,7 +88,13 @@ function Settings() {
                 id="stWhatsapp"
                 type="tel"
                 value={s.whatsapp}
-                onChange={(e) => updateSettings({ whatsapp: e.target.value })}
+                maxLength={18}
+                placeholder="+55 11 99999-9999"
+                onChange={(e) =>
+                  updateSettings({
+                    whatsapp: formatBrPhoneWithCountryCode(e.target.value),
+                  })
+                }
                 className={formInputClass}
               />
             </div>

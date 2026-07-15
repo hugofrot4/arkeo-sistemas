@@ -1,9 +1,12 @@
-import type { Message, SiteSettings } from "../../lib/api";
+import type { AchievementUnlocked, Message, SiteSettings, XpEvent } from "../../lib/api";
 
 export type {
+  AchievementUnlocked,
   Message as MessageItem,
   MessageStatus,
   SiteSettings,
+  XpAction,
+  XpEvent,
 } from "../../lib/api";
 
 export type EntityKey =
@@ -38,6 +41,8 @@ export interface AdminState {
   faq: EntityItem[];
   messages: Message[];
   settings: SiteSettings;
+  xpEvents: XpEvent[];
+  achievementsUnlocked: AchievementUnlocked[];
 }
 
 export type ViewKey =

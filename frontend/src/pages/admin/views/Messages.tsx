@@ -1,8 +1,9 @@
-import { Eye, Inbox, Search, Trash2 } from "lucide-react";
+import { Eye, Inbox, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useAdmin } from "../context";
 import type { MessageStatus } from "../types";
 import {
+  btnPrimaryClass,
   filterTabActiveClass,
   filterTabClass,
   iconBtnClass,
@@ -26,6 +27,7 @@ function Messages() {
     openConfirmDeleteMessage,
     updateMessageStatus,
     messagesLoading,
+    openNewLeadModal,
   } = useAdmin();
   const [filter, setFilter] = useState<MessageStatus | "all">("all");
   const [search, setSearch] = useState("");
@@ -60,15 +62,21 @@ function Messages() {
             </button>
           ))}
         </div>
-        <div className="border-border bg-bg text-text-muted flex w-55 items-center gap-2 rounded-lg border px-3 py-2.25">
-          <Search size={15} aria-hidden="true" />
-          <input
-            type="text"
-            placeholder="Buscar por nome ou WhatsApp..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="text-text placeholder:text-text-muted w-full bg-transparent text-[0.82rem] outline-none"
-          />
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="border-border bg-bg text-text-muted flex w-55 items-center gap-2 rounded-lg border px-3 py-2.25">
+            <Search size={15} aria-hidden="true" />
+            <input
+              type="text"
+              placeholder="Buscar por nome ou WhatsApp..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="text-text placeholder:text-text-muted w-full bg-transparent text-[0.82rem] outline-none"
+            />
+          </div>
+          <button className={btnPrimaryClass} onClick={openNewLeadModal}>
+            <Plus size={16} aria-hidden="true" />
+            Novo lead
+          </button>
         </div>
       </div>
 

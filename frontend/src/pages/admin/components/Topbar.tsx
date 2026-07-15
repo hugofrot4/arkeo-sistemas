@@ -1,5 +1,6 @@
 import { Bell, Menu, Search } from "lucide-react";
 import { useAdmin, viewMeta } from "../context";
+import LevelBadge from "../gamification/LevelBadge";
 import { iconBtnClass } from "../ui";
 
 function Topbar() {
@@ -50,6 +51,8 @@ function Topbar() {
             </span>
           )}
         </div>
+
+        <LevelBadge compact />
 
         <div
           className="from-accent to-accent-dark flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br text-[0.8rem] font-bold text-white"

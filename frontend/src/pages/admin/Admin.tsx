@@ -3,6 +3,7 @@ import { useAdmin } from "./context";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import EntityModal from "./components/EntityModal";
 import MessageDetailModal from "./components/MessageDetailModal";
+import NewLeadModal from "./components/NewLeadModal";
 import Sidebar from "./components/Sidebar";
 import Topbar from "./components/Topbar";
 import ToastStack from "./components/ToastStack";
@@ -46,6 +47,7 @@ function AdminContent() {
       <EntityModal />
       <ConfirmDeleteModal />
       <MessageDetailModal />
+      <NewLeadModal />
       <ToastStack />
     </div>
   );

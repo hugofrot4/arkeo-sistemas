@@ -1,6 +1,7 @@
 import { Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createMessage, getSettings, type SiteSettings } from "../../lib/api";
+import { formatBrPhone } from "../../lib/phone";
 import Reveal from "../ui/Reveal";
 import SectionLabel from "../ui/SectionLabel";
 
@@ -206,10 +207,11 @@ function Contact() {
                     placeholder="(11) 99999-9999"
                     autoComplete="tel"
                     value={whatsapp}
+                    maxLength={15}
                     onChange={(event) => {
-                      setWhatsapp(event.target.value);
-                      if (errors.whatsapp)
-                        checkField("whatsapp", event.target.value);
+                      const masked = formatBrPhone(event.target.value);
+                      setWhatsapp(masked);
+                      if (errors.whatsapp) checkField("whatsapp", masked);
                     }}
                     onBlur={(event) =>
                       checkField("whatsapp", event.target.value)

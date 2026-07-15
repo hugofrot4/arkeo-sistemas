@@ -64,6 +64,29 @@ export interface FaqItem {
 
 export type MessageStatus = "novo" | "contato" | "convertido" | "descartado";
 
+export type XpAction =
+  | "lead_first_response"
+  | "lead_converted"
+  | "lead_descartado"
+  | "content_created"
+  | "content_updated"
+  | "hero_updated"
+  | "settings_updated";
+
+export interface XpEvent {
+  id: number;
+  action: XpAction;
+  xp: number;
+  refTable: string | null;
+  refId: number | null;
+  createdAt: string;
+}
+
+export interface AchievementUnlocked {
+  key: string;
+  unlockedAt: string;
+}
+
 export interface Message {
   id: number;
   name: string;
@@ -253,6 +276,28 @@ export async function createMessage(data: {
   if (error) throw new Error(error.message);
 }
 
+/** Cria um lead diretamente no admin (contato recebido por outro canal — telefone, indicação, presencial). */
+export async function createMessageManual(data: {
+  name: string;
+  whatsapp: string;
+  service: string;
+  message?: string;
+  status: MessageStatus;
+}) {
+  const res = await supabase
+    .from("messages")
+    .insert({
+      name: data.name,
+      whatsapp: data.whatsapp,
+      service: data.service,
+      message: data.message ?? "",
+      status: data.status,
+    })
+    .select("id,name,whatsapp,service,message,status,date")
+    .single();
+  return unwrap<Message>(res);
+}
+
 export async function getMessages() {
   const res = await supabase
     .from("messages")
@@ -302,4 +347,59 @@ export async function updateSettings(data: SiteSettings) {
     .select(SETTINGS_SELECT)
     .single();
   return unwrap<SiteSettings>(res);
+}
+
+const XP_EVENT_SELECT =
+  "id,action,xp,refTable:ref_table,refId:ref_id,createdAt:created_at";
+
+export async function getXpEvents() {
+  const res = await supabase
+    .from("xp_events")
+    .select(XP_EVENT_SELECT)
+    .order("created_at", { ascending: true });
+  return unwrap<XpEvent[]>(res);
+}
+
+/** Retorna `null` em vez de lançar quando o evento já foi logado (dedupe por lead). */
+export async function logXpEvent(
+  action: XpAction,
+  xp: number,
+  ref?: { table: string; id: number },
+) {
+  const { data, error } = await supabase
+    .from("xp_events")
+    .insert({
+      action,
+      xp,
+      ref_table: ref?.table ?? null,
+      ref_id: ref?.id ?? null,
+    })
+    .select(XP_EVENT_SELECT)
+    .single();
+  if (error) {
+    if (error.code === "23505") return null;
+    throw new Error(error.message);
+  }
+  return data as unknown as XpEvent;
+}
+
+export async function getAchievementsUnlocked() {
+  const res = await supabase
+    .from("achievements_unlocked")
+    .select("key,unlockedAt:unlocked_at");
+  return unwrap<AchievementUnlocked[]>(res);
+}
+
+/** Retorna `null` em vez de lançar quando a conquista já estava desbloqueada. */
+export async function unlockAchievement(key: string) {
+  const { data, error } = await supabase
+    .from("achievements_unlocked")
+    .insert({ key })
+    .select("key,unlockedAt:unlocked_at")
+    .single();
+  if (error) {
+    if (error.code === "23505") return null;
+    throw new Error(error.message);
+  }
+  return data as unknown as AchievementUnlocked;
 }

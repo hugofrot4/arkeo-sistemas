@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
+  createMessageManual as createMessageManualApi,
   deleteMessage as deleteMessageApi,
   differentialsApi,
   faqApi,
+  getAchievementsUnlocked,
   getHero,
   getMessages,
   getSettings,
+  getXpEvents,
+  logXpEvent as logXpEventApi,
   metricsApi,
   portfolioApi,
   processApi,
   servicesApi,
+  unlockAchievement as unlockAchievementApi,
   updateHero as updateHeroApi,
   updateMessageStatus as updateMessageStatusApi,
   updateSettings as updateSettingsApi,
@@ -23,6 +28,13 @@ import {
 } from "./context";
 import { createInitialState, nextId } from "./data";
 import { entityConfig } from "./entityConfig";
+import {
+  ACHIEVEMENTS,
+  XP_VALUES,
+  levelForXp,
+  type AchievementContext,
+} from "./gamification/constants";
+import { computeWeeklyStreak } from "./gamification/streak";
 import type {
   AdminState,
   EntityItem,
@@ -31,6 +43,7 @@ import type {
   MessageStatus,
   SiteSettings,
   ViewKey,
+  XpAction,
 } from "./types";
 
 interface ListApiAdapter {
@@ -74,12 +87,15 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [confirmDelete, setConfirmDelete] =
     useState<ConfirmDeleteState | null>(null);
   const [messageDetailId, setMessageDetailId] = useState<number | null>(null);
+  const [newLeadModalOpen, setNewLeadModalOpen] = useState(false);
 
   const [heroLoading, setHeroLoading] = useState(true);
   const [heroSaving, setHeroSaving] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(true);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [xpEventsLoading, setXpEventsLoading] = useState(true);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
   const [listLoading, setListLoading] = useState<
     Partial<Record<EntityKey, boolean>>
   >(() =>
@@ -156,18 +172,113 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       .finally(() => setSettingsLoading(false));
   }, [showToast]);
 
+  useEffect(() => {
+    getXpEvents()
+      .then((xpEvents) => setState((prev) => ({ ...prev, xpEvents })))
+      .catch(() => {})
+      .finally(() => setXpEventsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    getAchievementsUnlocked()
+      .then((achievementsUnlocked) =>
+        setState((prev) => ({ ...prev, achievementsUnlocked })),
+      )
+      .catch(() => {})
+      .finally(() => setAchievementsLoading(false));
+  }, []);
+
+  const awardXp = useCallback(
+    (action: XpAction, ref?: { table: string; id: number }) => {
+      const xp = XP_VALUES[action];
+      logXpEventApi(action, xp, ref)
+        .then((event) => {
+          if (!event) return; // já logado (dedupe)
+          setState((prev) => {
+            const prevTotal = prev.xpEvents.reduce((sum, e) => sum + e.xp, 0);
+            const nextTotal = prevTotal + event.xp;
+            const prevLevel = levelForXp(prevTotal);
+            const nextLevel = levelForXp(nextTotal);
+            if (nextLevel.level > prevLevel.level) {
+              showToast(
+                `Você subiu para o nível ${nextLevel.level}: ${nextLevel.title}!`,
+              );
+            }
+            return { ...prev, xpEvents: [...prev.xpEvents, event] };
+          });
+        })
+        .catch(() => {
+          // XP nunca deve quebrar o fluxo principal do painel.
+        });
+    },
+    [showToast],
+  );
+
+  // Detecta conquistas recém-cruzadas sempre que XP ou conteúdo do site mudam.
+  useEffect(() => {
+    if (xpEventsLoading || achievementsLoading) return;
+
+    const ctx: AchievementContext = {
+      conversions: state.xpEvents.filter((e) => e.action === "lead_converted")
+        .length,
+      firstResponses: state.xpEvents.filter(
+        (e) => e.action === "lead_first_response",
+      ).length,
+      weekStreak: computeWeeklyStreak(state.xpEvents),
+      entityCounts: {
+        metrics: state.metrics.length,
+        services: state.services.length,
+        process: state.process.length,
+        differentials: state.differentials.length,
+        portfolio: state.portfolio.length,
+        faq: state.faq.length,
+      },
+    };
+
+    const unlockedKeys = new Set(state.achievementsUnlocked.map((a) => a.key));
+    const newlyUnlocked = ACHIEVEMENTS.filter(
+      (a) => !unlockedKeys.has(a.key) && a.isUnlocked(ctx),
+    );
+
+    newlyUnlocked.forEach((achievement) => {
+      unlockAchievementApi(achievement.key)
+        .then((unlocked) => {
+          if (!unlocked) return;
+          setState((prev) => ({
+            ...prev,
+            achievementsUnlocked: [...prev.achievementsUnlocked, unlocked],
+          }));
+          showToast(`Conquista desbloqueada: ${achievement.title}`);
+        })
+        .catch(() => {});
+    });
+  }, [
+    state.xpEvents,
+    state.achievementsUnlocked,
+    state.metrics,
+    state.services,
+    state.process,
+    state.differentials,
+    state.portfolio,
+    state.faq,
+    xpEventsLoading,
+    achievementsLoading,
+    showToast,
+  ]);
+
   const saveHero = useCallback(async () => {
     setHeroSaving(true);
     try {
       const saved = await updateHeroApi(state.hero);
       setState((prev) => ({ ...prev, hero: saved }));
       showToast("Seção Hero atualizada com sucesso.");
+      awardXp("hero_updated");
     } catch {
       showToast("Não foi possível salvar a seção Hero. Tente novamente.");
     } finally {
       setHeroSaving(false);
     }
-  }, [state.hero, showToast]);
+  }, [state.hero, showToast, awardXp]);
 
   const updateSettings = useCallback((patch: Partial<SiteSettings>) => {
     setState((prev) => ({
@@ -182,12 +293,13 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       const saved = await updateSettingsApi(state.settings);
       setState((prev) => ({ ...prev, settings: saved }));
       showToast("Configurações salvas com sucesso.");
+      awardXp("settings_updated");
     } catch {
       showToast("Não foi possível salvar as configurações. Tente novamente.");
     } finally {
       setSettingsSaving(false);
     }
-  }, [state.settings, showToast]);
+  }, [state.settings, showToast, awardXp]);
 
   const openEntityModal = useCallback(
     (key: EntityKey, item: EntityItem | null) => {
@@ -234,6 +346,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
               ? `${cfg.label} atualizado com sucesso.`
               : `${cfg.label} adicionado com sucesso.`,
           );
+          awardXp(id ? "content_updated" : "content_created", {
+            table: key,
+            id: item.id,
+          });
           setEntityModal(null);
           return true;
         } catch (err) {
@@ -270,7 +386,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       setEntityModal(null);
       return true;
     },
-    [showToast],
+    [showToast, awardXp],
   );
 
   const openConfirmDeleteEntity = useCallback(
@@ -377,11 +493,51 @@ export function AdminProvider({ children }: { children: ReactNode }) {
           messages: prev.messages.map((m) => (m.id === id ? updated : m)),
         }));
         showToast("Status do lead atualizado.");
+        if (status === "contato") {
+          awardXp("lead_first_response", { table: "messages", id });
+        } else if (status === "convertido") {
+          awardXp("lead_converted", { table: "messages", id });
+        } else if (status === "descartado") {
+          awardXp("lead_descartado", { table: "messages", id });
+        }
       } catch {
         showToast("Não foi possível atualizar o status. Tente novamente.");
       }
     },
-    [showToast],
+    [showToast, awardXp],
+  );
+
+  const openNewLeadModal = useCallback(() => setNewLeadModalOpen(true), []);
+  const closeNewLeadModal = useCallback(() => setNewLeadModalOpen(false), []);
+
+  const createLead = useCallback(
+    async (data: {
+      name: string;
+      whatsapp: string;
+      service: string;
+      message: string;
+      status: MessageStatus;
+    }) => {
+      if (!data.name.trim() || !data.whatsapp.trim()) return false;
+      try {
+        const created = await createMessageManualApi(data);
+        setState((prev) => ({ ...prev, messages: [created, ...prev.messages] }));
+        showToast("Lead adicionado com sucesso.");
+        if (created.status === "contato") {
+          awardXp("lead_first_response", { table: "messages", id: created.id });
+        } else if (created.status === "convertido") {
+          awardXp("lead_converted", { table: "messages", id: created.id });
+        } else if (created.status === "descartado") {
+          awardXp("lead_descartado", { table: "messages", id: created.id });
+        }
+        setNewLeadModalOpen(false);
+        return true;
+      } catch {
+        showToast("Não foi possível adicionar o lead. Tente novamente.");
+        return false;
+      }
+    },
+    [showToast, awardXp],
   );
 
   const value: AdminContextValue = {
@@ -418,6 +574,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     openMessageDetail,
     closeMessageDetail,
     updateMessageStatus,
+    newLeadModalOpen,
+    openNewLeadModal,
+    closeNewLeadModal,
+    createLead,
   };
 
   return (
