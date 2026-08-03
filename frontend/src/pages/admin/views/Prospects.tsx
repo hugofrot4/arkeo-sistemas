@@ -2,7 +2,9 @@ import {
   CheckCircle2,
   ChevronDown,
   Globe,
+  MapPin,
   MessageCircle,
+  Phone,
   Play,
   Radar,
   Search,
@@ -15,8 +17,10 @@ import { getProspectingCallsThisMonth } from "../../../lib/api";
 import { useAdmin } from "../context";
 import type { ProspectSegment, ProspectStatus } from "../types";
 import {
+  btnBlockClass,
   btnOutlineClass,
   btnPrimaryClass,
+  btnSmClass,
   filterTabActiveClass,
   filterTabClass,
   formHintClass,
@@ -74,7 +78,7 @@ function ConfigPanel() {
 
   return (
     <div className={panelClass}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           className="text-text flex items-center gap-2 text-left font-family-display text-[0.95rem] font-semibold"
           onClick={() => setOpen((v) => !v)}
@@ -87,14 +91,14 @@ function ConfigPanel() {
             aria-hidden="true"
           />
         </button>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           {callsThisMonth !== null && (
             <span className="text-text-muted text-[0.78rem]">
               {callsThisMonth} / {cfg.monthlyFreeLimit} chamadas usadas este mês
             </span>
           )}
           <button
-            className={btnOutlineClass}
+            className={`${btnOutlineClass} w-full sm:w-auto`}
             onClick={handleRunNow}
             disabled={prospectSearchRunning}
           >
@@ -225,7 +229,7 @@ function ConfigPanel() {
           </div>
           <div className="sm:col-span-2">
             <button
-              className={btnPrimaryClass}
+              className={`${btnPrimaryClass} ${btnBlockClass} sm:w-auto`}
               onClick={saveProspectingConfig}
               disabled={prospectingConfigSaving}
             >
@@ -303,44 +307,44 @@ function Prospects() {
       <ConfigPanel />
 
       <div className={panelClass}>
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-1.5">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:w-auto">
             {segments.map((s) => (
               <button
                 key={s.key}
                 onClick={() => setSegment(s.key)}
-                className={`${btnOutlineClass} ${segment === s.key ? "border-accent! text-accent!" : ""}`}
+                className={`${filterTabClass} ${segment === s.key ? filterTabActiveClass : ""}`}
               >
                 {s.label}
               </button>
             ))}
           </div>
-          <div className="border-border bg-bg text-text-muted flex w-55 items-center gap-2 rounded-lg border px-3 py-2.25">
+          <div className="border-border bg-bg text-text-muted flex w-full items-center gap-2 rounded-lg border px-3 py-2.5 sm:w-55">
             <Search size={15} aria-hidden="true" />
             <input
               type="text"
               placeholder="Buscar por nome, nicho ou telefone..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="text-text placeholder:text-text-muted w-full bg-transparent text-[0.82rem] outline-none"
+              className="text-text placeholder:text-text-muted w-full bg-transparent text-[0.85rem] outline-none"
             />
           </div>
         </div>
 
         {segment === "sem_site" && (
-          <p className={`${formHintClass} mb-4 -mt-2`}>
+          <p className={`${formHintClass} mb-4 -mt-1 sm:-mt-2`}>
             "Sem site" é baseado no que está cadastrado no Google Maps — o negócio pode ter
-            um site que só não foi vinculado lá. Use "Verificar no Google" antes de chamar,
-            e "Tem site" pra corrigir se for o caso.
+            um site que só não foi vinculado lá. Use "Google" antes de chamar, e "Tem site"
+            pra corrigir se for o caso.
           </p>
         )}
 
-        <div className="mb-6 flex flex-wrap gap-1.5">
+        <div className="mb-4 flex flex-nowrap gap-1.5 overflow-x-auto pb-1 sm:mb-6 sm:flex-wrap sm:overflow-visible">
           {statusFilters.map((f) => (
             <button
               key={f.status}
               onClick={() => setFilter(f.status)}
-              className={`${filterTabClass} ${filter === f.status ? filterTabActiveClass : ""}`}
+              className={`${filterTabClass} shrink-0 whitespace-nowrap ${filter === f.status ? filterTabActiveClass : ""}`}
             >
               {f.label}
             </button>
@@ -359,117 +363,218 @@ function Prospects() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-190 border-collapse">
-              <thead>
-                <tr>
-                  {["Empresa", "Telefone", "Endereço", "Avaliação", "Status", ""].map(
-                    (h) => (
-                      <th
-                        key={h}
-                        className="text-text-muted border-border border-b px-3.5 py-2.5 text-left text-[0.7rem] tracking-[0.08em] whitespace-nowrap uppercase"
-                      >
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((p) => {
-                  const waDigits = normalizePhoneForWa(p.phone);
-                  return (
-                    <tr key={p.id} className="hover:bg-white/2 transition-colors">
-                      <td className="border-border border-b px-3.5 py-3.25 align-middle">
-                        <div className="text-white text-[0.85rem] font-semibold">
+          <>
+            {/* Cards — telas pequenas (celular) */}
+            <div className="grid gap-3 sm:hidden">
+              {list.map((p) => {
+                const waDigits = normalizePhoneForWa(p.phone);
+                return (
+                  <div key={p.id} className="border-border bg-bg min-w-0 rounded-xl border p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-white truncate text-[0.95rem] font-semibold">
                           {p.name}
                         </div>
                         <div className="text-text-muted text-[0.8rem]">{p.niche}</div>
-                      </td>
-                      <td className="text-text-muted border-border border-b px-3.5 py-3.25 text-[0.85rem] align-middle">
-                        {p.phone ?? "—"}
-                      </td>
-                      <td
-                        className="text-text-muted border-border max-w-65 truncate border-b px-3.5 py-3.25 text-[0.85rem] align-middle"
-                        title={p.address ?? ""}
+                      </div>
+                      <button
+                        className={`${iconBtnClass} ${iconBtnDangerClass} shrink-0`}
+                        onClick={() => openConfirmDeleteProspect(p.id)}
+                        aria-label="Excluir"
                       >
-                        {p.address ?? "—"}
-                      </td>
-                      <td className="text-text-muted border-border border-b px-3.5 py-3.25 text-[0.8rem] align-middle">
-                        {p.rating ? (
-                          <span className="flex items-center gap-1">
-                            <Star size={13} className="fill-current" aria-hidden="true" />
-                            {p.rating.toFixed(1)} ({p.userRatingCount ?? 0})
-                          </span>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="border-border border-b px-3.5 py-3.25 align-middle">
-                        <select
-                          value={p.status}
-                          onChange={(e) =>
-                            updateProspectStatus(p.id, e.target.value as ProspectStatus)
-                          }
-                          className="bg-bg border-border text-text cursor-pointer rounded-lg border px-2.5 py-1.5 text-[0.78rem] outline-none"
+                        <Trash2 size={15} aria-hidden="true" />
+                      </button>
+                    </div>
+
+                    <div className="text-text-muted mt-3 space-y-1.5 text-[0.82rem]">
+                      {p.phone ? (
+                        <a
+                          href={`tel:+${waDigits}`}
+                          className="text-accent flex items-center gap-1.5"
                         >
-                          {Object.entries(prospectStatusMeta).map(([value, meta]) => (
-                            <option key={value} value={value}>
-                              {meta.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="border-border border-b px-3.5 py-3.25 align-middle">
-                        <div className="flex gap-1.5">
-                          {segment === "sem_site" && (
-                            <>
-                              <button
-                                className={iconBtnClass}
-                                onClick={() => handleVerifyOnGoogle(p)}
-                                aria-label="Verificar no Google"
-                                title="Verificar no Google se o site existe de verdade"
-                              >
-                                <Globe size={15} aria-hidden="true" />
-                              </button>
-                              <button
-                                className={iconBtnClass}
-                                onClick={() => handleMarkHasWebsite(p)}
-                                aria-label="Marcar como 'tem site'"
-                                title="Na verdade tem site — mover para 'Com site'"
-                              >
-                                <CheckCircle2 size={15} aria-hidden="true" />
-                              </button>
-                              <button
-                                className={iconBtnClass}
-                                onClick={() => handleGenerateWhatsApp(p)}
-                                disabled={!waDigits}
-                                aria-label="Gerar mensagem de WhatsApp"
-                                title={
-                                  waDigits
-                                    ? "Gerar mensagem de WhatsApp"
-                                    : "Sem telefone — contato precisa ser manual"
-                                }
-                              >
-                                <MessageCircle size={15} aria-hidden="true" />
-                              </button>
-                            </>
-                          )}
+                          <Phone size={13} aria-hidden="true" />
+                          {p.phone}
+                        </a>
+                      ) : (
+                        <span className="flex items-center gap-1.5">
+                          <Phone size={13} aria-hidden="true" />
+                          Sem telefone
+                        </span>
+                      )}
+                      {p.address && (
+                        <div className="flex items-start gap-1.5">
+                          <MapPin size={13} className="mt-0.5 shrink-0" aria-hidden="true" />
+                          <span>{p.address}</span>
+                        </div>
+                      )}
+                      {p.rating != null && (
+                        <div className="flex items-center gap-1.5">
+                          <Star size={13} className="fill-current" aria-hidden="true" />
+                          {p.rating.toFixed(1)} ({p.userRatingCount ?? 0} avaliações)
+                        </div>
+                      )}
+                    </div>
+
+                    <select
+                      value={p.status}
+                      onChange={(e) =>
+                        updateProspectStatus(p.id, e.target.value as ProspectStatus)
+                      }
+                      className="bg-bg border-border text-text mt-3 w-full cursor-pointer rounded-lg border px-3 py-2.5 text-[0.82rem] outline-none"
+                    >
+                      {Object.entries(prospectStatusMeta).map(([value, meta]) => (
+                        <option key={value} value={value}>
+                          {meta.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    {segment === "sem_site" && (
+                      <>
+                        <div className="mt-2.5 flex gap-2">
                           <button
-                            className={`${iconBtnClass} ${iconBtnDangerClass}`}
-                            onClick={() => openConfirmDeleteProspect(p.id)}
-                            aria-label="Excluir"
+                            className={`${btnOutlineClass} ${btnSmClass} flex-1`}
+                            onClick={() => handleVerifyOnGoogle(p)}
                           >
-                            <Trash2 size={15} aria-hidden="true" />
+                            <Globe size={14} aria-hidden="true" />
+                            Google
+                          </button>
+                          <button
+                            className={`${btnOutlineClass} ${btnSmClass} flex-1`}
+                            onClick={() => handleMarkHasWebsite(p)}
+                          >
+                            <CheckCircle2 size={14} aria-hidden="true" />
+                            Tem site
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <button
+                          className={`${btnPrimaryClass} ${btnBlockClass} mt-2`}
+                          onClick={() => handleGenerateWhatsApp(p)}
+                          disabled={!waDigits}
+                        >
+                          <MessageCircle size={16} aria-hidden="true" />
+                          {waDigits ? "Chamar no WhatsApp" : "Sem telefone pra chamar"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tabela — telas médias/grandes */}
+            <div className="hidden overflow-x-auto sm:block">
+              <table className="w-full min-w-190 border-collapse">
+                <thead>
+                  <tr>
+                    {["Empresa", "Telefone", "Endereço", "Avaliação", "Status", ""].map(
+                      (h) => (
+                        <th
+                          key={h}
+                          className="text-text-muted border-border border-b px-3.5 py-2.5 text-left text-[0.7rem] tracking-[0.08em] whitespace-nowrap uppercase"
+                        >
+                          {h}
+                        </th>
+                      ),
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((p) => {
+                    const waDigits = normalizePhoneForWa(p.phone);
+                    return (
+                      <tr key={p.id} className="hover:bg-white/2 transition-colors">
+                        <td className="border-border border-b px-3.5 py-3.25 align-middle">
+                          <div className="text-white text-[0.85rem] font-semibold">
+                            {p.name}
+                          </div>
+                          <div className="text-text-muted text-[0.8rem]">{p.niche}</div>
+                        </td>
+                        <td className="text-text-muted border-border border-b px-3.5 py-3.25 text-[0.85rem] align-middle">
+                          {p.phone ?? "—"}
+                        </td>
+                        <td
+                          className="text-text-muted border-border max-w-65 truncate border-b px-3.5 py-3.25 text-[0.85rem] align-middle"
+                          title={p.address ?? ""}
+                        >
+                          {p.address ?? "—"}
+                        </td>
+                        <td className="text-text-muted border-border border-b px-3.5 py-3.25 text-[0.8rem] align-middle">
+                          {p.rating ? (
+                            <span className="flex items-center gap-1">
+                              <Star size={13} className="fill-current" aria-hidden="true" />
+                              {p.rating.toFixed(1)} ({p.userRatingCount ?? 0})
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="border-border border-b px-3.5 py-3.25 align-middle">
+                          <select
+                            value={p.status}
+                            onChange={(e) =>
+                              updateProspectStatus(p.id, e.target.value as ProspectStatus)
+                            }
+                            className="bg-bg border-border text-text cursor-pointer rounded-lg border px-2.5 py-1.5 text-[0.78rem] outline-none"
+                          >
+                            {Object.entries(prospectStatusMeta).map(([value, meta]) => (
+                              <option key={value} value={value}>
+                                {meta.label}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="border-border border-b px-3.5 py-3.25 align-middle">
+                          <div className="flex gap-1.5">
+                            {segment === "sem_site" && (
+                              <>
+                                <button
+                                  className={iconBtnClass}
+                                  onClick={() => handleVerifyOnGoogle(p)}
+                                  aria-label="Verificar no Google"
+                                  title="Verificar no Google se o site existe de verdade"
+                                >
+                                  <Globe size={15} aria-hidden="true" />
+                                </button>
+                                <button
+                                  className={iconBtnClass}
+                                  onClick={() => handleMarkHasWebsite(p)}
+                                  aria-label="Marcar como 'tem site'"
+                                  title="Na verdade tem site — mover para 'Com site'"
+                                >
+                                  <CheckCircle2 size={15} aria-hidden="true" />
+                                </button>
+                                <button
+                                  className={iconBtnClass}
+                                  onClick={() => handleGenerateWhatsApp(p)}
+                                  disabled={!waDigits}
+                                  aria-label="Gerar mensagem de WhatsApp"
+                                  title={
+                                    waDigits
+                                      ? "Gerar mensagem de WhatsApp"
+                                      : "Sem telefone — contato precisa ser manual"
+                                  }
+                                >
+                                  <MessageCircle size={15} aria-hidden="true" />
+                                </button>
+                              </>
+                            )}
+                            <button
+                              className={`${iconBtnClass} ${iconBtnDangerClass}`}
+                              onClick={() => openConfirmDeleteProspect(p.id)}
+                              aria-label="Excluir"
+                            >
+                              <Trash2 size={15} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </>
