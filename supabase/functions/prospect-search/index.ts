@@ -2,12 +2,12 @@
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { withSupabase } from "@supabase/server";
 
-// Busca diária de negócios locais via Google Places API (New) e alimenta a
-// tabela `prospects` para o pipeline de prospecção ativa do admin.
-// Duas formas de chamar:
-// - server-to-server (cron do GitHub Actions) com a chave "secret";
-// - painel admin (botão "Buscar agora") com a chave "publishable" + o token
-//   de sessão do admin logado, validado abaixo antes de rodar.
+// Busca negócios locais via Google Places API (New) e alimenta a tabela
+// `prospects` para o pipeline de prospecção ativa do admin.
+// Hoje só é chamada manualmente pelo botão "Buscar agora" no admin (chave
+// "publishable" + token de sessão do admin logado, validado abaixo). O modo
+// "secret" (chamada server-to-server) continua suportado caso um agendamento
+// automático seja reativado no futuro — não há cron configurado agora.
 // `ctx.supabaseAdmin` ignora RLS.
 
 const PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchNearby";

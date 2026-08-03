@@ -170,7 +170,7 @@ function ConfigPanel() {
             </p>
           </div>
           <div>
-            <label className={formLabelClass}>Limite de buscas por dia</label>
+            <label className={formLabelClass}>Limite de buscas por clique em "Buscar agora"</label>
             <input
               type="number"
               min={1}
@@ -204,7 +204,7 @@ function ConfigPanel() {
                 checked={cfg.active}
                 onChange={(e) => updateProspectingConfig({ active: e.target.checked })}
               />
-              Busca diária ativa
+              Busca ativa (permite rodar ao clicar em "Buscar agora")
             </label>
           </div>
           <div className="sm:col-span-2">
