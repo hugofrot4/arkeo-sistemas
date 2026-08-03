@@ -389,6 +389,17 @@ export async function deleteProspect(id: number) {
   if (error) throw new Error(error.message);
 }
 
+/** Correção manual: o Google Maps não tinha o site linkado, mas o negócio tem um de verdade. */
+export async function markProspectHasWebsite(id: number, website: string | null) {
+  const res = await supabase
+    .from("prospects")
+    .update({ segment: "com_site", website: website || null })
+    .eq("id", id)
+    .select(PROSPECT_SELECT)
+    .single();
+  return unwrap<Prospect>(res);
+}
+
 const PROSPECTING_CONFIG_SELECT =
   "cityName:city_name,centerLat:center_lat,centerLng:center_lng,radiusMeters:radius_meters,nicheTypes:niche_types,dailyCallCap:daily_call_cap,monthlyFreeLimit:monthly_free_limit,waMessageTemplate:wa_message_template,active";
 

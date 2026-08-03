@@ -75,6 +75,7 @@ export interface AdminContextValue {
 
   prospectsLoading: boolean;
   updateProspectStatus: (id: number, status: ProspectStatus) => Promise<void>;
+  markProspectHasWebsite: (id: number, website: string | null) => Promise<void>;
   openConfirmDeleteProspect: (id: number) => void;
   prospectingConfigLoading: boolean;
   prospectingConfigSaving: boolean;

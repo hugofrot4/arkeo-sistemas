@@ -1,5 +1,7 @@
 import {
+  CheckCircle2,
   ChevronDown,
+  Globe,
   MessageCircle,
   Play,
   Radar,
@@ -241,6 +243,7 @@ function Prospects() {
     state,
     prospectsLoading,
     updateProspectStatus,
+    markProspectHasWebsite,
     openConfirmDeleteProspect,
   } = useAdmin();
   const [segment, setSegment] = useState<ProspectSegment>("sem_site");
@@ -277,6 +280,24 @@ function Prospects() {
     updateProspectStatus(p.id, "contatado_whatsapp");
   }
 
+  function handleVerifyOnGoogle(p: (typeof list)[number]) {
+    const query = `${p.name} ${state.prospectingConfig.cityName}`;
+    window.open(
+      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
+  function handleMarkHasWebsite(p: (typeof list)[number]) {
+    const website = window.prompt(
+      `Achou o site da "${p.name}"? Cole a URL (ou deixe em branco e confirme).`,
+      "",
+    );
+    if (website === null) return; // cancelou
+    markProspectHasWebsite(p.id, website.trim() || null);
+  }
+
   return (
     <>
       <ConfigPanel />
@@ -305,6 +326,14 @@ function Prospects() {
             />
           </div>
         </div>
+
+        {segment === "sem_site" && (
+          <p className={`${formHintClass} mb-4 -mt-2`}>
+            "Sem site" é baseado no que está cadastrado no Google Maps — o negócio pode ter
+            um site que só não foi vinculado lá. Use "Verificar no Google" antes de chamar,
+            e "Tem site" pra corrigir se for o caso.
+          </p>
+        )}
 
         <div className="mb-6 flex flex-wrap gap-1.5">
           {statusFilters.map((f) => (
@@ -394,19 +423,37 @@ function Prospects() {
                       <td className="border-border border-b px-3.5 py-3.25 align-middle">
                         <div className="flex gap-1.5">
                           {segment === "sem_site" && (
-                            <button
-                              className={iconBtnClass}
-                              onClick={() => handleGenerateWhatsApp(p)}
-                              disabled={!waDigits}
-                              aria-label="Gerar mensagem de WhatsApp"
-                              title={
-                                waDigits
-                                  ? "Gerar mensagem de WhatsApp"
-                                  : "Sem telefone — contato precisa ser manual"
-                              }
-                            >
-                              <MessageCircle size={15} aria-hidden="true" />
-                            </button>
+                            <>
+                              <button
+                                className={iconBtnClass}
+                                onClick={() => handleVerifyOnGoogle(p)}
+                                aria-label="Verificar no Google"
+                                title="Verificar no Google se o site existe de verdade"
+                              >
+                                <Globe size={15} aria-hidden="true" />
+                              </button>
+                              <button
+                                className={iconBtnClass}
+                                onClick={() => handleMarkHasWebsite(p)}
+                                aria-label="Marcar como 'tem site'"
+                                title="Na verdade tem site — mover para 'Com site'"
+                              >
+                                <CheckCircle2 size={15} aria-hidden="true" />
+                              </button>
+                              <button
+                                className={iconBtnClass}
+                                onClick={() => handleGenerateWhatsApp(p)}
+                                disabled={!waDigits}
+                                aria-label="Gerar mensagem de WhatsApp"
+                                title={
+                                  waDigits
+                                    ? "Gerar mensagem de WhatsApp"
+                                    : "Sem telefone — contato precisa ser manual"
+                                }
+                              >
+                                <MessageCircle size={15} aria-hidden="true" />
+                              </button>
+                            </>
                           )}
                           <button
                             className={`${iconBtnClass} ${iconBtnDangerClass}`}

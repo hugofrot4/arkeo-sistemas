@@ -13,6 +13,7 @@ import {
   getSettings,
   getXpEvents,
   logXpEvent as logXpEventApi,
+  markProspectHasWebsite as markProspectHasWebsiteApi,
   metricsApi,
   portfolioApi,
   processApi,
@@ -571,6 +572,22 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [showToast],
   );
 
+  const markProspectHasWebsite = useCallback(
+    async (id: number, website: string | null) => {
+      try {
+        const updated = await markProspectHasWebsiteApi(id, website);
+        setState((prev) => ({
+          ...prev,
+          prospects: prev.prospects.map((p) => (p.id === id ? updated : p)),
+        }));
+        showToast("Prospect movido para \"Com site\".");
+      } catch {
+        showToast("Não foi possível corrigir o prospect. Tente novamente.");
+      }
+    },
+    [showToast],
+  );
+
   const openConfirmDeleteProspect = useCallback((id: number) => {
     setConfirmDelete({
       key: "__prospects",
@@ -694,6 +711,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     updateMessageStatus,
     prospectsLoading,
     updateProspectStatus,
+    markProspectHasWebsite,
     openConfirmDeleteProspect,
     prospectingConfigLoading,
     prospectingConfigSaving,
