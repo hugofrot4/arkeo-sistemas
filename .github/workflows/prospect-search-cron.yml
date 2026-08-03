@@ -1,0 +1,23 @@
+name: Prospecção diária (Google Places)
+
+on:
+  schedule:
+    # 13:00 UTC = 10:00 no horário de Brasília (UTC-3, sem horário de verão).
+    - cron: "0 13 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  run-prospect-search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar a Edge Function prospect-search
+        run: |
+          status=$(curl -sS -o response.json -w "%{http_code}" \
+            --location --request POST \
+            "https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/prospect-search" \
+            --header "apiKey: ${{ secrets.SUPABASE_SECRET_KEY }}")
+          echo "HTTP status: $status"
+          cat response.json
+          if [ "$status" -ge 300 ]; then
+            exit 1
+          fi

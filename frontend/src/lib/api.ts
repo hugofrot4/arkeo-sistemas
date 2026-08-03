@@ -97,6 +97,45 @@ export interface Message {
   date: string;
 }
 
+export type ProspectStatus =
+  | "novo"
+  | "contatado_whatsapp"
+  | "respondeu"
+  | "convertido"
+  | "nao_contatar"
+  | "descartado";
+
+export type ProspectSegment = "sem_site" | "com_site";
+
+export interface Prospect {
+  id: number;
+  placeId: string;
+  name: string;
+  niche: string;
+  phone: string | null;
+  address: string | null;
+  website: string | null;
+  segment: ProspectSegment;
+  rating: number | null;
+  userRatingCount: number | null;
+  status: ProspectStatus;
+  contactedAt: string | null;
+  notes: string;
+  createdAt: string;
+}
+
+export interface ProspectingConfig {
+  cityName: string;
+  centerLat: number;
+  centerLng: number;
+  radiusMeters: number;
+  nicheTypes: string[];
+  dailyCallCap: number;
+  monthlyFreeLimit: number;
+  waMessageTemplate: string;
+  active: boolean;
+}
+
 export interface SiteSettings {
   siteName: string;
   tagline: string;
@@ -319,6 +358,112 @@ export async function updateMessageStatus(id: number, status: MessageStatus) {
 export async function deleteMessage(id: number) {
   const { error } = await supabase.from("messages").delete().eq("id", id);
   if (error) throw new Error(error.message);
+}
+
+const PROSPECT_SELECT =
+  "id,placeId:place_id,name,niche,phone,address,website,segment,rating,userRatingCount:user_rating_count,status,contactedAt:contacted_at,notes,createdAt:created_at";
+
+export async function getProspects() {
+  const res = await supabase
+    .from("prospects")
+    .select(PROSPECT_SELECT)
+    .order("created_at", { ascending: false });
+  return unwrap<Prospect[]>(res);
+}
+
+/** Ao marcar `contatado_whatsapp`, grava `contacted_at` na mesma chamada. */
+export async function updateProspectStatus(id: number, status: ProspectStatus) {
+  const payload: Record<string, unknown> = { status };
+  if (status === "contatado_whatsapp") payload.contacted_at = new Date().toISOString();
+  const res = await supabase
+    .from("prospects")
+    .update(payload)
+    .eq("id", id)
+    .select(PROSPECT_SELECT)
+    .single();
+  return unwrap<Prospect>(res);
+}
+
+export async function deleteProspect(id: number) {
+  const { error } = await supabase.from("prospects").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+const PROSPECTING_CONFIG_SELECT =
+  "cityName:city_name,centerLat:center_lat,centerLng:center_lng,radiusMeters:radius_meters,nicheTypes:niche_types,dailyCallCap:daily_call_cap,monthlyFreeLimit:monthly_free_limit,waMessageTemplate:wa_message_template,active";
+
+export async function getProspectingConfig() {
+  const res = await supabase
+    .from("prospecting_config")
+    .select(PROSPECTING_CONFIG_SELECT)
+    .eq("id", 1)
+    .single();
+  return unwrap<ProspectingConfig>(res);
+}
+
+export async function updateProspectingConfig(data: ProspectingConfig) {
+  const res = await supabase
+    .from("prospecting_config")
+    .update({
+      city_name: data.cityName,
+      center_lat: data.centerLat,
+      center_lng: data.centerLng,
+      radius_meters: data.radiusMeters,
+      niche_types: data.nicheTypes,
+      daily_call_cap: data.dailyCallCap,
+      monthly_free_limit: data.monthlyFreeLimit,
+      wa_message_template: data.waMessageTemplate,
+      active: data.active,
+    })
+    .eq("id", 1)
+    .select(PROSPECTING_CONFIG_SELECT)
+    .single();
+  return unwrap<ProspectingConfig>(res);
+}
+
+/** Quantas chamadas à Places API já foram feitas no mês corrente (1 linha em `prospecting_runs` por chamada). */
+export async function getProspectingCallsThisMonth() {
+  const startOfMonth = new Date();
+  startOfMonth.setUTCDate(1);
+  startOfMonth.setUTCHours(0, 0, 0, 0);
+  const { count, error } = await supabase
+    .from("prospecting_runs")
+    .select("id", { count: "exact", head: true })
+    .gte("created_at", startOfMonth.toISOString());
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+export interface ProspectSearchResult {
+  skipped?: boolean;
+  reason?: string;
+  unitsProcessed?: number;
+  totalFound?: number;
+  totalNew?: number;
+  totalUpdated?: number;
+  callsThisMonth?: number;
+  monthlyFreeLimit?: number;
+}
+
+/** Dispara a busca manualmente (botão "Buscar agora"), usando a sessão do admin logado. */
+export async function triggerProspectSearch(): Promise<ProspectSearchResult> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
+  if (!token) throw new Error("Sessão expirada. Faça login novamente.");
+
+  const res = await fetch(
+    `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/prospect-search`,
+    {
+      method: "POST",
+      headers: {
+        apiKey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+  const body = await res.json();
+  if (!res.ok) throw new Error(body.error ?? "Falha ao disparar a busca.");
+  return body as ProspectSearchResult;
 }
 
 const SETTINGS_SELECT =

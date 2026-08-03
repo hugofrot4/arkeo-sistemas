@@ -184,5 +184,17 @@ export function createInitialState(): AdminState {
     },
     xpEvents: [],
     achievementsUnlocked: [],
+    prospects: [],
+    prospectingConfig: {
+      cityName: "",
+      centerLat: 0,
+      centerLng: 0,
+      radiusMeters: 15000,
+      nicheTypes: [],
+      dailyCallCap: 25,
+      monthlyFreeLimit: 900,
+      waMessageTemplate: "",
+      active: true,
+    },
   };
 }

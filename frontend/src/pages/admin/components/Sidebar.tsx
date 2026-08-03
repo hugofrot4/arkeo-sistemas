@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
+  Radar,
   Settings,
   Sparkles,
   X,
@@ -52,6 +53,7 @@ function NavButton({ view, icon: Icon }: NavItem) {
       <Icon size={18} className="shrink-0" aria-hidden="true" />
       {viewMeta[view].title}
       {view === "messages" && <MessageBadge />}
+      {view === "prospects" && <ProspectBadge />}
     </button>
   );
 }
@@ -59,6 +61,17 @@ function NavButton({ view, icon: Icon }: NavItem) {
 function MessageBadge() {
   const { state } = useAdmin();
   const count = state.messages.filter((m) => m.status === "novo").length;
+  if (!count) return null;
+  return (
+    <span className="bg-accent ml-auto rounded-full px-1.75 py-0.25 text-[0.68rem] font-bold text-white">
+      {count}
+    </span>
+  );
+}
+
+function ProspectBadge() {
+  const { state } = useAdmin();
+  const count = state.prospects.filter((p) => p.status === "novo").length;
   if (!count) return null;
   return (
     <span className="bg-accent ml-auto rounded-full px-1.75 py-0.25 text-[0.68rem] font-bold text-white">
@@ -128,6 +141,7 @@ function Sidebar() {
             Gestão
           </p>
           <NavButton view="messages" icon={Inbox} />
+          <NavButton view="prospects" icon={Radar} />
           <NavButton view="settings" icon={Settings} />
         </nav>
 
