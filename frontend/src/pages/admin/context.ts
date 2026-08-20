@@ -5,8 +5,6 @@ import type {
   EntityKey,
   HeroContent,
   MessageStatus,
-  ProspectingConfig,
-  ProspectStatus,
   SiteSettings,
   ViewKey,
 } from "./types";
@@ -22,7 +20,7 @@ export interface EntityModalState {
 }
 
 export interface ConfirmDeleteState {
-  key: EntityKey | "__messages" | "__prospects";
+  key: EntityKey | "__messages";
   id: number;
   label: string;
 }
@@ -72,17 +70,6 @@ export interface AdminContextValue {
   openMessageDetail: (id: number) => void;
   closeMessageDetail: () => void;
   updateMessageStatus: (id: number, status: MessageStatus) => Promise<void>;
-
-  prospectsLoading: boolean;
-  updateProspectStatus: (id: number, status: ProspectStatus) => Promise<void>;
-  markProspectHasWebsite: (id: number, website: string | null) => Promise<void>;
-  openConfirmDeleteProspect: (id: number) => void;
-  prospectingConfigLoading: boolean;
-  prospectingConfigSaving: boolean;
-  updateProspectingConfig: (patch: Partial<ProspectingConfig>) => void;
-  saveProspectingConfig: () => Promise<void>;
-  prospectSearchRunning: boolean;
-  runProspectSearchNow: () => Promise<void>;
 
   newLeadModalOpen: boolean;
   openNewLeadModal: () => void;
@@ -138,7 +125,7 @@ export const viewMeta: Record<ViewKey, { title: string; subtitle: string }> = {
   prospects: {
     title: "Prospecção",
     subtitle:
-      "Negócios encontrados automaticamente via Google Maps para contato ativo.",
+      "Encontrar, auditar e abordar negócios locais com um protótipo do site pronto.",
   },
   settings: {
     title: "Configurações",

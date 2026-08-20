@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /login
+# Protótipos de prospecção: páginas de terceiros, não fazem parte do site.
+Disallow: /p/
 
 Sitemap: https://www.arkeosistemas.com.br/sitemap.xml

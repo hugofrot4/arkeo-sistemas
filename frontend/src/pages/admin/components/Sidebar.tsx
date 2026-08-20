@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearToken, getMe } from "../../../lib/api";
+import { listHotLeads, listOutreachQueue } from "../../../lib/prospecting";
 import { useAdmin, viewMeta } from "../context";
 import { iconBtnClass } from "../ui";
 import { initials } from "../utils";
@@ -69,9 +70,20 @@ function MessageBadge() {
   );
 }
 
+/**
+ * Conta o que está esperando ação hoje: toques vencidos mais quem abriu o
+ * protótipo. Consulta própria de propósito — a lista de leads não fica no
+ * AdminContext, e carregá-la só para desenhar um número seria desperdício.
+ */
 function ProspectBadge() {
-  const { state } = useAdmin();
-  const count = state.prospects.filter((p) => p.status === "novo").length;
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    Promise.all([listOutreachQueue(), listHotLeads()])
+      .then(([queue, hot]) => setCount(queue.length + hot.length))
+      .catch(() => setCount(0));
+  }, []);
+
   if (!count) return null;
   return (
     <span className="bg-accent ml-auto rounded-full px-1.75 py-0.25 text-[0.68rem] font-bold text-white">

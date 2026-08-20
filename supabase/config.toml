@@ -1,11 +1,14 @@
+# Prospecção v2. Ambas fazem a autorização à mão (sessão de admin ou chave
+# secreta do projeto), por isso verify_jwt = false.
 
-[functions.prospect-search]
+[functions.prospect-source]
 enabled = true
 verify_jwt = false
-import_map = "./functions/prospect-search/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/prospect-search/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/prospect-search/*.html" ]
+import_map = "./functions/prospect-source/deno.json"
+entrypoint = "./functions/prospect-source/index.ts"
+
+[functions.prospect-worker]
+enabled = true
+verify_jwt = false
+import_map = "./functions/prospect-worker/deno.json"
+entrypoint = "./functions/prospect-worker/index.ts"

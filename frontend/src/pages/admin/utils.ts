@@ -1,4 +1,4 @@
-import type { MessageItem, MessageStatus, ProspectStatus } from "./types";
+import type { MessageItem, MessageStatus } from "./types";
 
 export function str(value: string | number | undefined): string {
   return value == null ? "" : String(value);
@@ -66,37 +66,3 @@ export const statusMeta: Record<
     className: "text-text-muted bg-text-muted/12",
   },
 };
-
-export const prospectStatusMeta: Record<
-  ProspectStatus,
-  { label: string; className: string }
-> = {
-  novo: { label: "Novo", className: "text-accent bg-accent/12" },
-  contatado_whatsapp: {
-    label: "Contatado",
-    className: "text-warning bg-warning/12",
-  },
-  respondeu: { label: "Respondeu", className: "text-warning bg-warning/12" },
-  convertido: { label: "Convertido", className: "text-good bg-good/12" },
-  nao_contatar: {
-    label: "Não contatar",
-    className: "text-danger bg-danger/12",
-  },
-  descartado: {
-    label: "Descartado",
-    className: "text-text-muted bg-text-muted/12",
-  },
-};
-
-/** Normaliza telefone (formato "national" do Google Places, sem DDI) para o formato exigido pelo link wa.me. */
-export function normalizePhoneForWa(phone: string | null): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (!digits) return null;
-  return digits.length <= 11 ? `55${digits}` : digits;
-}
-
-/** Substitui placeholders `{{chave}}` do template pela mensagem final. */
-export function fillTemplate(template: string, vars: Record<string, string>) {
-  return template.replace(/\{\{(\w+)\}\}/g, (_, key: string) => vars[key] ?? "");
-}

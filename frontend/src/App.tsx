@@ -12,6 +12,7 @@ import Services from "./components/sections/Services";
 import WhyArkeo from "./components/sections/WhyArkeo";
 import Admin from "./pages/admin/Admin";
 import Login from "./pages/Login";
+import Prototype from "./pages/Prototype";
 
 function Home() {
   return (
@@ -37,6 +38,9 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      {/* Protótipo público enviado ao prospect. Sem Navbar/Footer da Arkeo:
+          a página se apresenta como o site do cliente. */}
+      <Route path="/p/:slug" element={<Prototype />} />
       <Route
         path="/admin"
         element={

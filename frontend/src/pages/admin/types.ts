@@ -1,8 +1,6 @@
 import type {
   AchievementUnlocked,
   Message,
-  Prospect,
-  ProspectingConfig,
   SiteSettings,
   XpEvent,
 } from "../../lib/api";
@@ -11,10 +9,6 @@ export type {
   AchievementUnlocked,
   Message as MessageItem,
   MessageStatus,
-  Prospect as ProspectItem,
-  ProspectingConfig,
-  ProspectSegment,
-  ProspectStatus,
   SiteSettings,
   XpAction,
   XpEvent,
@@ -54,8 +48,6 @@ export interface AdminState {
   settings: SiteSettings;
   xpEvents: XpEvent[];
   achievementsUnlocked: AchievementUnlocked[];
-  prospects: Prospect[];
-  prospectingConfig: ProspectingConfig;
 }
 
 export type ViewKey =

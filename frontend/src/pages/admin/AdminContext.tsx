@@ -2,28 +2,21 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   createMessageManual as createMessageManualApi,
   deleteMessage as deleteMessageApi,
-  deleteProspect as deleteProspectApi,
   differentialsApi,
   faqApi,
   getAchievementsUnlocked,
   getHero,
   getMessages,
-  getProspectingConfig,
-  getProspects,
   getSettings,
   getXpEvents,
   logXpEvent as logXpEventApi,
-  markProspectHasWebsite as markProspectHasWebsiteApi,
   metricsApi,
   portfolioApi,
   processApi,
   servicesApi,
-  triggerProspectSearch,
   unlockAchievement as unlockAchievementApi,
   updateHero as updateHeroApi,
   updateMessageStatus as updateMessageStatusApi,
-  updateProspectingConfig as updateProspectingConfigApi,
-  updateProspectStatus as updateProspectStatusApi,
   updateSettings as updateSettingsApi,
 } from "../../lib/api";
 import {
@@ -48,8 +41,6 @@ import type {
   EntityKey,
   HeroContent,
   MessageStatus,
-  ProspectingConfig,
-  ProspectStatus,
   SiteSettings,
   ViewKey,
   XpAction,
@@ -101,10 +92,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const [heroLoading, setHeroLoading] = useState(true);
   const [heroSaving, setHeroSaving] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(true);
-  const [prospectsLoading, setProspectsLoading] = useState(true);
-  const [prospectingConfigLoading, setProspectingConfigLoading] = useState(true);
-  const [prospectingConfigSaving, setProspectingConfigSaving] = useState(false);
-  const [prospectSearchRunning, setProspectSearchRunning] = useState(false);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [xpEventsLoading, setXpEventsLoading] = useState(true);
@@ -172,28 +159,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         showToast("Não foi possível carregar as mensagens recebidas."),
       )
       .finally(() => setMessagesLoading(false));
-  }, [showToast]);
-
-  useEffect(() => {
-    getProspects()
-      .then((prospects) => setState((prev) => ({ ...prev, prospects })))
-      .catch(() =>
-        showToast("Não foi possível carregar os prospects encontrados."),
-      )
-      .finally(() => setProspectsLoading(false));
-  }, [showToast]);
-
-  useEffect(() => {
-    getProspectingConfig()
-      .then((prospectingConfig) =>
-        setState((prev) => ({ ...prev, prospectingConfig })),
-      )
-      .catch(() =>
-        showToast(
-          "Não foi possível carregar a configuração de prospecção salva. Exibindo os valores padrão.",
-        ),
-      )
-      .finally(() => setProspectingConfigLoading(false));
   }, [showToast]);
 
   useEffect(() => {
@@ -466,21 +431,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (key === "__prospects") {
-      try {
-        await deleteProspectApi(id);
-        setState((prev) => ({
-          ...prev,
-          prospects: prev.prospects.filter((p) => p.id !== id),
-        }));
-        showToast("Prospect excluído.");
-      } catch {
-        showToast("Não foi possível excluir o prospect. Tente novamente.");
-      }
-      setConfirmDelete(null);
-      return;
-    }
-
     const api = listApis[key];
     if (api) {
       try {
@@ -557,91 +507,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [showToast, awardXp],
   );
 
-  const updateProspectStatus = useCallback(
-    async (id: number, status: ProspectStatus) => {
-      try {
-        const updated = await updateProspectStatusApi(id, status);
-        setState((prev) => ({
-          ...prev,
-          prospects: prev.prospects.map((p) => (p.id === id ? updated : p)),
-        }));
-      } catch {
-        showToast("Não foi possível atualizar o status do prospect. Tente novamente.");
-      }
-    },
-    [showToast],
-  );
-
-  const markProspectHasWebsite = useCallback(
-    async (id: number, website: string | null) => {
-      try {
-        const updated = await markProspectHasWebsiteApi(id, website);
-        setState((prev) => ({
-          ...prev,
-          prospects: prev.prospects.map((p) => (p.id === id ? updated : p)),
-        }));
-        showToast("Prospect movido para \"Com site\".");
-      } catch {
-        showToast("Não foi possível corrigir o prospect. Tente novamente.");
-      }
-    },
-    [showToast],
-  );
-
-  const openConfirmDeleteProspect = useCallback((id: number) => {
-    setConfirmDelete({
-      key: "__prospects",
-      id,
-      label:
-        "Tem certeza que deseja excluir este prospect? Essa ação não pode ser desfeita.",
-    });
-  }, []);
-
-  const updateProspectingConfig = useCallback(
-    (patch: Partial<ProspectingConfig>) => {
-      setState((prev) => ({
-        ...prev,
-        prospectingConfig: { ...prev.prospectingConfig, ...patch },
-      }));
-    },
-    [],
-  );
-
-  const saveProspectingConfig = useCallback(async () => {
-    setProspectingConfigSaving(true);
-    try {
-      const saved = await updateProspectingConfigApi(state.prospectingConfig);
-      setState((prev) => ({ ...prev, prospectingConfig: saved }));
-      showToast("Configuração de prospecção salva com sucesso.");
-    } catch {
-      showToast("Não foi possível salvar a configuração de prospecção. Tente novamente.");
-    } finally {
-      setProspectingConfigSaving(false);
-    }
-  }, [state.prospectingConfig, showToast]);
-
-  const runProspectSearchNow = useCallback(async () => {
-    setProspectSearchRunning(true);
-    try {
-      const result = await triggerProspectSearch();
-      if (result.skipped) {
-        showToast(result.reason ?? "Busca não executada.");
-      } else {
-        showToast(
-          `Busca concluída: ${result.totalNew ?? 0} prospect(s) novo(s) encontrado(s).`,
-        );
-        const prospects = await getProspects();
-        setState((prev) => ({ ...prev, prospects }));
-      }
-    } catch (err) {
-      showToast(
-        err instanceof Error ? err.message : "Não foi possível rodar a busca agora.",
-      );
-    } finally {
-      setProspectSearchRunning(false);
-    }
-  }, [showToast]);
-
   const openNewLeadModal = useCallback(() => setNewLeadModalOpen(true), []);
   const closeNewLeadModal = useCallback(() => setNewLeadModalOpen(false), []);
 
@@ -709,16 +574,6 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     openMessageDetail,
     closeMessageDetail,
     updateMessageStatus,
-    prospectsLoading,
-    updateProspectStatus,
-    markProspectHasWebsite,
-    openConfirmDeleteProspect,
-    prospectingConfigLoading,
-    prospectingConfigSaving,
-    updateProspectingConfig,
-    saveProspectingConfig,
-    prospectSearchRunning,
-    runProspectSearchNow,
     newLeadModalOpen,
     openNewLeadModal,
     closeNewLeadModal,
