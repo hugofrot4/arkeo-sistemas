@@ -187,18 +187,7 @@ function QueueCard({
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
-        {item.lead.whatsappValid && item.lead.phoneE164 ? (
-          <button
-            onClick={onSend}
-            disabled={busy}
-            className="bg-good inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
-          >
-            <MessageCircle size={16} aria-hidden />
-            {busy ? "Enviando…" : "Enviar no WhatsApp"}
-          </button>
-        ) : (
-          <AdicionarWhatsApp item={item} onSalvo={refresh} />
-        )}
+        <WhatsAppDoLead item={item} busy={busy} onSend={onSend} onSalvo={refresh} />
 
         {item.prototypeSlug && (
           <a
@@ -238,26 +227,41 @@ function QueueCard({
 }
 
 /**
- * Sem WhatsApp válido, o card ficava sem ação nenhuma — e corrigir exigia sair
- * da fila, achar o lead na outra aba e abrir o modal de edição. Como isto é a
- * tela de trabalho do dia, o número entra aqui mesmo.
+ * O número do lead na fila: mostra, deixa enviar e deixa corrigir.
  *
- * Salvar marca `verifiedByHuman`: número conferido por gente não é sobrescrito
- * pela coleta automática depois.
+ * Duas coisas que faltavam. Sem WhatsApp válido o card não oferecia ação
+ * nenhuma, e corrigir exigia sair da fila. Com WhatsApp válido o número nem
+ * aparecia — um dígito errado só seria descoberto quando a conversa abrisse,
+ * e nesse ponto o toque já teria sido marcado como enviado.
+ *
+ * Salvar marca `verifiedByHuman`: número conferido por gente não é
+ * sobrescrito pela coleta automática depois.
  */
-function AdicionarWhatsApp({
+function WhatsAppDoLead({
   item,
+  busy,
+  onSend,
   onSalvo,
 }: {
   item: QueueItem;
+  busy: boolean;
+  onSend: () => void;
   onSalvo: () => Promise<void>;
 }) {
   const { showToast } = useAdmin();
-  const [aberto, setAberto] = useState(false);
+  const [editando, setEditando] = useState(false);
   const [valor, setValor] = useState("");
   const [salvando, setSalvando] = useState(false);
 
+  const valido = item.lead.whatsappValid && !!item.lead.phoneE164;
   const telefone = parseTelefoneBr(valor);
+
+  function abrir() {
+    // Pré-preenche com o que já existe: corrigir um dígito não deve exigir
+    // redigitar o número inteiro.
+    setValor(item.lead.phone ? formatarTelefoneBr(item.lead.phone) : "");
+    setEditando(true);
+  }
 
   async function salvar() {
     if (!telefone.isMobile) return;
@@ -277,59 +281,87 @@ function AdicionarWhatsApp({
     }
   }
 
-  if (!aberto) {
+  if (editando) {
+    return (
+      <div className="w-full">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            autoFocus
+            value={valor}
+            onChange={(e) => setValor(formatarTelefoneBr(e.target.value))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && telefone.isMobile) void salvar();
+              if (e.key === "Escape") setEditando(false);
+            }}
+            placeholder="(85) 98765-4321"
+            className="border-border bg-bg w-44 rounded-lg border px-3 py-2 text-sm"
+          />
+          <button
+            onClick={salvar}
+            disabled={!telefone.isMobile || salvando}
+            className="bg-good rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {salvando ? "Salvando…" : "Salvar"}
+          </button>
+          <button
+            onClick={() => setEditando(false)}
+            className="text-text-muted hover:text-text px-2 py-2 text-sm"
+          >
+            Cancelar
+          </button>
+        </div>
+        {valor.trim() && !telefone.isMobile && (
+          <p className="text-warning mt-1.5 text-xs">
+            {telefone.motivo ?? "Número incompleto."}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  if (valido) {
     return (
       <div className="flex flex-wrap items-center gap-2">
-        <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
-          {item.lead.phone
-            ? `Sem WhatsApp — o número cadastrado (${item.lead.phone}) é fixo.`
-            : "Sem telefone cadastrado."}
-        </span>
         <button
-          onClick={() => setAberto(true)}
-          className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white"
+          onClick={onSend}
+          disabled={busy}
+          className="bg-good inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          Adicionar WhatsApp
+          <MessageCircle size={16} aria-hidden />
+          {busy ? "Enviando…" : "Enviar no WhatsApp"}
         </button>
+        {/* O número fica à vista: é a única chance de perceber um dígito errado
+            antes de a conversa abrir e o toque virar enviado. */}
+        <span className="text-text-muted text-xs">
+          {item.lead.phone ?? item.lead.phoneE164}
+          <button
+            onClick={abrir}
+            className="text-accent ml-1.5 underline underline-offset-2"
+          >
+            editar
+          </button>
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          autoFocus
-          value={valor}
-          onChange={(e) => setValor(formatarTelefoneBr(e.target.value))}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && telefone.isMobile) void salvar();
-            if (e.key === "Escape") setAberto(false);
-          }}
-          placeholder="(85) 98765-4321"
-          className="border-border bg-bg w-44 rounded-lg border px-3 py-2 text-sm"
-        />
-        <button
-          onClick={salvar}
-          disabled={!telefone.isMobile || salvando}
-          className="bg-good rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-        >
-          {salvando ? "Salvando…" : "Salvar"}
-        </button>
-        <button
-          onClick={() => setAberto(false)}
-          className="text-text-muted hover:text-text px-2 py-2 text-sm"
-        >
-          Cancelar
-        </button>
-      </div>
-      {valor.trim() && !telefone.isMobile && (
-        <p className="text-warning mt-1.5 text-xs">{telefone.motivo ?? "Número incompleto."}</p>
-      )}
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
+        {item.lead.phone
+          ? `Sem WhatsApp — o número cadastrado (${item.lead.phone}) é fixo.`
+          : "Sem telefone cadastrado."}
+      </span>
+      <button
+        onClick={abrir}
+        className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white"
+      >
+        Adicionar WhatsApp
+      </button>
       {item.lead.phone && (
-        <p className="text-text-muted mt-1.5 text-xs">
-          Fixo cadastrado: {item.lead.phone} — dá para ligar e pedir o WhatsApp da recepção.
-        </p>
+        <span className="text-text-muted w-full text-xs">
+          Dá para ligar no fixo e pedir o WhatsApp da recepção.
+        </span>
       )}
     </div>
   );
