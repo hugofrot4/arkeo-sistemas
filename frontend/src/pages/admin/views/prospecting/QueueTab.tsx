@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, ExternalLink, Flame, MessageCircle, SkipForward } from "lucide-react";
+import { Ban, Check, ExternalLink, Flame, MessageCircle, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
@@ -33,16 +33,29 @@ export default function QueueTab({
   const cap = data.settings?.dailyOutreachCap ?? 40;
   const remaining = Math.max(0, cap - data.sentToday);
 
-  async function handleSend(item: QueueItem) {
-    if (!item.lead.phoneE164) return;
+  /**
+   * Registra o envio. Só roda depois de o operador confirmar que mandou —
+   * abrir a conversa não é enviar, e marcar no clique registrava envio que
+   * podia não ter acontecido (pop-up bloqueado, número sem WhatsApp, desistiu).
+   */
+  async function handleConfirm(item: QueueItem) {
     setBusy(item.id);
-    // Abre a conversa antes de gravar: se o pop-up for bloqueado, o envio não
-    // fica marcado como feito sem ter acontecido.
-    window.open(whatsappLink(item.lead.phoneE164, item.body), "_blank", "noopener");
     try {
-      await markTouchSent(item);
+      const resultado = await markTouchSent(item);
       await refresh();
-      showToast(`Toque ${item.step} enviado para ${item.lead.name}.`);
+      const quando = resultado.nextTouchDate
+        ? new Date(`${resultado.nextTouchDate}T12:00:00`).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+          })
+        : null;
+      // O lead sai da fila de hoje ao ser marcado. Dizer quando ele volta evita
+      // a sensação de que sumiu.
+      showToast(
+        quando
+          ? `Toque ${item.step} registrado. ${item.lead.name} volta à fila em ${quando} para o toque ${resultado.nextStep}.`
+          : `Toque ${item.step} registrado. Era o último da sequência de ${item.lead.name}.`,
+      );
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Falha ao registrar o envio.");
     } finally {
@@ -120,7 +133,7 @@ export default function QueueTab({
                 key={item.id}
                 item={item}
                 busy={busy === item.id}
-                onSend={() => handleSend(item)}
+                onConfirm={() => handleConfirm(item)}
                 onSkip={() => handleSkip(item)}
                 onRemove={() =>
                   handleRemoveFromQueue(item.leadId, item.lead.name, item.id)
@@ -150,14 +163,14 @@ function EmptyQueue() {
 function QueueCard({
   item,
   busy,
-  onSend,
+  onConfirm,
   onSkip,
   onRemove,
   refresh,
 }: {
   item: QueueItem;
   busy: boolean;
-  onSend: () => void;
+  onConfirm: () => void;
   onSkip: () => void;
   onRemove: () => void;
   refresh: () => Promise<void>;
@@ -187,7 +200,7 @@ function QueueCard({
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <WhatsAppDoLead item={item} busy={busy} onSend={onSend} onSalvo={refresh} />
+        <WhatsAppDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
 
         {item.prototypeSlug && (
           <a
@@ -240,15 +253,16 @@ function QueueCard({
 function WhatsAppDoLead({
   item,
   busy,
-  onSend,
+  onConfirm,
   onSalvo,
 }: {
   item: QueueItem;
   busy: boolean;
-  onSend: () => void;
+  onConfirm: () => void;
   onSalvo: () => Promise<void>;
 }) {
   const { showToast } = useAdmin();
+  const [conversaAberta, setConversaAberta] = useState(false);
   const [editando, setEditando] = useState(false);
   const [valor, setValor] = useState("");
   const [salvando, setSalvando] = useState(false);
@@ -327,17 +341,47 @@ function WhatsAppDoLead({
     );
   }
 
+  function abrirConversa() {
+    if (!item.lead.phoneE164) return;
+    window.open(whatsappLink(item.lead.phoneE164, item.body), "_blank", "noopener");
+    setConversaAberta(true);
+  }
+
   if (temNumero) {
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex w-full flex-wrap items-center gap-2">
         <button
-          onClick={onSend}
+          onClick={abrirConversa}
           disabled={busy}
-          className="bg-good inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
+            conversaAberta
+              ? "border-border text-text-muted border"
+              : "bg-good text-white"
+          }`}
         >
           <MessageCircle size={16} aria-hidden />
-          {busy ? "Enviando…" : "Enviar no WhatsApp"}
+          {conversaAberta ? "Abrir de novo" : "Abrir conversa"}
         </button>
+
+        {conversaAberta && (
+          <>
+            <button
+              onClick={onConfirm}
+              disabled={busy}
+              className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              <Check size={15} className="mr-1.5 inline" aria-hidden />
+              {busy ? "Registrando…" : "Confirmar envio"}
+            </button>
+            <button
+              onClick={() => setConversaAberta(false)}
+              disabled={busy}
+              className="text-text-muted hover:text-text px-2 py-2 text-sm disabled:opacity-50"
+            >
+              Não enviei
+            </button>
+          </>
+        )}
         {/* O número fica à vista: é a única chance de perceber um dígito errado
             antes de a conversa abrir e o toque virar enviado. */}
         <span className="text-text-muted text-xs">
@@ -354,6 +398,13 @@ function WhatsAppDoLead({
             editar
           </button>
         </span>
+
+        {conversaAberta && (
+          <p className="text-text-muted w-full text-xs">
+            Mande a mensagem no WhatsApp e volte aqui para confirmar. O toque só
+            é registrado depois da confirmação.
+          </p>
+        )}
       </div>
     );
   }

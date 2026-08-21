@@ -573,18 +573,49 @@ export async function countSentToday(): Promise<number> {
  * `advance_lead_stage`, que nunca regride: registrar um toque num lead que já
  * respondeu não o rebaixa para "contatado" — era o que a v1 fazia.
  */
-export async function markTouchSent(touch: QueueItem) {
+export interface TouchSentResult {
+  /** Estágio em que o lead ficou. */
+  stage: string;
+  /** Data do próximo toque agendado, se houver — para dizer ao operador o que vem. */
+  nextTouchDate: string | null;
+  nextStep: number | null;
+}
+
+/**
+ * Registra o envio e devolve o que acontece em seguida.
+ *
+ * O retorno existe porque, marcado o envio, o lead sai da fila de hoje — e
+ * sumir sem explicação é desorientador. Com a data do próximo toque dá para
+ * dizer exatamente quando ele volta.
+ */
+export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> {
   const { error } = await supabase
     .from("outreach_touches")
     .update({ status: "sent", sent_at: new Date().toISOString() })
     .eq("id", touch.id);
   if (error) throw new Error(error.message);
 
-  const { error: stageError } = await supabase.rpc("advance_lead_stage", {
+  const { data: stage, error: stageError } = await supabase.rpc("advance_lead_stage", {
     p_lead_id: touch.leadId,
     p_stage: "contatado",
   });
   if (stageError) throw new Error(stageError.message);
+
+  const proximo = await supabase
+    .from("outreach_touches")
+    .select("step, scheduledFor:scheduled_for")
+    .eq("lead_id", touch.leadId)
+    .eq("status", "pending")
+    .order("step", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  const seguinte = proximo.data as { step: number; scheduledFor: string } | null;
+  return {
+    stage: (stage as string) ?? "contatado",
+    nextTouchDate: seguinte?.scheduledFor ?? null,
+    nextStep: seguinte?.step ?? null,
+  };
 }
 
 export async function skipTouch(touchId: number) {
