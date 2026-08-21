@@ -54,17 +54,33 @@ O relatório informa quantos KB cada imagem custa em `data:` URI. O arquivo fina
 
 Se o script falhar, é lead de site quebrado — siga sem material e trate a falta de imagem como em `references/design.md`.
 
-**Analise também o quanto o site está datado.** Um site pode passar em toda checagem técnica e ainda parecer 2012, e é disso que sai a proposta de nova versão:
+**Veja como o site está hoje.** É daí que sai a proposta de nova versão — e é a régua do protótipo, que precisa ser visivelmente melhor que aquilo:
 
 ```bash
-node .claude/skills/prototipo-site/scripts/modernidade.mjs <url-do-site> <slug>
+node .claude/skills/prototipo-site/scripts/capturar.mjs <url-do-site> <slug>
 ```
 
-Abre o site no Chromium, tira print em celular e computador e mede sinais de época: largura fixa, ausência de regra de tela, marcação de tabela, biblioteca antiga, tipografia miúda, falta de respiro. Devolve um **índice de atraso de 0 a 100** e cada achado já escrito como frase para dizer ao dono.
+Tira print em celular e computador e escreve `atual/relatorio.md`. **O script não julga o site.** Ele traz só fatos inequívocos e avisa quando a própria captura pode ter dado errado. Quem avalia é você, olhando `atual/mobile.png` e `atual/desktop.png`.
 
-**Abra `atual/mobile.png` e `atual/desktop.png` e olhe.** A medição pega o que é contável; o que parece velho aos olhos — cor, ícone, estilo de botão, foto — só se vê olhando, e costuma render a melhor frase da abordagem. Também é a referência do "antes": o protótipo precisa ser visivelmente melhor que aquilo.
+Não é preciosismo. Uma versão anterior deste script pontuava o site de 0 a 100 com frases prontas para a abordagem, e no primeiro lead real cravou "27 mil pixels de altura no celular" — o que tanto podia ser o site quanto o navegador headless falhando a carregar a fonte do cliente. Número dá autoridade a palpite, e palpite na primeira mensagem encerra a conversa.
 
-Se o índice vier abaixo de 12, **não force o argumento de modernização** — o site está em dia e insistir nisso queima a credibilidade. Procure outro ângulo (captação, conteúdo, velocidade) ou considere que talvez não seja o lead certo agora.
+#### A régua para citar algo na abordagem
+
+> **Só afirme o que o dono confirmaria abrindo o site no próprio celular.**
+
+Antes de transformar qualquer observação em frase de venda:
+
+1. **Leia a seção de ressalvas do relatório.** Se ela menciona o que você ia citar, a captura pode ser a culpada — confirme antes.
+2. **Distinga defeito do site de falha da captura.** Conteúdo misto (HTTPS pedindo HTTP) atinge todo visitante e é fato. Fonte que não baixou pode ser só o nosso acesso.
+3. **Na dúvida, não cite.** Há sempre outro ângulo, e um errado custa o lead inteiro.
+
+#### Equilíbrio
+
+Olhe os prints procurando também **o que está bom** — marca bonita, conteúdo forte, foto decente. Aproveite isso no protótipo em vez de descartar, e reconheça na abordagem.
+
+Abordagem que só lista defeito soa como ataque e coloca o dono na defensiva; abordagem que reconhece o que funciona e mostra o que dá para melhorar abre conversa. **No máximo duas críticas na sequência inteira**, e nunca as duas na mesma mensagem.
+
+Se o site estiver em dia, **não force o argumento de modernização** — insistir que está velho um site que está bom queima a credibilidade. Procure outro ângulo, ou aceite que talvez não seja o lead certo agora.
 
 **Lead sem site, só com Instagram.** Há extrator para isso também:
 
@@ -181,7 +197,7 @@ Primeira pessoa do plural para a empresa, primeira do singular para o que a pess
 
 **2 — retomada (+2 dias).** Volta com um achado concreto — da auditoria do brief ou da análise de modernização — e o motivo de ele importar. Nada de "só passando para saber se viu" sozinho.
 
-Os achados de `atual/relatorio.md` já vêm escritos como frase para o dono. Use **no máximo dois por mensagem**: lista de defeitos soa como ataque, e o objetivo é abrir conversa, não constranger.
+Vale a régua do passo 2: só entra o que o dono confirmaria olhando o próprio celular, e o que a seção de ressalvas do relatório não colocou em dúvida. **Uma crítica por mensagem, no máximo duas na sequência inteira.**
 
 **3 — conversa (+5 dias).** Oferece dez minutos, no canal que a pessoa preferir.
 
