@@ -285,15 +285,19 @@ export async function listPrototypeViews(sinceDays = 14): Promise<PrototypeViewS
     { viewedAt: string; prototypes: { id: number; slug: string; lead_id: number } }[]
   >(res);
 
-  const byPrototype = new Map<number, PrototypeViewSummary>();
+  // Agrupa por LEAD, não por protótipo: republicar cria uma linha nova em
+  // `prototypes`, e as visitas do protótipo anterior continuam válidas. Com a
+  // chave no protótipo, o mesmo negócio aparecia duas vezes na fila.
+  const byLead = new Map<number, PrototypeViewSummary>();
   for (const row of rows) {
-    const existing = byPrototype.get(row.prototypes.id);
+    const existing = byLead.get(row.prototypes.lead_id);
     if (existing) {
       existing.views += 1;
     } else {
       // As linhas vêm ordenadas por data decrescente, então a primeira de
-      // cada protótipo já é a visita mais recente.
-      byPrototype.set(row.prototypes.id, {
+      // cada lead já é a visita mais recente — e o slug dela é o do protótipo
+      // que a pessoa abriu por último.
+      byLead.set(row.prototypes.lead_id, {
         leadId: row.prototypes.lead_id,
         prototypeId: row.prototypes.id,
         slug: row.prototypes.slug,
@@ -302,7 +306,7 @@ export async function listPrototypeViews(sinceDays = 14): Promise<PrototypeViewS
       });
     }
   }
-  return [...byPrototype.values()].sort((a, b) =>
+  return [...byLead.values()].sort((a, b) =>
     b.lastViewedAt.localeCompare(a.lastViewedAt),
   );
 }

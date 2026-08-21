@@ -1,15 +1,17 @@
 import { useState } from "react";
-import { ExternalLink, Flame, MessageCircle, SkipForward } from "lucide-react";
+import { Ban, ExternalLink, Flame, MessageCircle, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
+  closeLead,
   markTouchSent,
   markViewed,
   skipTouch,
   whatsappLink,
   type HotLead,
+  type LostReason,
   type QueueItem,
 } from "../../../../lib/prospecting";
-import { SEGMENT_META, nicheLabel, relativeTime } from "./meta";
+import { LOST_REASONS, SEGMENT_META, nicheLabel, relativeTime } from "./meta";
 import { Badge, ScoreDot } from "./ui";
 import type { ProspectingData } from "./useProspecting";
 
@@ -52,9 +54,27 @@ export default function QueueTab({
     try {
       await skipTouch(item.id);
       await refresh();
-      showToast("Toque pulado.");
+      showToast("Toque adiado. O lead continua na sequência.");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Falha ao pular.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Encerra o lead de vez, sem passar pela aba Leads. `closeLead` marca como
+   * perdido e cancela os toques que ainda estavam agendados — sem isso o lead
+   * voltaria à fila no próximo toque, que é o problema de só "pular".
+   */
+  async function handleDiscard(leadId: number, nome: string, reason: LostReason, chave: number) {
+    setBusy(chave);
+    try {
+      await closeLead(leadId, false, reason);
+      await refresh();
+      showToast(`${nome} descartado. Os toques restantes foram cancelados.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao descartar.");
     } finally {
       setBusy(null);
     }
@@ -98,6 +118,9 @@ export default function QueueTab({
                 busy={busy === item.id}
                 onSend={() => handleSend(item)}
                 onSkip={() => handleSkip(item)}
+                onDiscard={(reason) =>
+                  handleDiscard(item.leadId, item.lead.name, reason, item.id)
+                }
               />
             ))}
           </ul>
@@ -124,12 +147,15 @@ function QueueCard({
   busy,
   onSend,
   onSkip,
+  onDiscard,
 }: {
   item: QueueItem;
   busy: boolean;
   onSend: () => void;
   onSkip: () => void;
+  onDiscard: (reason: LostReason) => void;
 }) {
+  const [descartando, setDescartando] = useState(false);
   const segment = SEGMENT_META[item.lead.segment];
   return (
     <li className="border-border bg-surface rounded-xl border p-4 sm:p-5">
@@ -182,15 +208,54 @@ function QueueCard({
           </a>
         )}
 
-        <button
-          onClick={onSkip}
-          disabled={busy}
-          className="text-text-muted hover:text-text ml-auto inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
-        >
-          <SkipForward size={15} aria-hidden />
-          Pular
-        </button>
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={onSkip}
+            disabled={busy}
+            title="Adia este toque. O lead segue na sequência."
+            className="text-text-muted hover:text-text inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
+          >
+            <SkipForward size={15} aria-hidden />
+            Pular
+          </button>
+          <button
+            onClick={() => setDescartando(!descartando)}
+            disabled={busy}
+            aria-expanded={descartando}
+            title="Encerra o lead e cancela os toques restantes."
+            className="text-text-muted hover:text-danger inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
+          >
+            <Ban size={15} aria-hidden />
+            Descartar
+          </button>
+        </div>
       </div>
+
+      {descartando && (
+        <div className="border-danger/25 bg-danger/6 mt-3 rounded-lg border p-3">
+          <p className="mb-2 text-sm">
+            Encerrar <strong>{item.lead.name}</strong> e cancelar os toques que faltam. Por quê?
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {LOST_REASONS.map((reason) => (
+              <button
+                key={reason.value}
+                onClick={() => onDiscard(reason.value)}
+                disabled={busy}
+                className="border-border hover:bg-surface-hover rounded-full border px-3 py-1.5 text-xs disabled:opacity-40"
+              >
+                {reason.label}
+              </button>
+            ))}
+            <button
+              onClick={() => setDescartando(false)}
+              className="text-text-muted hover:text-text px-2 py-1.5 text-xs"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }
@@ -202,6 +267,20 @@ function QueueCard({
  */
 function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<void> }) {
   const { showToast } = useAdmin();
+  const [descartando, setDescartando] = useState<number | null>(null);
+
+  // Abrir o protótipo não obriga a seguir: número errado e "já tem agência"
+  // aparecem justamente depois que a pessoa olha.
+  async function discard(item: HotLead, reason: LostReason) {
+    try {
+      await closeLead(item.leadId, false, reason);
+      await refresh();
+      setDescartando(null);
+      showToast(`${item.lead.name} descartado.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao descartar.");
+    }
+  }
 
   async function open(item: HotLead) {
     if (item.lead.phoneE164) {
@@ -237,34 +316,55 @@ function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<voi
       </p>
       <ul className="space-y-2">
         {hot.map((item) => (
-          <li
-            key={item.prototypeId}
-            className="bg-surface flex flex-wrap items-center justify-between gap-3 rounded-lg px-4 py-3"
-          >
-            <div className="min-w-0">
-              <p className="truncate font-semibold">{item.lead.name}</p>
-              <p className="text-text-muted text-xs">
-                {item.views === 1 ? "1 visita" : `${item.views} visitas`} ·{" "}
-                {relativeTime(item.lastViewedAt)} · {nicheLabel(item.lead.niche)}
-              </p>
+          <li key={item.leadId} className="bg-surface rounded-lg px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{item.lead.name}</p>
+                <p className="text-text-muted text-xs">
+                  {item.views === 1 ? "1 visita" : `${item.views} visitas`} ·{" "}
+                  {relativeTime(item.lastViewedAt)} · {nicheLabel(item.lead.niche)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`/p/${item.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-text-muted hover:text-text text-sm"
+                >
+                  Ver
+                </a>
+                <button
+                  onClick={() => setDescartando(descartando === item.leadId ? null : item.leadId)}
+                  aria-expanded={descartando === item.leadId}
+                  className="text-text-muted hover:text-danger text-sm"
+                >
+                  Descartar
+                </button>
+                <button
+                  onClick={() => open(item)}
+                  disabled={!item.lead.whatsappValid}
+                  title={item.lead.whatsappValid ? undefined : "Sem WhatsApp válido neste lead."}
+                  className="bg-good rounded-lg px-3.5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+                >
+                  Falar agora
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <a
-                href={`/p/${item.slug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-text-muted hover:text-text text-sm"
-              >
-                Ver
-              </a>
-              <button
-                onClick={() => open(item)}
-                disabled={!item.lead.whatsappValid}
-                className="bg-good rounded-lg px-3.5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
-              >
-                Falar agora
-              </button>
-            </div>
+
+            {descartando === item.leadId && (
+              <div className="border-danger/25 mt-3 flex flex-wrap gap-2 border-t pt-3">
+                {LOST_REASONS.map((reason) => (
+                  <button
+                    key={reason.value}
+                    onClick={() => discard(item, reason.value)}
+                    className="border-border hover:bg-surface-hover rounded-full border px-3 py-1.5 text-xs"
+                  >
+                    {reason.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>
