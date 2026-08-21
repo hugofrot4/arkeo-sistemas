@@ -95,7 +95,7 @@ Se a paleta da logo brigar com a referência, a referência cede. Se a cor da ma
 
 A ordem de preferência é sempre esta:
 
-1. **Fotos do próprio negócio**, extraídas do site atual (`fonte/imagens/`). Sempre que existirem, ganham de tudo.
+1. **Fotos do próprio negócio** — do site atual (`extrair.py`) ou do Instagram (`instagram.py`). Sempre que existirem, ganham de tudo: são o espaço dele, o trabalho dele.
 2. **Imagens de apoio em domínio público**, quando não houver nenhuma foto própria.
 3. **Nenhuma imagem**, quando a única disponível for ruim.
 

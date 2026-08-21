@@ -54,11 +54,23 @@ O relatório informa quantos KB cada imagem custa em `data:` URI. O arquivo fina
 
 Se o script falhar, é lead de site quebrado — siga sem material e trate a falta de imagem como em `references/design.md`.
 
-**Lead sem site, só com Instagram.** O extrator não serve: o Instagram entrega apenas o aplicativo para quem não está logado, sem nenhum dado de perfil, então logo, foto e bio não saem por script. Nesse caso:
+**Lead sem site, só com Instagram.** Há extrator para isso também:
 
-1. Confira a seção **Observações do admin** no brief — é onde a bio, os serviços e o horário costumam estar colados.
-2. Veja se há imagens em `prototipos/<slug>/fonte/imagens/`; quem preparou o lead pode ter salvo a logo ali à mão.
-3. Se não houver nem uma coisa nem outra, **peça ao usuário antes de construir** — vale mais esperar dois minutos por uma logo do que entregar um protótipo sem marca nenhuma.
+```bash
+python3 .claude/skills/prototipo-site/scripts/instagram.py <perfil-ou-url> <slug> 6
+```
+
+Traz a foto de perfil como logo, as fotos recentes do feed, a bio, a categoria e o site que estiver informado na bio. Escreve em `fonte/`, no mesmo formato do outro extrator — com a paleta da marca já derivada da foto de perfil.
+
+São **fotos reais do negócio**, o que vale muito mais que imagem de banco. Mas nem toda foto de feed serve num site: descarte print, card de texto, foto escura e imagem com promoção antiga embutida. Feed costuma ser quadrado ou 4:5, então encaixa em grade e coluna, e mal em faixa de largura total.
+
+Se a bio informar um site, rode `extrair.py` nele também — site rende mais texto e contexto que o perfil.
+
+**Se o script falhar**, e ele pode: o endpoint é interno do Instagram, não uma API publicada, e responde 429 quando se insiste. Nesse caso o caminho manual continua valendo:
+
+1. Confira a seção **Observações do admin** no brief — é onde a bio e os serviços costumam estar colados.
+2. Veja se há imagens em `fonte/imagens/`; quem preparou o lead pode ter salvo a logo à mão.
+3. Não havendo nada, **peça ao usuário antes de construir** — vale mais esperar dois minutos por uma logo do que entregar protótipo sem marca.
 
 ### 3. Leia as referências visuais
 
@@ -87,7 +99,7 @@ Este passo existe para impedir o padrão automático. Se a direção couber em "
 
 ### 5. Sem foto própria? Busque imagens de apoio
 
-Se o lead não tem site, ou o site não rendeu foto aproveitável, não construa sem imagem — página sem foto parece pobre e derruba o argumento.
+Só depois de esgotar as fontes reais: site atual (`extrair.py`) e Instagram (`instagram.py`). Foto do próprio negócio ganha de qualquer banco de imagens — mas página sem foto nenhuma parece pobre e derruba o argumento, então quando não houver nenhuma:
 
 ```bash
 python3 .claude/skills/prototipo-site/scripts/imagens.py <slug> <template> 3
