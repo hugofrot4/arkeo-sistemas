@@ -108,18 +108,27 @@ export function buildBrief({
     );
   } else if (lead.socialUrl) {
     linhas.push(
-      "## Sem site",
+      "## Sem site — só rede social",
       "",
-      `Só rede social: ${lead.socialUrl}`,
+      lead.socialUrl,
       "",
-      "Não há material para extrair. Trate a falta de imagem como manda a doutrina de design.",
+      "**O extrator não funciona aqui.** O Instagram serve só o aplicativo para",
+      "quem não está logado, sem nenhum dado de perfil, então não há como baixar",
+      "logo, foto ou bio por script.",
+      "",
+      "O caminho é manual: abra o perfil, salve a logo e as melhores fotos em",
+      `\`prototipos/${slug}/fonte/imagens/\` e confira as observações abaixo —`,
+      "é onde a bio e os serviços foram colados. Se não houver nada lá, peça ao",
+      "usuário antes de construir, ou trate a falta de imagem como manda a",
+      "doutrina de design.",
       "",
     );
   } else {
     linhas.push(
-      "## Sem site",
+      "## Sem presença digital",
       "",
-      "Nenhuma presença digital encontrada. Sem material para extrair.",
+      "Nem site nem rede social. Não há material para extrair — o protótipo se",
+      "sustenta em tipografia e cor, como manda a doutrina de design.",
       "",
     );
   }
@@ -131,6 +140,26 @@ export function buildBrief({
       "Servem para a mensagem de abordagem, não para a página.",
       "",
       ...findings.map((f) => `- [${f.severity}] ${f.evidence}`),
+      "",
+    );
+  }
+
+  if (lead.notes.trim()) {
+    linhas.push(
+      "## Observações do admin",
+      "",
+      "Anotado à mão por quem conferiu o lead. **Trate como fato do negócio** —",
+      "vale o mesmo que conteúdo publicado por ele.",
+      "",
+      lead.notes.trim(),
+      "",
+    );
+  }
+
+  if (lead.verifiedByHuman) {
+    linhas.push(
+      "> Este lead foi conferido à mão: os dados de contato e endereço acima",
+      "> valem mais que qualquer coisa que a coleta automática tenha dito.",
       "",
     );
   }

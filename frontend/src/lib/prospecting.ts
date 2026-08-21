@@ -166,19 +166,6 @@ export async function updateLead(id: number, patch: Partial<Lead>) {
   return unwrap<Lead>(res);
 }
 
-/**
- * Corrige o site à mão e trava o lead: a partir daqui nem a busca nem a
- * auditoria sobrescrevem. Era exatamente o que faltava na v1, onde a
- * verificação manual era desfeita na busca seguinte.
- */
-export async function verifyLeadWebsite(id: number, website: string | null) {
-  return updateLead(id, {
-    website,
-    segment: website ? "site_ok" : "sem_presenca",
-    verifiedByHuman: true,
-  });
-}
-
 export async function getLeadAudit(leadId: number) {
   const res = await supabase
     .from("lead_audits")

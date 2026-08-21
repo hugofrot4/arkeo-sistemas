@@ -6,7 +6,6 @@ import {
   getLeadAudit,
   listLeads,
   requestReaudit,
-  verifyLeadWebsite,
   type Finding,
   type Lead,
   type LeadSegment,
@@ -14,6 +13,7 @@ import {
   type ProspectingSettings,
 } from "../../../../lib/prospecting";
 import GenerateModal from "./GenerateModal";
+import LeadEditModal from "./LeadEditModal";
 import { LOST_REASONS, SEGMENT_META, STAGE_META, nicheLabel } from "./meta";
 import { Badge, ScoreDot } from "./ui";
 
@@ -54,6 +54,7 @@ export default function LeadsTab({
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [generating, setGenerating] = useState<Lead | null>(null);
+  const [editing, setEditing] = useState<Lead | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -144,6 +145,7 @@ export default function LeadsTab({
               expanded={expanded === lead.id}
               onToggle={() => setExpanded(expanded === lead.id ? null : lead.id)}
               onGenerate={() => setGenerating(lead)}
+              onEdit={() => setEditing(lead)}
               onChanged={async () => {
                 await load();
                 await onChanged();
@@ -151,6 +153,17 @@ export default function LeadsTab({
             />
           ))}
         </ul>
+      )}
+
+      {editing && (
+        <LeadEditModal
+          lead={editing}
+          onClose={() => setEditing(null)}
+          onSaved={async () => {
+            await load();
+            await onChanged();
+          }}
+        />
       )}
 
       {generating && settings && (
@@ -173,12 +186,14 @@ function LeadRow({
   expanded,
   onToggle,
   onGenerate,
+  onEdit,
   onChanged,
 }: {
   lead: Lead;
   expanded: boolean;
   onToggle: () => void;
   onGenerate: () => void;
+  onEdit: () => void;
   onChanged: () => Promise<void>;
 }) {
   const { showToast } = useAdmin();
@@ -220,7 +235,13 @@ function LeadRow({
       </button>
 
       {expanded && (
-        <LeadDetail lead={lead} busy={busy} run={run} onGenerate={onGenerate} />
+        <LeadDetail
+          lead={lead}
+          busy={busy}
+          run={run}
+          onGenerate={onGenerate}
+          onEdit={onEdit}
+        />
       )}
     </li>
   );
@@ -231,11 +252,13 @@ function LeadDetail({
   busy,
   run,
   onGenerate,
+  onEdit,
 }: {
   lead: Lead;
   busy: boolean;
   run: (action: () => Promise<unknown>, message: string) => Promise<void>;
   onGenerate: () => void;
+  onEdit: () => void;
 }) {
   const [findings, setFindings] = useState<Finding[] | null>(null);
   const [closing, setClosing] = useState(false);
@@ -319,26 +342,11 @@ function LeadDetail({
         </button>
 
         <button
-          onClick={() => {
-            const url = window.prompt(
-              "Endereço do site (deixe vazio se confirmou que não tem):",
-              lead.website ?? "",
-            );
-            if (url === null) return;
-            const trimmed = url.trim();
-            if (trimmed && !/^https?:\/\/\S+\.\S+/.test(trimmed)) {
-              window.alert("Endereço inválido. Use o formato https://exemplo.com.br");
-              return;
-            }
-            void run(
-              () => verifyLeadWebsite(lead.id, trimmed || null),
-              "Lead marcado como conferido — a busca não sobrescreve mais.",
-            );
-          }}
+          onClick={onEdit}
           disabled={busy}
           className="border-border text-text-muted hover:text-text rounded-lg border px-3 py-2 text-sm disabled:opacity-40"
         >
-          Corrigir site à mão
+          Editar
         </button>
 
         <button

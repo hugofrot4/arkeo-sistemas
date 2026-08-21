@@ -54,6 +54,12 @@ O relatório informa quantos KB cada imagem custa em `data:` URI. O arquivo fina
 
 Se o script falhar, é lead de site quebrado — siga sem material e trate a falta de imagem como em `references/design.md`.
 
+**Lead sem site, só com Instagram.** O extrator não serve: o Instagram entrega apenas o aplicativo para quem não está logado, sem nenhum dado de perfil, então logo, foto e bio não saem por script. Nesse caso:
+
+1. Confira a seção **Observações do admin** no brief — é onde a bio, os serviços e o horário costumam estar colados.
+2. Veja se há imagens em `prototipos/<slug>/fonte/imagens/`; quem preparou o lead pode ter salvo a logo ali à mão.
+3. Se não houver nem uma coisa nem outra, **peça ao usuário antes de construir** — vale mais esperar dois minutos por uma logo do que entregar um protótipo sem marca nenhuma.
+
 ### 3. Leia as referências visuais
 
 Para cada imagem enviada, extraia e anote:

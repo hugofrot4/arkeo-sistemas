@@ -42,6 +42,14 @@ export default function GenerateModal({
   const slug = slugFor(lead.name);
 
   useEffect(() => {
+    const aoTeclar = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", aoTeclar);
+    return () => document.removeEventListener("keydown", aoTeclar);
+  }, [onClose]);
+
+  useEffect(() => {
     let ativo = true;
     getLeadAudit(lead.id)
       .catch(() => null)
@@ -108,10 +116,13 @@ export default function GenerateModal({
 
   return (
     <div
-      className="bg-bg-menu fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-8"
+      className="fixed inset-0 z-300 flex items-start justify-center overflow-y-auto bg-[rgba(6,12,22,0.78)] p-4 backdrop-blur-sm sm:p-8"
       role="dialog"
       aria-modal="true"
       aria-label={`Gerar protótipo de ${lead.name}`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="border-border bg-bg-alt w-full max-w-3xl rounded-2xl border shadow-xl">
         <header className="border-border flex items-start justify-between gap-4 border-b px-5 py-4">
