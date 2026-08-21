@@ -2,16 +2,15 @@ import { useState } from "react";
 import { Ban, ExternalLink, Flame, MessageCircle, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
-  closeLead,
+  cancelRemainingTouches,
   markTouchSent,
   markViewed,
   skipTouch,
   whatsappLink,
   type HotLead,
-  type LostReason,
   type QueueItem,
 } from "../../../../lib/prospecting";
-import { LOST_REASONS, SEGMENT_META, nicheLabel, relativeTime } from "./meta";
+import { SEGMENT_META, nicheLabel, relativeTime } from "./meta";
 import { Badge, ScoreDot } from "./ui";
 import type { ProspectingData } from "./useProspecting";
 
@@ -63,18 +62,21 @@ export default function QueueTab({
   }
 
   /**
-   * Encerra o lead de vez, sem passar pela aba Leads. `closeLead` marca como
-   * perdido e cancela os toques que ainda estavam agendados — sem isso o lead
-   * voltaria à fila no próximo toque, que é o problema de só "pular".
+   * Tira o lead da fila sem encerrá-lo: cancela os toques agendados e para
+   * por aí. O lead continua na base, no estágio em que está, e pode ser
+   * retomado depois — gerar um protótipo novo reabre a sequência.
+   *
+   * É diferente de "pular", que só adia o toque de hoje, e de marcar como
+   * perdido na aba Leads, que fecha o lead de vez.
    */
-  async function handleDiscard(leadId: number, nome: string, reason: LostReason, chave: number) {
+  async function handleRemoveFromQueue(leadId: number, nome: string, chave: number) {
     setBusy(chave);
     try {
-      await closeLead(leadId, false, reason);
+      await cancelRemainingTouches(leadId);
       await refresh();
-      showToast(`${nome} descartado. Os toques restantes foram cancelados.`);
+      showToast(`${nome} saiu da fila. O lead continua na aba Leads.`);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Falha ao descartar.");
+      showToast(err instanceof Error ? err.message : "Falha ao tirar da fila.");
     } finally {
       setBusy(null);
     }
@@ -118,8 +120,8 @@ export default function QueueTab({
                 busy={busy === item.id}
                 onSend={() => handleSend(item)}
                 onSkip={() => handleSkip(item)}
-                onDiscard={(reason) =>
-                  handleDiscard(item.leadId, item.lead.name, reason, item.id)
+                onRemove={() =>
+                  handleRemoveFromQueue(item.leadId, item.lead.name, item.id)
                 }
               />
             ))}
@@ -147,15 +149,14 @@ function QueueCard({
   busy,
   onSend,
   onSkip,
-  onDiscard,
+  onRemove,
 }: {
   item: QueueItem;
   busy: boolean;
   onSend: () => void;
   onSkip: () => void;
-  onDiscard: (reason: LostReason) => void;
+  onRemove: () => void;
 }) {
-  const [descartando, setDescartando] = useState(false);
   const segment = SEGMENT_META[item.lead.segment];
   return (
     <li className="border-border bg-surface rounded-xl border p-4 sm:p-5">
@@ -212,50 +213,23 @@ function QueueCard({
           <button
             onClick={onSkip}
             disabled={busy}
-            title="Adia este toque. O lead segue na sequência."
+            title="Adia só o toque de hoje. O lead continua na sequência."
             className="text-text-muted hover:text-text inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
           >
             <SkipForward size={15} aria-hidden />
             Pular
           </button>
           <button
-            onClick={() => setDescartando(!descartando)}
+            onClick={onRemove}
             disabled={busy}
-            aria-expanded={descartando}
-            title="Encerra o lead e cancela os toques restantes."
-            className="text-text-muted hover:text-danger inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
+            title="Cancela os toques agendados. O lead continua na aba Leads e pode ser retomado."
+            className="text-text-muted hover:text-warning inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
           >
             <Ban size={15} aria-hidden />
-            Descartar
+            Tirar da fila
           </button>
         </div>
       </div>
-
-      {descartando && (
-        <div className="border-danger/25 bg-danger/6 mt-3 rounded-lg border p-3">
-          <p className="mb-2 text-sm">
-            Encerrar <strong>{item.lead.name}</strong> e cancelar os toques que faltam. Por quê?
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {LOST_REASONS.map((reason) => (
-              <button
-                key={reason.value}
-                onClick={() => onDiscard(reason.value)}
-                disabled={busy}
-                className="border-border hover:bg-surface-hover rounded-full border px-3 py-1.5 text-xs disabled:opacity-40"
-              >
-                {reason.label}
-              </button>
-            ))}
-            <button
-              onClick={() => setDescartando(false)}
-              className="text-text-muted hover:text-text px-2 py-1.5 text-xs"
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
     </li>
   );
 }
@@ -267,18 +241,16 @@ function QueueCard({
  */
 function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<void> }) {
   const { showToast } = useAdmin();
-  const [descartando, setDescartando] = useState<number | null>(null);
 
-  // Abrir o protótipo não obriga a seguir: número errado e "já tem agência"
-  // aparecem justamente depois que a pessoa olha.
-  async function discard(item: HotLead, reason: LostReason) {
+  // Abrir o protótipo não obriga a seguir. Aqui também é só sair da fila: o
+  // lead fica na base, no estágio em que está.
+  async function removeFromQueue(item: HotLead) {
     try {
-      await closeLead(item.leadId, false, reason);
+      await cancelRemainingTouches(item.leadId);
       await refresh();
-      setDescartando(null);
-      showToast(`${item.lead.name} descartado.`);
+      showToast(`${item.lead.name} saiu da fila. O lead continua na aba Leads.`);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Falha ao descartar.");
+      showToast(err instanceof Error ? err.message : "Falha ao tirar da fila.");
     }
   }
 
@@ -335,11 +307,11 @@ function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<voi
                   Ver
                 </a>
                 <button
-                  onClick={() => setDescartando(descartando === item.leadId ? null : item.leadId)}
-                  aria-expanded={descartando === item.leadId}
-                  className="text-text-muted hover:text-danger text-sm"
+                  onClick={() => removeFromQueue(item)}
+                  title="Cancela os toques agendados. O lead continua na aba Leads."
+                  className="text-text-muted hover:text-warning text-sm"
                 >
-                  Descartar
+                  Tirar da fila
                 </button>
                 <button
                   onClick={() => open(item)}
@@ -352,19 +324,6 @@ function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<voi
               </div>
             </div>
 
-            {descartando === item.leadId && (
-              <div className="border-danger/25 mt-3 flex flex-wrap gap-2 border-t pt-3">
-                {LOST_REASONS.map((reason) => (
-                  <button
-                    key={reason.value}
-                    onClick={() => discard(item, reason.value)}
-                    className="border-border hover:bg-surface-hover rounded-full border px-3 py-1.5 text-xs"
-                  >
-                    {reason.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </li>
         ))}
       </ul>
