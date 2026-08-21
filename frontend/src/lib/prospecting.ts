@@ -246,6 +246,93 @@ export async function setPrototypePublished(id: number, published: boolean) {
   return unwrap<PrototypeRecord>(res);
 }
 
+export interface PrototypeListItem {
+  id: number;
+  leadId: number;
+  leadName: string;
+  slug: string;
+  pageTitle: string | null;
+  published: boolean;
+  expiresAt: string | null;
+  createdAt: string;
+  views: number;
+  lastViewedAt: string | null;
+}
+
+/**
+ * Todos os protótipos já publicados, com o nome do lead e a contagem de
+ * visitas. Sem o HTML, que pesa centenas de KB por linha — ele é buscado só
+ * quando alguém pede o download.
+ */
+export async function listPrototypes(): Promise<PrototypeListItem[]> {
+  const res = await supabase
+    .from("prototypes")
+    .select(
+      "id, leadId:lead_id, slug, pageTitle:page_title, published, expiresAt:expires_at, createdAt:created_at, leads!inner(name)",
+    )
+    .order("created_at", { ascending: false })
+    .limit(300);
+
+  type Row = Omit<PrototypeListItem, "leadName" | "views" | "lastViewedAt"> & {
+    leads: { name: string };
+  };
+  const rows = unwrap<Row[]>(res);
+  if (rows.length === 0) return [];
+
+  const visitas = await supabase
+    .from("prototype_views")
+    .select("prototype_id, viewedAt:viewed_at")
+    .in("prototype_id", rows.map((r) => r.id))
+    .order("viewed_at", { ascending: false })
+    .limit(5000);
+
+  const porProtótipo = new Map<number, { total: number; ultima: string }>();
+  for (const v of unwrap<{ prototype_id: number; viewedAt: string }[]>(visitas)) {
+    const atual = porProtótipo.get(v.prototype_id);
+    // Vêm ordenadas por data decrescente: a primeira de cada é a mais recente.
+    if (atual) atual.total += 1;
+    else porProtótipo.set(v.prototype_id, { total: 1, ultima: v.viewedAt });
+  }
+
+  return rows.map(({ leads, ...proto }) => ({
+    ...proto,
+    leadName: leads.name,
+    views: porProtótipo.get(proto.id)?.total ?? 0,
+    lastViewedAt: porProtótipo.get(proto.id)?.ultima ?? null,
+  }));
+}
+
+/** O HTML só é carregado sob demanda: são centenas de KB por protótipo. */
+export async function getPrototypeHtml(id: number): Promise<string> {
+  const res = await supabase.from("prototypes").select("html").eq("id", id).single();
+  const linha = unwrap<{ html: string | null }>(res);
+  if (!linha.html) throw new Error("Este protótipo não tem HTML guardado.");
+  return linha.html;
+}
+
+/**
+ * Troca o HTML mantendo o mesmo endereço.
+ *
+ * O link já foi enviado ao prospect, então republicar com slug novo quebraria
+ * a mensagem que ele tem no WhatsApp — e perderia o histórico de visitas.
+ */
+export async function updatePrototypeHtml(id: number, html: string, pageTitle: string | null) {
+  const { error } = await supabase
+    .from("prototypes")
+    .update({ html, page_title: pageTitle })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Empurra o prazo para frente, a contar de hoje. */
+export async function extendPrototype(id: number, days: number) {
+  const { error } = await supabase
+    .from("prototypes")
+    .update({ expires_at: new Date(Date.now() + days * 86_400_000).toISOString() })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 export interface PrototypeViewSummary {
   leadId: number;
   prototypeId: number;

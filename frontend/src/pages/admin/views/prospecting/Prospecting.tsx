@@ -1,6 +1,7 @@
 import { useState } from "react";
 import QueueTab from "./QueueTab";
 import LeadsTab from "./LeadsTab";
+import PrototypesTab from "./PrototypesTab";
 import OperationTab from "./OperationTab";
 import SettingsTab from "./SettingsTab";
 import { useProspecting } from "./useProspecting";
@@ -8,6 +9,7 @@ import { useProspecting } from "./useProspecting";
 const TABS = [
   { id: "fila", label: "Fila de hoje" },
   { id: "leads", label: "Leads" },
+  { id: "prototipos", label: "Protótipos" },
   { id: "operacao", label: "Operação" },
   { id: "config", label: "Configuração" },
 ] as const;
@@ -56,6 +58,9 @@ export default function Prospecting() {
           {tab === "fila" && <QueueTab data={data} refresh={refresh} />}
           {tab === "leads" && (
             <LeadsTab onChanged={refresh} settings={data.settings} />
+          )}
+          {tab === "prototipos" && (
+            <PrototypesTab ttlDays={data.settings?.prototypeTtlDays ?? 45} />
           )}
           {tab === "operacao" && <OperationTab data={data} refresh={refresh} />}
           {tab === "config" && <SettingsTab settings={data.settings} refresh={refresh} />}
