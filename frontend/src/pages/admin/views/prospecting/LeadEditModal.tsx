@@ -149,10 +149,16 @@ export default function LeadEditModal({
               />
               {form.phone.trim() && (
                 <p
-                  className={`mt-1.5 text-xs ${telefone.isMobile ? "text-good" : "text-warning"}`}
+                  className={`mt-1.5 text-xs ${
+                    telefone.isMobile
+                      ? "text-good"
+                      : telefone.e164
+                        ? "text-text-muted"
+                        : "text-warning"
+                  }`}
                 >
                   {telefone.isMobile
-                    ? `Celular válido — o botão de WhatsApp vai funcionar.`
+                    ? "Celular válido — o botão de WhatsApp vai funcionar."
                     : (telefone.motivo ?? "Número incompleto.")}
                 </p>
               )}
@@ -195,13 +201,10 @@ export default function LeadEditModal({
             <p className="border-accent/25 bg-accent/8 text-text-muted flex gap-2 rounded-lg border px-4 py-3 text-sm">
               <Info size={16} className="text-accent mt-0.5 shrink-0" aria-hidden />
               <span>
-                Sem site, o Instagram não pode ser lido automaticamente — a rede
-                serve só o aplicativo para quem não está logado. Abra o perfil,
-                salve a logo em{" "}
-                <code className="bg-bg rounded px-1 py-0.5 text-xs">
-                  prototipos/&lt;slug&gt;/fonte/imagens/
-                </code>{" "}
-                e cole a bio no campo acima.
+                Sem site, o Instagram vira a fonte do protótipo — a skill extrai a
+                logo, as fotos do feed e a bio a partir desse endereço. Se a
+                extração falhar, o que você escrever em Observações é o que
+                sobra, então vale colar a bio e os serviços aqui.
               </span>
             </p>
           )}

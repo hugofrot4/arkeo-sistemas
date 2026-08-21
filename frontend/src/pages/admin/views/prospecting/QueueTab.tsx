@@ -253,7 +253,11 @@ function WhatsAppDoLead({
   const [valor, setValor] = useState("");
   const [salvando, setSalvando] = useState(false);
 
-  const valido = item.lead.whatsappValid && !!item.lead.phoneE164;
+  // Dá para enviar sempre que houver número válido. Fixo pode ter WhatsApp
+  // Business, e se não tiver o próprio WhatsApp avisa — o custo de tentar é
+  // zero, e antes o lead ficava parado na fila sem ação nenhuma.
+  const temNumero = !!item.lead.phoneE164;
+  const incerto = temNumero && !item.lead.whatsappValid;
   const telefone = parseTelefoneBr(valor);
 
   function abrir() {
@@ -264,12 +268,14 @@ function WhatsAppDoLead({
   }
 
   async function salvar() {
-    if (!telefone.isMobile) return;
+    if (!telefone.e164) return;
     setSalvando(true);
     try {
       await updateLead(item.leadId, {
         phone: valor,
         phoneE164: telefone.e164,
+        // Digitou um fixo aqui de propósito? Então é porque sabe que tem
+        // WhatsApp — a conferência humana vale mais que o formato.
         whatsappValid: true,
         verifiedByHuman: true,
       });
@@ -290,7 +296,7 @@ function WhatsAppDoLead({
             value={valor}
             onChange={(e) => setValor(formatarTelefoneBr(e.target.value))}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && telefone.isMobile) void salvar();
+              if (e.key === "Enter" && telefone.e164) void salvar();
               if (e.key === "Escape") setEditando(false);
             }}
             placeholder="(85) 98765-4321"
@@ -298,7 +304,7 @@ function WhatsAppDoLead({
           />
           <button
             onClick={salvar}
-            disabled={!telefone.isMobile || salvando}
+            disabled={!telefone.e164 || salvando}
             className="bg-good rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {salvando ? "Salvando…" : "Salvar"}
@@ -310,16 +316,18 @@ function WhatsAppDoLead({
             Cancelar
           </button>
         </div>
-        {valor.trim() && !telefone.isMobile && (
-          <p className="text-warning mt-1.5 text-xs">
-            {telefone.motivo ?? "Número incompleto."}
+        {valor.trim() && telefone.motivo && (
+          <p
+            className={`mt-1.5 text-xs ${telefone.e164 ? "text-text-muted" : "text-warning"}`}
+          >
+            {telefone.motivo}
           </p>
         )}
       </div>
     );
   }
 
-  if (valido) {
+  if (temNumero) {
     return (
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -334,6 +342,11 @@ function WhatsAppDoLead({
             antes de a conversa abrir e o toque virar enviado. */}
         <span className="text-text-muted text-xs">
           {item.lead.phone ?? item.lead.phoneE164}
+          {incerto && (
+            <span className="text-warning ml-1.5" title="Linha fixa. Pode ter WhatsApp Business — se não tiver, o WhatsApp avisa ao abrir.">
+              (fixo)
+            </span>
+          )}
           <button
             onClick={abrir}
             className="text-accent ml-1.5 underline underline-offset-2"
@@ -348,9 +361,7 @@ function WhatsAppDoLead({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
-        {item.lead.phone
-          ? `Sem WhatsApp — o número cadastrado (${item.lead.phone}) é fixo.`
-          : "Sem telefone cadastrado."}
+        Sem telefone cadastrado.
       </span>
       <button
         onClick={abrir}
@@ -358,11 +369,7 @@ function WhatsAppDoLead({
       >
         Adicionar WhatsApp
       </button>
-      {item.lead.phone && (
-        <span className="text-text-muted w-full text-xs">
-          Dá para ligar no fixo e pedir o WhatsApp da recepção.
-        </span>
-      )}
+
     </div>
   );
 }

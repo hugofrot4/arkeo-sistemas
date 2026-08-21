@@ -22,10 +22,11 @@ const DDD_VALIDOS = new Set([
 ]);
 
 export interface TelefoneBr {
-  /** "+5585987654321" — só quando é celular válido. */
+  /** "+5585987654321" para qualquer número brasileiro válido, fixo incluído. */
   e164: string | null;
+  /** Celular confirmado pelo formato. */
   isMobile: boolean;
-  /** Por que não serve, quando não serve. */
+  /** Aviso ou motivo da recusa. Fixo válido tem aviso, não recusa. */
   motivo: string | null;
 }
 
@@ -57,7 +58,13 @@ export function parseTelefoneBr(bruto: string | null | undefined): TelefoneBr {
   // 8 dígitos: 2–5 é fixo; 6–9 é celular antigo, anterior ao nono dígito.
   const primeiro = assinante[0];
   if (primeiro >= "2" && primeiro <= "5") {
-    return { e164: null, isMobile: false, motivo: "É telefone fixo — não tem WhatsApp." };
+    // Fixo pode ter WhatsApp Business, verificado por ligação. Vale tentar: se
+    // não tiver, o próprio WhatsApp avisa que o número não existe por lá.
+    return {
+      e164: `+55${ddd}${assinante}`,
+      isMobile: false,
+      motivo: "É telefone fixo. Pode ter WhatsApp Business — vale tentar.",
+    };
   }
   if (primeiro >= "6" && primeiro <= "9") {
     assinante = `9${assinante}`;

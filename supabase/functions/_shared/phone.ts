@@ -2,8 +2,13 @@
 //
 // A v1 fazia `digits.length <= 11 ? "55" + digits : digits`, então um fixo de
 // 10 dígitos como (85) 3333-3333 virava wa.me/5585333333 — um link para um
-// número que não existe. Aqui fixo é reconhecido como fixo e simplesmente não
-// gera link.
+// número que não existe.
+//
+// Fixo, porém, PODE ter WhatsApp: o WhatsApp Business verifica linha fixa por
+// ligação, e clínica, restaurante e escritório usam isso o tempo todo. Então o
+// que se devolve é o número em formato internacional sempre que ele for válido,
+// mais a informação de ser celular ou não — quem decide se vale tentar é a
+// camada de cima, não esta função.
 //
 // A validação vive só aqui de propósito: o resultado é gravado em
 // `leads.phone_e164` / `leads.whatsapp_valid`, e o frontend lê a coluna em vez
@@ -22,8 +27,9 @@ const VALID_DDD = new Set([
 ]);
 
 export interface BrPhone {
-  /** "+5585987654321" — só quando o número é celular válido. */
+  /** "+5585987654321" para qualquer número brasileiro válido, fixo incluído. */
   e164: string | null;
+  /** Celular confirmado pelo formato. Fixo pode ter WhatsApp, mas não dá para saber daqui. */
   isMobile: boolean;
 }
 
@@ -52,7 +58,10 @@ export function parseBrPhone(raw: string | null | undefined): BrPhone {
 
   // 8 dígitos: 2–5 é fixo; 6–9 é celular antigo, anterior ao nono dígito.
   const first = subscriber[0];
-  if (first >= "2" && first <= "5") return miss;
+  if (first >= "2" && first <= "5") {
+    // Fixo válido: devolve o número, sem afirmar que tem WhatsApp.
+    return { e164: `+55${ddd}${subscriber}`, isMobile: false };
+  }
   if (first >= "6" && first <= "9") {
     subscriber = `9${subscriber}`;
     return { e164: `+55${ddd}${subscriber}`, isMobile: true };

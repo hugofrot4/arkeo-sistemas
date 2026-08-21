@@ -78,7 +78,9 @@ export function scoreLead(input: ScoreInput): ScoreBreakdown {
   else if (input.rating >= 4.0) reputation = 10;
   else reputation = 3;
 
-  const reachability = input.whatsappValid ? 15 : input.hasPhone ? 5 : 0;
+  // Fixo pode ter WhatsApp Business, então vale bem mais que "quase nada" —
+  // mas menos que celular, porque é incerto até alguém tentar.
+  const reachability = input.whatsappValid ? 15 : input.hasPhone ? 10 : 0;
 
   const highTicket = HIGH_TICKET.has(input.niche);
   const raw = (pain + capacity + reputation + reachability) * (highTicket ? 1.15 : 1);

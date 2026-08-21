@@ -48,6 +48,8 @@ export const handleDetails: Handler = async ({ admin, job }) => {
 
   if (!lead.verified_by_human) {
     patch.phone = details.nationalPhoneNumber ?? null;
+    // e164 sai para qualquer número válido; `whatsapp_valid` só afirma celular.
+    // Fixo entra na fila mesmo assim — quem decide se tenta é quem opera.
     patch.phone_e164 = phone.e164;
     patch.whatsapp_valid = phone.isMobile;
     patch.website = site.kind === "site" ? site.url : null;
