@@ -75,7 +75,15 @@ Quatro papéis, definidos como variáveis CSS no `:root`:
 --ink       /* texto principal sobre surface, bem escuro */
 ```
 
-**De onde vem:** da inspiração enviada, se houver. Senão, da seção do ramo em `references/nichos.md` — cada ramo tem uma direção com motivo.
+**De onde vem, nesta ordem:**
+
+1. **Da logo do cliente, sempre que houver logo.** O extrator já devolve a paleta pronta em `fonte/relatorio.md`, na seção *Paleta da marca* — cores encontradas na logo e os quatro papéis derivados delas, com o acento já escurecido até passar no contraste.
+2. Da referência visual que o usuário enviou — mas só a estrutura e o clima. **A cor continua vindo da logo.**
+3. Da direção do ramo em `nichos.md`, quando não houver nem logo nem referência.
+
+A ordem não é negociável. O protótipo precisa parecer o site *daquele negócio*, e a logo é o único elemento de identidade que temos. Um site azul-marinho para uma marca laranja não parece dele — parece um template com o nome trocado, que é exatamente a impressão que o protótipo existe para evitar.
+
+Se a paleta da logo brigar com a referência, a referência cede. Se a cor da marca for difícil (amarelo, rosa-claro), escureça para o texto e mantenha a cor original em blocos e detalhes — não troque o matiz.
 
 **Contraste, sem exceção:** corpo sobre fundo ≥ 4.5:1. Texto grande e botões ≥ 3:1. Cinza claro sobre branco é o erro mais comum e o mais visível no celular sob sol.
 
@@ -83,11 +91,45 @@ Quatro papéis, definidos como variáveis CSS no `:root`:
 
 ---
 
-## Não temos foto nenhuma
+## Imagens
 
-Nenhuma imagem do negócio. Nada de banco de imagens genérico — foto de stock de "equipe sorrindo" denuncia protótipo na hora, e uma foto de outra clínica é pior ainda.
+A ordem de preferência é sempre esta:
 
-Isso é uma restrição produtiva. O que preencher o espaço:
+1. **Fotos do próprio negócio**, extraídas do site atual (`fonte/imagens/`). Sempre que existirem, ganham de tudo.
+2. **Imagens de apoio em domínio público**, quando não houver nenhuma foto própria.
+3. **Nenhuma imagem**, quando a única disponível for ruim.
+
+### Imagens de apoio
+
+Site sem imagem nenhuma parece pobre, e isso derruba o argumento do protótipo. Mas foto de banco que finge ser o negócio é pior: "nossa equipe" com gente que não trabalha lá é o que denuncia template na hora, e em clínica chega a ser problema de publicidade.
+
+O que separa um caso do outro não é a origem da foto — é **o que ela afirma**.
+
+```bash
+python3 .claude/skills/prototipo-site/scripts/imagens.py <slug> <template> 3
+```
+
+Busca no Openverse filtrando `cc0,pdm`: domínio público, uso comercial livre, **sem exigir crédito** na página. O filtro não é opcional — o mesmo acervo indexa CC-BY, que obrigaria a creditar o fotógrafo no site do cliente.
+
+**Pode:** textura e material · detalhe de instrumento ou ferramenta · ingrediente, xícara, mesa posta · fundo abstrato · elemento de contexto sem rosto identificável.
+
+**Não pode**, porque afirma algo falso sobre o negócio:
+
+- "nossa equipe", "nossa clínica", "nosso espaço" com foto de outro lugar
+- fachada de outro prédio apresentada como a dele
+- pessoa sorrindo dando a entender que é o profissional
+- antes e depois (e em saúde isso é vedado de qualquer forma)
+- qualquer legenda que transforme a foto ilustrativa em afirmação
+
+**Regra prática:** se a foto puder ser lida como "este é o lugar / esta é a equipe", ela não entra — ou entra sem legenda, tratada como fundo, com sobreposição de cor e sem destaque.
+
+**Toda imagem de banco usada entra na seção de placeholders**, declarada como ilustrativa: *"fotos ilustrativas — no site definitivo entram fotos do seu espaço"*. Isso é o que mantém o protótipo honesto e, de quebra, é gancho de conversa: o cliente quer ver o lugar dele ali.
+
+Duas fotos boas valem mais que seis medianas. E página sem imagem é melhor que página com imagem ruim — foto escura, tremida ou de baixa resolução tira credibilidade em vez de somar.
+
+### Quando não houver imagem alguma
+
+A restrição é produtiva. O que preenche o espaço:
 
 - **Tipografia como imagem** — um título ocupando meia tela é um elemento visual
 - **Blocos de cor sólida** sangrando até a borda
@@ -96,9 +138,6 @@ Isso é uma restrição produtiva. O que preencher o espaço:
 - **Padrões** — `repeating-linear-gradient` para listras finas, pontos, grade sutil
 - **Números grandes** — a nota do Google, quando existir no brief, vira elemento gráfico
 - **Grão** — filtro SVG de ruído em baixa opacidade tira o aspecto "chapado" de fundo sólido
-- **SVG desenhado à mão** — um ícone de linha simples, feito por você, vale mais que um pacote de ícones
-
----
 
 ## Espaço e ritmo
 

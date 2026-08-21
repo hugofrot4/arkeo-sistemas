@@ -46,7 +46,7 @@ Gera `prototipos/<slug>/fonte/`:
 
 - **a logo** — use a real, sempre que houver; nada de inventar um monograma quando existe marca
 - **as fotos** — resolvem a falta de imagem; escolha as melhores dentro do orçamento de tamanho
-- **a paleta** — as cores do CSS são a identidade dele, não a sua preferência
+- **a paleta da marca** — a seção *Paleta da marca* do relatório traz as cores tiradas da logo e os quatro papéis já derivados, com o acento escurecido até passar no contraste. **Use essa paleta**, mesmo que haja referência visual: a referência dá estrutura e clima, a logo dá a cor
 - **os serviços reais** — a estrutura de títulos diz o que o negócio de fato oferece
 - **os contatos** — telefone e redes publicados por ele
 
@@ -77,7 +77,7 @@ Escreva 5 linhas, mostre ao usuário e siga em frente — não espere aprovaçã
 
 ```
 Ideia estrutural: <a ÚNICA ideia que organiza a página>
-Paleta:           <4 hexadecimais com o papel de cada um>
+Paleta:           <4 hexadecimais — da logo, se houver logo>
 Tipografia:       <par de fontes do Google Fonts + por quê>
 Movimento:        <o detalhe que diferencia>
 Risco:            <o que pode não funcionar>
@@ -85,7 +85,21 @@ Risco:            <o que pode não funcionar>
 
 Este passo existe para impedir o padrão automático. Se a direção couber em "hero centrado, três cards com ícone, rodapé escuro", **descarte e escolha outra**.
 
-### 5. Faça o casting das imagens e fixe as medidas
+### 5. Sem foto própria? Busque imagens de apoio
+
+Se o lead não tem site, ou o site não rendeu foto aproveitável, não construa sem imagem — página sem foto parece pobre e derruba o argumento.
+
+```bash
+python3 .claude/skills/prototipo-site/scripts/imagens.py <slug> <template> 3
+```
+
+Busca no Openverse em `cc0,pdm`: domínio público, uso comercial livre e sem exigir crédito na página. Escreve em `prototipos/<slug>/banco/`, no mesmo formato do extrator.
+
+**O que separa uso legítimo de vigarice não é a origem da foto, é o que ela afirma.** Textura, detalhe, ingrediente e ambiente sem rosto: pode. Foto que dê a entender "esta é a nossa equipe" ou "este é o nosso espaço": não. As regras completas estão em `references/design.md`, seção *Imagens de apoio* — leia antes de escolher.
+
+Toda imagem de banco que entrar na página é declarada na seção de placeholders como ilustrativa.
+
+### 6. Faça o casting das imagens e fixe as medidas
 
 Duas decisões que, tomadas antes do markup, evitam a maior parte do retrabalho.
 
@@ -99,7 +113,7 @@ Proporção errada é o que produz foto esticada e corte no meio do rosto. A tab
 
 **Medidas.** Escreva o `:root` com a escala de espaço, o container e o ritmo vertical **antes** da primeira seção. Depois disso, nenhum valor solto no CSS. É o que impede as bordas de cada seção começarem num lugar diferente.
 
-### 6. Construa
+### 7. Construa
 
 Um arquivo: `prototipos/<slug>/index.html`.
 
@@ -109,7 +123,7 @@ Um arquivo: `prototipos/<slug>/index.html`.
 
 Contrato de layout — container único, grade que fecha a base, imagem com proporção reservada — em `references/composicao.md`. Restrições do arquivo em `references/tecnico.md`. O que cada ramo precisa em `references/nichos.md` — **leia a seção do ramo do lead antes de escrever a primeira linha de copy**.
 
-### 7. Escreva a abordagem
+### 8. Escreva a abordagem
 
 `prototipos/<slug>/abordagem.txt` — quatro mensagens separadas por uma linha com `---`.
 
@@ -188,7 +202,7 @@ por mais alguns dias, caso queira mostrar para alguém da equipe. Se precisar,
 - [ ] Nenhuma abreviação de internet, nenhum superlativo, nenhuma promessa de resultado
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 
-### 8. Revise como especialista — duas passadas obrigatórias
+### 9. Revise como especialista — duas passadas obrigatórias
 
 Protótipo nenhum vai para o usuário sem isto. O protocolo completo está em `references/revisao.md`.
 
@@ -204,7 +218,7 @@ Pega desalinhamento de borda, container divergente, card com base irregular, fot
 
 Depois disso, a checklist de verdade e conteúdo de `references/tecnico.md`. Ela não é formalidade: o item sobre fato inventado é o que impede o protótipo de queimar o lead.
 
-### 9. Entregue
+### 10. Entregue
 
 Informe:
 

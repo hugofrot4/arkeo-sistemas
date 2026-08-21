@@ -120,7 +120,8 @@ Para **cada** afirmação sobre o negócio na página, uma de duas coisas tem qu
 - [ ] Nota do Google e nº de avaliações: só do brief, com o valor exato
 - [ ] Nenhum `lorem ipsum` e nenhum "Texto de exemplo"
 - [ ] Ramo regulamentado: as restrições de `nichos.md` foram respeitadas **inclusive sobre o que foi copiado do site atual**
-- [ ] Logo e fotos vieram de `fonte/imagens/` — nada de banco de imagens
+- [ ] Nenhuma foto de banco dá a entender que é o espaço, a equipe ou a fachada do negócio
+- [ ] Toda imagem de banco usada está declarada nos placeholders como ilustrativa
 
 ### Design
 
@@ -128,6 +129,7 @@ Para **cada** afirmação sobre o negócio na página, uma de duas coisas tem qu
 - [ ] Não caiu no padrão proibido de `design.md`
 - [ ] Duas fontes, com contraste real de tamanho entre display e corpo
 - [ ] `--surface` não é `#FFFFFF`
+- [ ] Havendo logo, a paleta veio dela — não da referência nem do padrão do ramo
 - [ ] Contraste do corpo ≥ 4.5:1; botões e texto grande ≥ 3:1
 - [ ] Nenhuma foto de banco de imagens
 

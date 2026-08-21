@@ -211,6 +211,118 @@ def analisar_conteudo(imagem):
     return tipo, transparente, dominantes
 
 
+def _hsl(r, g, b):
+    r, g, b = r / 255, g / 255, b / 255
+    alto, baixo = max(r, g, b), min(r, g, b)
+    luz = (alto + baixo) / 2
+    if alto == baixo:
+        return 0.0, 0.0, luz
+    d = alto - baixo
+    sat = d / (2 - alto - baixo) if luz > 0.5 else d / (alto + baixo)
+    if alto == r:
+        matiz = ((g - b) / d + (6 if g < b else 0)) / 6
+    elif alto == g:
+        matiz = ((b - r) / d + 2) / 6
+    else:
+        matiz = ((r - g) / d + 4) / 6
+    return matiz, sat, luz
+
+
+def _hex(r, g, b):
+    return f"#{int(r):02x}{int(g):02x}{int(b):02x}"
+
+
+def _misturar(cor, alvo, fator):
+    """Interpola entre duas cores. Usado para derivar surface e ink da marca."""
+    return tuple(round(c + (a - c) * fator) for c, a in zip(cor, alvo))
+
+
+def _luminancia(cor):
+    def canal(v):
+        v /= 255
+        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
+    r, g, b = (canal(c) for c in cor)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _contraste(a, b):
+    la, lb = _luminancia(a), _luminancia(b)
+    return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+
+
+def _escurecer_ate_contrastar(cor, fundo=(255, 255, 255), minimo=4.5):
+    """
+    Escurece a cor da marca até ela passar no contraste, preservando o matiz.
+
+    Azul de logo costuma ficar em 3:1 sobre branco — bonito na marca, ilegível
+    como cor de link. Escurecer mantém a identidade; trocar a cor, não.
+    """
+    atual = list(cor)
+    for _ in range(24):
+        if _contraste(tuple(atual), fundo) >= minimo:
+            break
+        atual = [max(0, round(c * 0.92)) for c in atual]
+    return tuple(atual)
+
+
+def paleta_da_logo(imagem):
+    """
+    Cores da marca a partir da logo, e uma paleta de quatro papéis derivada
+    delas.
+
+    O protótipo precisa parecer do cliente, não da agência — e o único elemento
+    de identidade que temos é a logo. Por isso ela manda na paleta mesmo quando
+    há referência visual: a referência dá estrutura e clima, a logo dá a cor.
+
+    Pixel transparente é descartado (logo costuma vir recortada), e cinza,
+    branco e preto também: são o texto da logo, não a cor da marca.
+    """
+    from PIL import Image
+
+    if imagem.mode == "P":
+        imagem = imagem.convert("RGBA")
+    tem_alfa = imagem.mode in ("RGBA", "LA")
+    amostra = imagem.convert("RGBA").resize((100, 100), Image.LANCZOS)
+
+    contagem = {}
+    for r, g, b, a in amostra.getdata():
+        if tem_alfa and a < 200:
+            continue
+        _, sat, luz = _hsl(r, g, b)
+        # Neutro e quase-neutro não são a cor da marca.
+        if sat < 0.18 or luz < 0.08 or luz > 0.94:
+            continue
+        chave = (r // 24 * 24, g // 24 * 24, b // 24 * 24)
+        contagem[chave] = contagem.get(chave, 0) + 1
+
+    if not contagem:
+        return None
+
+    ordenadas = sorted(contagem.items(), key=lambda kv: -kv[1])
+    marca = [cor for cor, _ in ordenadas[:3]]
+
+    # A mais escura vira faixa de destaque (texto branco por cima); a mais
+    # saturada vira o acento de botão e link.
+    primary = min(marca, key=lambda c: _hsl(*c)[2])
+    accent = max(marca, key=lambda c: _hsl(*c)[1])
+    if accent == primary and len(marca) > 1:
+        accent = [c for c in marca if c != primary][0]
+
+    accent_legivel = _escurecer_ate_contrastar(accent)
+    return {
+        "marca": [_hex(*c) for c in marca],
+        "accent_ajustado": accent_legivel != accent,
+        "contraste_accent": round(_contraste(accent_legivel, (255, 255, 255)), 2),
+        "sugestao": {
+            "primary": _hex(*_misturar(primary, (0, 0, 0), 0.25)),
+            "accent": _hex(*accent_legivel),
+            # Tinta clara da própria marca: tira o branco puro sem trair a cor.
+            "surface": _hex(*_misturar(primary, (255, 255, 255), 0.94)),
+            "ink": _hex(*_misturar(primary, (0, 0, 0), 0.68)),
+        },
+    }
+
+
 def sugerir_papel(contexto, formato, tipo, transparente, largura):
     """Sugestão de uso. É ponto de partida — quem decide é quem olha a imagem."""
     if contexto == "favicon" or (transparente and tipo == "grafico" and largura <= 600):
@@ -256,6 +368,7 @@ def processar_imagem(bytes_originais, contexto):
     tipo, transparente, dominantes = analisar_conteudo(imagem)
     largura, altura = imagem.size
     formato, razao = classificar_formato(largura, altura)
+    paleta = paleta_da_logo(imagem) if contexto in ("logo", "favicon") else None
 
     saida = io.BytesIO()
     imagem.save(saida, format="WEBP", quality=QUALIDADE_WEBP, method=4)
@@ -269,6 +382,7 @@ def processar_imagem(bytes_originais, contexto):
         "transparente": transparente,
         "dominantes": dominantes,
         "papel": sugerir_papel(contexto, formato, tipo, transparente, largura),
+        "paleta": paleta,
     }
 
 
@@ -370,6 +484,7 @@ def main():
             "formato": analise["formato"], "razao": analise["razao"],
             "tipo": analise["tipo"], "transparente": analise["transparente"],
             "dominantes": analise["dominantes"], "papel": analise["papel"],
+            "paleta": analise.get("paleta"),
             "largura": analise["largura"], "altura": analise["altura"],
             "bytes_datauri": len(uri),
         })
@@ -385,6 +500,30 @@ def main():
                f"- **Descrição:** {coletor.meta.get('description', '(vazia)')}",
                f"- **og:title:** {coletor.meta.get('og:title', '—')}",
                f"- **Gerador:** {coletor.meta.get('generator', '—')}", ""]
+
+    paletas = [i["paleta"] for i in salvas if i.get("paleta")]
+    if paletas:
+        melhor = max(paletas, key=lambda p: len(p["marca"]))
+        s_ = melhor["sugestao"]
+        linhas += [
+            "## Paleta da marca (vinda da logo)", "",
+            "**Use esta paleta.** A logo é o único elemento de identidade que temos,",
+            "e o protótipo precisa parecer do cliente, não da agência. Vale mesmo",
+            "quando há referência visual: a referência dá estrutura e clima, a logo",
+            "dá a cor.", "",
+            "Cores encontradas na logo: " + " ".join(f"`{c}`" for c in melhor["marca"]), "",
+            "Paleta derivada, pronta para o `:root`:", "",
+            "```css",
+            f"--primary: {s_['primary']};   /* faixas de destaque, texto branco por cima */",
+            f"--accent:  {s_['accent']};   /* botões e links */",
+            f"--surface: {s_['surface']};   /* fundo claro, tinta da própria marca */",
+            f"--ink:     {s_['ink']};   /* texto principal */",
+            "```", "",
+            f"O acento já sai com {melhor['contraste_accent']}:1 sobre branco"
+            + (" — foi escurecido a partir da cor da logo para passar no contraste, "
+               "preservando o matiz." if melhor["accent_ajustado"] else "."),
+            "",
+        ]
 
     cores = cores_do_css(html)
     if cores:
