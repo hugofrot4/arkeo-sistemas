@@ -17,7 +17,7 @@ import {
 } from "../../../../lib/prospecting";
 import GenerateModal from "./GenerateModal";
 import LeadEditModal from "./LeadEditModal";
-import { LOST_REASONS, SEGMENT_META, STAGE_META, nicheLabel } from "./meta";
+import { LOST_REASONS, SEGMENT_META, STAGE_META, STAGE_ORDER, nicheLabel } from "./meta";
 import { Badge, ScoreDot } from "./ui";
 
 const SEGMENT_FILTERS: { value: LeadSegment | "todos"; label: string }[] = [
@@ -53,7 +53,10 @@ export default function LeadsTab({
   const [segment, setSegment] = useState<LeadSegment | "todos">("todos");
   const [search, setSearch] = useState("");
   const [minScore, setMinScore] = useState(0);
-  const [includeClosed, setIncludeClosed] = useState(false);
+  // "ativos" é o padrão de trabalho; "todos" inclui ganhos e perdidos; e cada
+  // estágio isolado responde "quem está parado em contatado?", que é a
+  // pergunta que faz alguém abrir esta aba.
+  const [stage, setStage] = useState<LeadStage | "ativos" | "todos">("ativos");
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [generating, setGenerating] = useState<Lead | null>(null);
@@ -69,7 +72,8 @@ export default function LeadsTab({
           segments: segment === "todos" ? undefined : [segment],
           search: search.trim() || undefined,
           minScore: minScore || undefined,
-          stages: includeClosed ? undefined : ACTIVE_STAGES,
+          stages:
+            stage === "todos" ? undefined : stage === "ativos" ? ACTIVE_STAGES : [stage],
           limit: 100,
         }),
       );
@@ -78,7 +82,7 @@ export default function LeadsTab({
     } finally {
       setLoading(false);
     }
-  }, [segment, search, minScore, includeClosed, showToast]);
+  }, [segment, search, minScore, stage, showToast]);
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), search ? 350 : 0);
@@ -123,14 +127,20 @@ export default function LeadsTab({
           />
         </label>
 
-        <label className="text-text-muted flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={includeClosed}
-            onChange={(e) => setIncludeClosed(e.target.checked)}
-          />
-          Incluir encerrados
-        </label>
+        <select
+          value={stage}
+          onChange={(e) => setStage(e.target.value as LeadStage | "ativos" | "todos")}
+          aria-label="Filtrar por estágio"
+          className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
+        >
+          <option value="ativos">Em andamento</option>
+          <option value="todos">Todos os estágios</option>
+          {STAGE_ORDER.map((valor) => (
+            <option key={valor} value={valor}>
+              {STAGE_META[valor].label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {loading ? (
