@@ -492,6 +492,52 @@ export async function getPipelineCounts(): Promise<PipelineCounts[]> {
   return results;
 }
 
+export interface CoberturaPrototipos {
+  /** Auditados e sem protótipo: o conjunto realmente pronto para gerar. */
+  prontosParaGerar: number;
+  /** Vivos no funil e sem protótipo, auditados ou não. */
+  semPrototipo: number;
+  comPrototipo: number;
+}
+
+/**
+ * Quantos leads ainda precisam de protótipo, medido pela ausência de
+ * protótipo — não pelo estágio.
+ *
+ * O estágio é um proxy e diverge: ele só avança, então um lead que já foi
+ * contatado e teve o protótipo apagado continua adiante, e qualquer caminho
+ * que crie protótipo sem passar pelo `advance_lead_stage` deixa o lead para
+ * trás. Contar o que de fato existe não tem esse problema.
+ */
+export async function getCoberturaPrototipos(): Promise<CoberturaPrototipos> {
+  const ativos = await supabase
+    .from("leads")
+    .select("id, segment")
+    .not("stage", "in", "(ganho,perdido)")
+    .limit(5000);
+  const leads = unwrap<{ id: number; segment: LeadSegment }[]>(ativos);
+  if (leads.length === 0) {
+    return { prontosParaGerar: 0, semPrototipo: 0, comPrototipo: 0 };
+  }
+
+  const publicados = await supabase
+    .from("prototypes")
+    .select("lead_id")
+    .eq("published", true)
+    .limit(5000);
+  const comProto = new Set(
+    unwrap<{ lead_id: number }[]>(publicados).map((p) => p.lead_id),
+  );
+
+  const comPrototipo = leads.filter((l) => comProto.has(l.id)).length;
+  // Sem auditoria o protótipo até sai, mas a abordagem vai sem argumento —
+  // por isso o passo aponta só os auditados, e o resto vira o passo anterior.
+  const prontosParaGerar = leads.filter(
+    (l) => !comProto.has(l.id) && l.segment !== "nao_auditado",
+  ).length;
+  return { prontosParaGerar, semPrototipo: leads.length - comPrototipo, comPrototipo };
+}
+
 export interface JobQueueSummary {
   kind: string;
   status: string;

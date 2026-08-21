@@ -3,12 +3,14 @@ import {
   countSentToday,
   getGridProgress,
   getJobQueue,
+  getCoberturaPrototipos,
   getPipelineCounts,
   getProspectingSettings,
   listHotLeads,
   listOutreachQueue,
   type HotLead,
   type JobQueueSummary,
+  type CoberturaPrototipos,
   type PipelineCounts,
   type ProspectingSettings,
   type QueueItem,
@@ -21,6 +23,7 @@ export interface ProspectingData {
   pipeline: PipelineCounts[];
   jobs: JobQueueSummary[];
   grid: { totalTasks: number; pendingTasks: number; deadCells: number };
+  cobertura: CoberturaPrototipos;
   settings: ProspectingSettings | null;
 }
 
@@ -31,21 +34,24 @@ const EMPTY: ProspectingData = {
   pipeline: [],
   jobs: [],
   grid: { totalTasks: 0, pendingTasks: 0, deadCells: 0 },
+  cobertura: { prontosParaGerar: 0, semPrototipo: 0, comPrototipo: 0 },
   settings: null,
 };
 
 /** Busca pura: não toca em estado, só devolve os dados. */
 async function fetchAll(): Promise<ProspectingData> {
-  const [queue, hot, sentToday, pipeline, jobs, grid, settings] = await Promise.all([
-    listOutreachQueue(),
-    listHotLeads(),
-    countSentToday(),
-    getPipelineCounts(),
-    getJobQueue(),
-    getGridProgress(),
-    getProspectingSettings(),
-  ]);
-  return { queue, hot, sentToday, pipeline, jobs, grid, settings };
+  const [queue, hot, sentToday, pipeline, jobs, grid, cobertura, settings] =
+    await Promise.all([
+      listOutreachQueue(),
+      listHotLeads(),
+      countSentToday(),
+      getPipelineCounts(),
+      getJobQueue(),
+      getGridProgress(),
+      getCoberturaPrototipos(),
+      getProspectingSettings(),
+    ]);
+  return { queue, hot, sentToday, pipeline, jobs, grid, cobertura, settings };
 }
 
 /**

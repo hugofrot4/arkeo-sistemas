@@ -28,10 +28,15 @@ export default function TodayTab({
   const [rodando, setRodando] = useState<"busca" | "fila" | null>(null);
 
   const porEstagio = new Map(data.pipeline.map((p) => [p.stage, p.count]));
-  const qualificados = porEstagio.get("qualificado") ?? 0;
-  const prototiposProntos = porEstagio.get("prototipo_pronto") ?? 0;
   const totalLeads = data.pipeline.reduce((soma, p) => soma + p.count, 0);
   const ganhos = porEstagio.get("ganho") ?? 0;
+
+  // Medido pela ausência de protótipo publicado, não pelo estágio: estágio só
+  // avança, então ele diverge de quem já tem protótipo. Ver
+  // `getCoberturaPrototipos`.
+  const prontos = data.cobertura.prontosParaGerar;
+  const semPrototipo = data.cobertura.semPrototipo;
+  const comPrototipo = data.cobertura.comPrototipo;
 
   const jobsPendentes = data.jobs
     .filter((j) => j.status === "pending" || j.status === "running")
@@ -112,14 +117,14 @@ export default function TodayTab({
     });
   }
 
-  if (qualificados > 0) {
+  if (prontos > 0) {
     passos.push({
       chave: "gerar",
       tom: "acao",
       icone: <Wand2 size={18} aria-hidden />,
-      titulo: `${qualificados} ${qualificados === 1 ? "lead pronto" : "leads prontos"} para gerar protótipo`,
+      titulo: `${prontos} ${prontos === 1 ? "lead auditado espera" : "leads auditados esperam"} protótipo`,
       texto:
-        "Já foram auditados e pontuados. Gerar o protótipo é o que os coloca na fila de abordagem.",
+        "Gerar o protótipo é o que coloca o lead na fila de abordagem. Comece pelos de maior score.",
       acao: { rotulo: "Ver leads", ao: () => irPara("leads") },
     });
   }
@@ -136,7 +141,7 @@ export default function TodayTab({
     });
   }
 
-  if (data.grid.pendingTasks > 0 && qualificados < 10) {
+  if (data.grid.pendingTasks > 0 && prontos < 10) {
     const varrido = data.grid.totalTasks
       ? Math.round(((data.grid.totalTasks - data.grid.pendingTasks) / data.grid.totalTasks) * 100)
       : 0;
@@ -192,8 +197,8 @@ export default function TodayTab({
           tarefa. Antes ocupavam uma aba inteira em forma de gráfico e não
           levavam a nenhuma ação. */}
       <p className="text-text-muted border-border border-t pt-4 text-xs">
-        {totalLeads} leads na base · {qualificados} prontos para protótipo ·{" "}
-        {prototiposProntos} com protótipo · {ganhos} ganhos ·{" "}
+        {totalLeads} leads na base · {comPrototipo} com protótipo publicado ·{" "}
+        {semPrototipo} sem ({prontos} já auditados) · {ganhos} ganhos ·{" "}
         {data.grid.totalTasks - data.grid.pendingTasks} de {data.grid.totalTasks} buscas
         feitas
       </p>
