@@ -194,7 +194,7 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 **O assunto.** Cada bloco abre com uma linha `Assunto: ...`. No canal e-mail ela vira o assunto da mensagem; no WhatsApp é descartada. Escreva sempre — o canal é decidido no sistema, pelo contato que o lead tem. Regras e exemplos em `references/abordagem.md`.
 
-**O link.** Escreva `{{link}}` onde o endereço encaixa na frase. O sistema substitui na publicação. Sem o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
+**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 pede permissão em três linhas. O sistema substitui na publicação. Sem o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
 
 #### O que a mensagem tem que fazer
 

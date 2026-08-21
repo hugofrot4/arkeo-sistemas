@@ -1036,15 +1036,6 @@ export async function publishPrototype(
   const link = `${window.location.origin}/p/${slug}`;
   const today = Date.now();
 
-  // O texto marca `{{link}}` onde o endereço encaixa na frase — o slug só
-  // existe aqui, na publicação, então não há como escrevê-lo antes. Sem o
-  // marcador, o link vai para o fim do primeiro toque, que é o comportamento
-  // antigo e continua valendo.
-  const bodies = upload.messages.map((body, i) => {
-    if (body.includes("{{link}}")) return body.replaceAll("{{link}}", link);
-    return i === 0 ? `${body}\n\n${link}` : body;
-  });
-
   // Canal decidido pelo contato que existe: sem celular e com e-mail, a
   // sequência já nasce por e-mail em vez de o lead ficar parado na fila
   // esperando um número que ninguém vai conseguir.
@@ -1053,6 +1044,23 @@ export async function publishPrototype(
   if (canal !== lead.preferredChannel) {
     await supabase.from("leads").update({ preferred_channel: canal }).eq("id", lead.id);
   }
+
+  // O texto marca `{{link}}` onde o endereço encaixa na frase — o slug só
+  // existe aqui, na publicação, então não há como escrevê-lo antes.
+  //
+  // Sem marcador, onde o link cai depende do canal, e isso não é detalhe de
+  // formatação: no WhatsApp, mandar link na primeira mensagem para quem não
+  // tem você nos contatos é o padrão que a plataforma penaliza — foi o que
+  // restringiu o número mesmo com menos de vinte envios por dia. Lá o primeiro
+  // toque pede permissão e o link vem no segundo. Em e-mail, link na primeira
+  // é normal e esperado.
+  const temMarcador = upload.messages.some((m) => m.includes("{{link}}"));
+  const indiceDoLink = canal === "whatsapp" ? 1 : 0;
+  const bodies = upload.messages.map((body, i) => {
+    if (body.includes("{{link}}")) return body.replaceAll("{{link}}", link);
+    if (!temMarcador && i === indiceDoLink) return `${body}\n\n${link}`;
+    return body;
+  });
 
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
     bodies.map((body, i) => ({

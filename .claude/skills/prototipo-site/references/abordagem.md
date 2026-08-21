@@ -51,6 +51,33 @@ O `{{link}}` conta como oito caracteres na conferência, mas vira uma URL de uns
 
 Se não couber, corte adjetivo e explicação, nunca a pergunta do fim.
 
+## O link no toque 1 depende do canal
+
+**No WhatsApp, não mande link na primeira mensagem.**
+
+Mensagem fria com link para quem não tem você nos contatos é a assinatura que a plataforma reconhece como spam. Aconteceu com o número da Arkeo: restrição de 24 horas, e nova restrição na primeira mensagem enviada depois do desbloqueio — com menos de vinte envios por dia. Não é volume, é o padrão.
+
+O toque 1 no WhatsApp fica curto e pede permissão:
+
+```
+Assunto: Uma prévia do site da Clínica Sorriso Vivo
+Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
+clínicas aqui no Ceará.
+
+Reparei que o site de vocês não abre direito no celular e montei uma prévia
+de como ficaria resolvido. Posso te mandar para dar uma olhada?
+```
+
+Três linhas, sem link, com uma pergunta de sim ou não. Quem responde "pode"
+passa a ter você na conversa — e aí o link chega numa troca já aberta, que é
+outra coisa aos olhos da plataforma e do leitor.
+
+O `{{link}}` vai no **toque 2**.
+
+**No e-mail, o link vai no toque 1** normalmente: link em e-mail é esperado e não tem esse custo.
+
+O brief informa o canal do lead. Se ele não disser, assuma WhatsApp — errar para o lado cauteloso custa uma mensagem a mais; errar para o outro custa o número.
+
 ## A estrutura da primeira mensagem
 
 Seis blocos, nesta ordem. Cada um cabe em uma ou duas frases.

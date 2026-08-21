@@ -168,7 +168,25 @@ export function buildBrief({
     );
   }
 
+  const canal = lead.preferredChannel === "email" ? "e-mail" : "WhatsApp";
   linhas.push(
+    "## Canal da abordagem",
+    "",
+    `**${canal}.**`,
+    "",
+    lead.preferredChannel === "email"
+      ? [
+          "Link do protótipo no toque 1, que em e-mail é normal e esperado.",
+          "Cada bloco precisa da linha `Assunto:`.",
+        ].join(" ")
+      : [
+          "**Não coloque o link no toque 1.** Mensagem fria com link para quem não",
+          "tem você nos contatos é o padrão que o WhatsApp penaliza — restringiu o",
+          "número da Arkeo mesmo com menos de vinte envios por dia. O toque 1 pede",
+          "permissão em duas ou três linhas; o `{{link}}` vai no toque 2, depois da",
+          "resposta. Ver `references/abordagem.md`.",
+        ].join(" "),
+    "",
     "## Quem assina a abordagem",
     "",
     `**${senderName}**, do atendimento da **${agencyName}**.`,
