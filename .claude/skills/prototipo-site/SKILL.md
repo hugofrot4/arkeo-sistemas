@@ -105,14 +105,82 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 ### 7. Escreva a abordagem
 
-`prototipos/<slug>/abordagem.txt` — quatro mensagens de WhatsApp separadas por uma linha com `---`, nesta ordem:
+`prototipos/<slug>/abordagem.txt` — quatro mensagens separadas por uma linha com `---`.
 
-1. Entrega o protótipo sem pedir nada. Cita um fato verificável do negócio. Sem "espero que esteja bem". **Não inclua o link** — o sistema anexa.
-2. Retoma um achado concreto da auditoria.
-3. Oferece uma conversa de 10 minutos.
-4. Encerra educadamente e avisa que o protótipo sai do ar.
+**Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo. Pessoa com nome responde melhor que empresa; empresa por trás da pessoa dá seriedade. Precisa dos dois.
 
-Primeira pessoa do singular, como quem escreve na hora. Cada uma mais curta que a anterior.
+**O link.** Escreva `{{link}}` onde o endereço encaixa na frase. O sistema substitui na publicação — o endereço só existe lá, porque leva um sufixo único. Se você não colocar o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
+
+#### Como se apresenta a empresa
+
+| Nunca | Sempre |
+|---|---|
+| "eu mexo com sites" | "somos especializados em criação de sites" |
+| "trabalho com criação de sites" | "trabalhamos com sites para clínicas aqui em Fortaleza" |
+| "faço sites pra empresas" | "desenvolvemos sites para pequenos negócios da região" |
+
+Primeira pessoa do plural para a empresa, primeira do singular para o que a pessoa fez: *"somos especializados em sites para clínicas, e preparei uma prévia da página de vocês"*.
+
+#### Tom
+
+- Português correto, frases completas. Nada de `vc`, `blz`, `pfv`, `tbm`.
+- Sem gíria e sem intimidade forçada. Trate por "você" e "vocês".
+- No máximo um emoji na conversa inteira, e só se cair natural. Zero é melhor que forçado.
+- Nenhum superlativo sobre a própria empresa: nada de "a melhor", "referência", "líder".
+- Nenhuma promessa de resultado — nem de posição no Google, nem de aumento de clientes.
+- Cada mensagem mais curta que a anterior.
+- Abra com saudação ("Oi, bom dia!") — mensagem de WhatsApp sem saudação soa como disparo em massa.
+
+#### As quatro mensagens
+
+**1 — entrega (dia 0).** Identifica pessoa e empresa, diz a especialização, cita um fato verificável do negócio, entrega o protótipo e não pede nada em troca.
+
+**2 — retomada (+2 dias).** Volta com um achado concreto da auditoria e o motivo de ele importar. Nada de "só passando para saber se viu" sozinho.
+
+**3 — conversa (+5 dias).** Oferece dez minutos, no canal que a pessoa preferir.
+
+**4 — encerramento (+9 dias).** Encerra com educação e avisa o prazo em que o protótipo sai do ar.
+
+#### Exemplo completo
+
+Dentista com site que não abre no celular, atendimento assinado por Sara:
+
+```
+Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — somos especializados em
+criação de sites para clínicas e consultórios em Fortaleza.
+
+Reparei que o site da Clínica Sorriso Vivo não abre corretamente no celular.
+Como boa parte das buscas por dentista na região vem do telefone, preparei uma
+prévia de como a página de vocês poderia ficar:
+
+{{link}}
+
+É uma demonstração, sem custo e sem compromisso. Se puder dar uma olhada e me
+dizer o que achou, fico à disposição.
+---
+Oi! Sara aqui, da Arkeo Sistemas. Passando para saber se conseguiu ver a
+prévia.
+
+Um ponto que costuma pesar: quando a página não se adapta ao celular, ela
+perde posição nas buscas locais do Google, que é justamente de onde vem a
+maior parte dos contatos de clínica.
+---
+Oi! Se ficar mais fácil, posso explicar a proposta em uns dez minutos, por
+aqui mesmo ou por ligação — como preferir. Sem compromisso de fechar nada.
+---
+Oi! Vou encerrar o contato por aqui para não incomodar. A prévia fica no ar
+por mais alguns dias, caso queira mostrar para alguém da equipe. Se precisar,
+é só me chamar. Obrigada!
+```
+
+#### Antes de salvar
+
+- [ ] A mensagem 1 tem `{{link}}` e está pronta para enviar como está
+- [ ] Pessoa e empresa aparecem na abertura da mensagem 1
+- [ ] A especialização está no plural ("somos especializados"), nunca "eu mexo com"
+- [ ] Cada mensagem cita algo do negócio, não é texto genérico
+- [ ] Nenhuma abreviação de internet, nenhum superlativo, nenhuma promessa de resultado
+- [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 
 ### 8. Revise como especialista — duas passadas obrigatórias
 

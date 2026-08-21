@@ -11,6 +11,7 @@ import {
   type Lead,
   type LeadSegment,
   type LeadStage,
+  type ProspectingSettings,
 } from "../../../../lib/prospecting";
 import GenerateModal from "./GenerateModal";
 import { LOST_REASONS, SEGMENT_META, STAGE_META, nicheLabel } from "./meta";
@@ -39,12 +40,10 @@ const ACTIVE_STAGES: LeadStage[] = [
 
 export default function LeadsTab({
   onChanged,
-  cityName,
-  ttlDays,
+  settings,
 }: {
   onChanged: () => Promise<void>;
-  cityName: string;
-  ttlDays: number;
+  settings: ProspectingSettings | null;
 }) {
   const { showToast } = useAdmin();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -154,11 +153,10 @@ export default function LeadsTab({
         </ul>
       )}
 
-      {generating && (
+      {generating && settings && (
         <GenerateModal
           lead={generating}
-          cityName={cityName}
-          ttlDays={ttlDays}
+          settings={settings}
           onClose={() => setGenerating(null)}
           onPublished={async () => {
             await load();

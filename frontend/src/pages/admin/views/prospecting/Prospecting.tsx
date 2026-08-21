@@ -55,11 +55,7 @@ export default function Prospecting() {
         <>
           {tab === "fila" && <QueueTab data={data} refresh={refresh} />}
           {tab === "leads" && (
-            <LeadsTab
-              onChanged={refresh}
-              cityName={data.settings?.cityName ?? ""}
-              ttlDays={data.settings?.prototypeTtlDays ?? 45}
-            />
+            <LeadsTab onChanged={refresh} settings={data.settings} />
           )}
           {tab === "operacao" && <OperationTab data={data} refresh={refresh} />}
           {tab === "config" && <SettingsTab settings={data.settings} refresh={refresh} />}

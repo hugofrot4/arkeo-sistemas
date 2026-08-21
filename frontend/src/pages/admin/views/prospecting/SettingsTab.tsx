@@ -120,7 +120,33 @@ export default function SettingsTab({
       </Group>
 
       <Group
-        title="Abordagem"
+        title="Quem assina a abordagem"
+        hint="Mensagem assinada por uma pessoa com nome responde melhor que mensagem de empresa — mas a pessoa precisa representar a empresa, senão soa como freelancer."
+      >
+        <label className="block">
+          <span className="text-text-muted mb-1 block text-sm">Nome de quem atende</span>
+          <input
+            value={form.outreachSenderName}
+            onChange={(e) => set("outreachSenderName", e.target.value)}
+            className="border-border bg-surface w-full rounded-lg border px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="block">
+          <span className="text-text-muted mb-1 block text-sm">Nome da empresa</span>
+          <input
+            value={form.agencyName}
+            onChange={(e) => set("agencyName", e.target.value)}
+            className="border-border bg-surface w-full rounded-lg border px-3 py-2 text-sm"
+          />
+        </label>
+        <p className="text-text-muted sm:col-span-2 text-xs">
+          As mensagens abrem com &ldquo;Aqui é a {form.outreachSenderName}, da{" "}
+          {form.agencyName}&rdquo;.
+        </p>
+      </Group>
+
+      <Group
+        title="Ritmo da abordagem"
         hint="Teto diário de mensagens. Volume alto num dia só é o que faz número ser marcado como spam."
       >
         <Number

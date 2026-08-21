@@ -53,9 +53,17 @@ export interface BriefInput {
   lead: Lead;
   findings: Finding[];
   cityName: string;
+  senderName: string;
+  agencyName: string;
 }
 
-export function buildBrief({ lead, findings, cityName }: BriefInput): string {
+export function buildBrief({
+  lead,
+  findings,
+  cityName,
+  senderName,
+  agencyName,
+}: BriefInput): string {
   const slug = slugFor(lead.name);
 
   const linhas: string[] = [
@@ -128,6 +136,14 @@ export function buildBrief({ lead, findings, cityName }: BriefInput): string {
   }
 
   linhas.push(
+    "## Quem assina a abordagem",
+    "",
+    `**${senderName}**, do atendimento da **${agencyName}**.`,
+    "",
+    "As quatro mensagens vão em nome dela, representando a empresa — não em",
+    "nome de um profissional autônomo. Tom profissional, sem gíria e sem",
+    "abreviação. Ver o passo 7 da skill para as regras e os exemplos.",
+    "",
     "---",
     "",
     `Gere o protótipo em \`prototipos/${slug}/\`.`,

@@ -320,6 +320,9 @@ export interface ProspectingSettings {
   detailsMonthlyCap: number;
   dailyOutreachCap: number;
   prototypeTtlDays: number;
+  /** Quem assina a abordagem. Pessoa com nome responde melhor que empresa. */
+  outreachSenderName: string;
+  agencyName: string;
 }
 
 const SETTINGS_SELECT = [
@@ -333,6 +336,8 @@ const SETTINGS_SELECT = [
   "detailsMonthlyCap:details_monthly_cap",
   "dailyOutreachCap:daily_outreach_cap",
   "prototypeTtlDays:prototype_ttl_days",
+  "outreachSenderName:outreach_sender_name",
+  "agencyName:agency_name",
 ].join(",");
 
 export async function getProspectingSettings() {
@@ -352,6 +357,8 @@ export async function updateProspectingSettings(data: Partial<ProspectingSetting
   if (data.detailsMonthlyCap !== undefined) payload.details_monthly_cap = data.detailsMonthlyCap;
   if (data.dailyOutreachCap !== undefined) payload.daily_outreach_cap = data.dailyOutreachCap;
   if (data.prototypeTtlDays !== undefined) payload.prototype_ttl_days = data.prototypeTtlDays;
+  if (data.outreachSenderName !== undefined) payload.outreach_sender_name = data.outreachSenderName;
+  if (data.agencyName !== undefined) payload.agency_name = data.agencyName;
 
   const res = await supabase
     .from("prospecting_settings")
@@ -734,8 +741,15 @@ export async function publishPrototype(
 
   const link = `${window.location.origin}/p/${slug}`;
   const today = Date.now();
-  // O link entra só no primeiro toque: repetir em todos soa automatizado.
-  const bodies = upload.messages.map((body, i) => (i === 0 ? `${body}\n\n${link}` : body));
+
+  // O texto marca `{{link}}` onde o endereço encaixa na frase — o slug só
+  // existe aqui, na publicação, então não há como escrevê-lo antes. Sem o
+  // marcador, o link vai para o fim do primeiro toque, que é o comportamento
+  // antigo e continua valendo.
+  const bodies = upload.messages.map((body, i) => {
+    if (body.includes("{{link}}")) return body.replaceAll("{{link}}", link);
+    return i === 0 ? `${body}\n\n${link}` : body;
+  });
 
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
     bodies.map((body, i) => ({

@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ClipboardCopy, Upload, X } from "lucide-react";
-import { getLeadAudit, publishPrototype, type Lead } from "../../../../lib/prospecting";
+import {
+  getLeadAudit,
+  publishPrototype,
+  type Lead,
+  type ProspectingSettings,
+} from "../../../../lib/prospecting";
 import { buildBrief, slugFor } from "../../../../prototypes/brief";
 import { parseAbordagem, validateHtml } from "../../../../prototypes/validate";
 
@@ -14,14 +19,12 @@ import { parseAbordagem, validateHtml } from "../../../../prototypes/validate";
  */
 export default function GenerateModal({
   lead,
-  cityName,
-  ttlDays,
+  settings,
   onClose,
   onPublished,
 }: {
   lead: Lead;
-  cityName: string;
-  ttlDays: number;
+  settings: ProspectingSettings;
   onClose: () => void;
   onPublished: () => Promise<void>;
 }) {
@@ -43,14 +46,21 @@ export default function GenerateModal({
     getLeadAudit(lead.id)
       .catch(() => null)
       .then((audit) => {
-        if (ativo) {
-          setBrief(buildBrief({ lead, cityName, findings: audit?.findings ?? [] }));
-        }
+        if (!ativo) return;
+        setBrief(
+          buildBrief({
+            lead,
+            cityName: settings.cityName,
+            senderName: settings.outreachSenderName,
+            agencyName: settings.agencyName,
+            findings: audit?.findings ?? [],
+          }),
+        );
       });
     return () => {
       ativo = false;
     };
-  }, [lead, cityName]);
+  }, [lead, settings]);
 
   async function copiarBrief() {
     if (!brief) return;
@@ -73,6 +83,7 @@ export default function GenerateModal({
     const conferido = validateHtml(html);
     const mensagens = parseAbordagem(abordagem);
     const problemas = [...conferido.errors, ...mensagens.errors];
+    setAvisos([...conferido.warnings, ...mensagens.warnings]);
     if (problemas.length > 0) {
       setErros(problemas);
       return;
@@ -84,7 +95,7 @@ export default function GenerateModal({
       const resultado = await publishPrototype(
         lead,
         { html, pageTitle: conferido.title, messages: mensagens.messages },
-        { ttlDays },
+        { ttlDays: settings.prototypeTtlDays },
       );
       setLink(resultado.link);
       await onPublished();
@@ -191,7 +202,7 @@ export default function GenerateModal({
                   value={abordagem}
                   onChange={(e) => setAbordagem(e.target.value)}
                   rows={6}
-                  placeholder={"Cole o conteúdo de abordagem.txt\n\nQuatro mensagens separadas por uma linha com ---"}
+                  placeholder={"Cole o conteúdo de abordagem.txt\n\nQuatro mensagens separadas por uma linha com ---\nO endereço do protótipo entra onde estiver {{link}}"}
                   className="border-border bg-bg w-full rounded-lg border p-3 font-mono text-xs"
                 />
 

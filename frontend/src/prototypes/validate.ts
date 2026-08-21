@@ -138,14 +138,25 @@ export function validateHtml(html: string): HtmlValidation {
   return { errors, warnings, title, bytes };
 }
 
-/** As 4 mensagens do `abordagem.txt`, separadas por uma linha com `---`. */
-export function parseAbordagem(texto: string): { messages: string[]; errors: string[] } {
+/**
+ * As 4 mensagens do `abordagem.txt`, separadas por uma linha com `---`.
+ *
+ * O endereço do protótipo entra como `{{link}}` no texto: o slug só é gerado
+ * na publicação, então não há como escrevê-lo antes.
+ */
+export function parseAbordagem(texto: string): {
+  messages: string[];
+  errors: string[];
+  warnings: string[];
+} {
   const messages = texto
     .split(/^\s*---\s*$/m)
     .map((bloco) => bloco.trim())
     .filter(Boolean);
 
   const errors: string[] = [];
+  const warnings: string[] = [];
+
   if (messages.length !== 4) {
     errors.push(
       `Esperava 4 mensagens separadas por uma linha com "---", encontrei ${messages.length}.`,
@@ -154,5 +165,18 @@ export function parseAbordagem(texto: string): { messages: string[]; errors: str
   const longa = messages.findIndex((m) => m.length > 900);
   if (longa >= 0) errors.push(`A mensagem ${longa + 1} tem mais de 900 caracteres.`);
 
-  return { messages, errors };
+  if (messages.length > 0 && !messages[0].includes("{{link}}")) {
+    warnings.push(
+      "A primeira mensagem não tem o marcador {{link}}. O endereço do protótipo " +
+        "vai ser colado no fim dela — se preferir no meio da frase, escreva {{link}} onde quiser.",
+    );
+  }
+  const foraDoPrimeiro = messages.slice(1).findIndex((m) => m.includes("{{link}}"));
+  if (foraDoPrimeiro >= 0) {
+    warnings.push(
+      `A mensagem ${foraDoPrimeiro + 2} também repete o link. Repetir em todo toque soa automatizado.`,
+    );
+  }
+
+  return { messages, errors, warnings };
 }
