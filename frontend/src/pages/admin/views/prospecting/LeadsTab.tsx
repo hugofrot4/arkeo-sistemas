@@ -265,6 +265,7 @@ function LeadDetail({
 }) {
   const [findings, setFindings] = useState<Finding[] | null>(null);
   const [closing, setClosing] = useState(false);
+  const naoAuditado = lead.segment === "nao_auditado";
 
   useEffect(() => {
     getLeadAudit(lead.id)
@@ -332,12 +333,15 @@ function LeadDetail({
       )}
 
       <div className="flex flex-wrap items-center gap-2">
+        {/* Sem auditoria dá para gerar assim mesmo: o protótipo sai igual, só a
+            mensagem de abordagem fica com menos argumento concreto. Bloquear
+            deixava o lead preso, porque a auditoria depende do worker rodar. */}
         <button
           onClick={onGenerate}
-          disabled={busy || lead.segment === "nao_auditado"}
+          disabled={busy}
           title={
-            lead.segment === "nao_auditado"
-              ? "A auditoria precisa rodar antes — é ela que dá os argumentos da mensagem."
+            naoAuditado
+              ? "Dá para gerar, mas a auditoria ainda não rodou — a abordagem sai com menos argumento. Rode \"Processar fila\" na aba Operação."
               : undefined
           }
           className="bg-accent inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
@@ -345,6 +349,12 @@ function LeadDetail({
           <Wand2 size={15} aria-hidden />
           Gerar protótipo
         </button>
+
+        {naoAuditado && (
+          <span className="text-warning text-xs">
+            sem auditoria — a abordagem sai mais fraca
+          </span>
+        )}
 
         <button
           onClick={onEdit}

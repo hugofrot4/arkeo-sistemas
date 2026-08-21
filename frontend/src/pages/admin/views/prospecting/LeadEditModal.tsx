@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Info, X } from "lucide-react";
 import { useAdmin } from "../../context";
-import { updateLead, type Lead } from "../../../../lib/prospecting";
+import { requestReaudit, updateLead, type Lead } from "../../../../lib/prospecting";
 import { formatarTelefoneBr, parseTelefoneBr } from "../../../../lib/phoneBr";
 
 /**
@@ -76,8 +76,20 @@ export default function LeadEditModal({
         // A partir daqui a coleta automática não mexe mais nestes campos.
         verifiedByHuman: true,
       });
+      // Mudou o site ou a rede social? A auditoria anterior não vale mais.
+      // Enfileira sem travar o salvamento: se falhar, o botão "Reauditar" no
+      // detalhe do lead continua disponível.
+      const mudouPresenca =
+        form.website.trim() !== (lead.website ?? "") ||
+        form.socialUrl.trim() !== (lead.socialUrl ?? "");
+      if (mudouPresenca) await requestReaudit(lead.id).catch(() => {});
+
       await onSaved();
-      showToast(`${form.name.trim()} atualizado e marcado como conferido.`);
+      showToast(
+        mudouPresenca
+          ? `${form.name.trim()} atualizado. Rode "Processar fila" na aba Operação para auditar.`
+          : `${form.name.trim()} atualizado e marcado como conferido.`,
+      );
       onClose();
     } catch (err) {
       setErro(err instanceof Error ? err.message : "Falha ao salvar.");

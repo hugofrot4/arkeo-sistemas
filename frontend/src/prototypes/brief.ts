@@ -34,7 +34,8 @@ const SITUACAO: Record<string, string> = {
   site_quebrado: "Tem endereço de site, mas ele não abre.",
   site_obsoleto: "Tem site, mas desatualizado ou quebrado no celular.",
   site_ok: "Tem site em condições — caso de reformulação, não de urgência.",
-  nao_auditado: "Ainda não auditado.",
+  nao_auditado:
+    "Auditoria ainda não rodou. Trabalhe com o que houver de material e não invente achado sobre o site.",
 };
 
 export function slugFor(name: string): string {
