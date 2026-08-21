@@ -324,6 +324,19 @@ export async function updatePrototypeHtml(id: number, html: string, pageTitle: s
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Apaga o protótipo de vez.
+ *
+ * Leva junto o histórico de visitas: `prototype_views` tem cascade. Como a
+ * visita é o sinal de compra do módulo, isso costuma ser mais caro que o
+ * arquivo — quem quiser só tirar do ar deve usar `setPrototypePublished`, que
+ * preserva tudo.
+ */
+export async function deletePrototype(id: number) {
+  const { error } = await supabase.from("prototypes").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
 /** Empurra o prazo para frente, a contar de hoje. */
 export async function extendPrototype(id: number, days: number) {
   const { error } = await supabase

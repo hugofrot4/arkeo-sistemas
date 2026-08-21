@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, ClipboardCopy, Download, ExternalLink, Eye, Upload } from "lucide-react";
+import { Check, ClipboardCopy, Download, ExternalLink, Eye, Trash2, Upload } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
+  deletePrototype,
   extendPrototype,
   getPrototypeHtml,
   listPrototypes,
@@ -136,6 +137,13 @@ export default function PrototypesTab({ ttlDays }: { ttlDays: number }) {
                 `Prazo estendido por mais ${ttlDays} dias.`,
               )
             }
+            onApagar={() =>
+              run(
+                item.id,
+                () => deletePrototype(item.id),
+                `Protótipo de ${item.leadName} apagado.`,
+              )
+            }
           />
         ))}
       </ul>
@@ -157,6 +165,7 @@ function Linha({
   onTrocar,
   onPublicar,
   onEstender,
+  onApagar,
 }: {
   item: PrototypeListItem;
   busy: boolean;
@@ -167,10 +176,12 @@ function Linha({
   onTrocar: (html: string, titulo: string | null) => void;
   onPublicar: (publicado: boolean) => void;
   onEstender: () => void;
+  onApagar: () => void;
 }) {
   const { showToast } = useAdmin();
   const inputArquivo = useRef<HTMLInputElement>(null);
   const [arrastando, setArrastando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
 
   const vencido = expirou(item);
   const link = `${window.location.origin}/p/${item.slug}`;
@@ -296,14 +307,75 @@ function Linha({
           {busy ? "Enviando…" : "Trocar arquivo"}
         </button>
 
-        <button
-          onClick={() => onPublicar(!item.published)}
-          disabled={busy}
-          className="text-text-muted hover:text-text ml-auto px-2 py-2 text-sm disabled:opacity-40"
-        >
-          {item.published ? "Tirar do ar" : "Colocar no ar"}
-        </button>
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => onPublicar(!item.published)}
+            disabled={busy}
+            title="Derruba o link sem apagar nada. Dá para voltar atrás."
+            className="text-text-muted hover:text-text px-2 py-2 text-sm disabled:opacity-40"
+          >
+            {item.published ? "Tirar do ar" : "Colocar no ar"}
+          </button>
+          <button
+            onClick={() => setConfirmando(!confirmando)}
+            disabled={busy}
+            aria-expanded={confirmando}
+            title="Apaga o arquivo e o histórico de visitas. Não dá para desfazer."
+            className="text-text-muted hover:text-danger inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-40"
+          >
+            <Trash2 size={14} aria-hidden />
+            Apagar
+          </button>
+        </div>
       </div>
+
+      {confirmando && (
+        <div className="border-danger/30 bg-danger/6 mt-3 rounded-lg border p-3">
+          <p className="mb-2 text-sm font-semibold">
+            Apagar o protótipo de {item.leadName}?
+          </p>
+          <ul className="text-text-muted mb-3 space-y-1 text-xs">
+            <li>· O arquivo some. Se não baixou, não tem como recuperar.</li>
+            {item.views > 0 && (
+              <li className="text-danger">
+                · As {item.views} visita{item.views > 1 ? "s" : ""} registrada
+                {item.views > 1 ? "s" : ""} também são apagadas — é o sinal de que
+                o prospect abriu a página.
+              </li>
+            )}
+            {item.published && !vencido && (
+              <li>· O link para de funcionar, inclusive na mensagem já enviada.</li>
+            )}
+          </ul>
+          <p className="text-text-muted mb-3 text-xs">
+            Só quer derrubar o link? Use <strong>Tirar do ar</strong> — preserva
+            tudo e dá para voltar atrás.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={onBaixar}
+              disabled={busy}
+              className="border-border hover:bg-surface-hover inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs disabled:opacity-40"
+            >
+              <Download size={13} aria-hidden />
+              Baixar antes
+            </button>
+            <button
+              onClick={onApagar}
+              disabled={busy}
+              className="bg-danger rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              {busy ? "Apagando…" : "Apagar mesmo assim"}
+            </button>
+            <button
+              onClick={() => setConfirmando(false)}
+              className="text-text-muted hover:text-text px-2 py-1.5 text-xs"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
     </li>
   );
 }
