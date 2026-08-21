@@ -545,6 +545,40 @@ export async function getPipelineCounts(): Promise<PipelineCounts[]> {
   return results;
 }
 
+export interface CoberturaContato {
+  comWhatsapp: number;
+  comEmail: number;
+  comAmbos: number;
+  semNada: number;
+}
+
+/**
+ * Por onde dá para falar com os leads vivos.
+ *
+ * Existe porque a escolha de canal depende disto e não havia como ver: com o
+ * WhatsApp restringindo os envios, saber quantos leads têm e-mail é o que
+ * define se o e-mail substitui o canal ou só complementa.
+ */
+export async function getCoberturaContato(): Promise<CoberturaContato> {
+  const res = await supabase
+    .from("leads")
+    .select("phone_e164, email")
+    .not("stage", "in", "(ganho,perdido)")
+    .limit(5000);
+  const leads = unwrap<{ phone_e164: string | null; email: string | null }[]>(res);
+
+  let comWhatsapp = 0, comEmail = 0, comAmbos = 0, semNada = 0;
+  for (const l of leads) {
+    const tel = !!l.phone_e164;
+    const mail = !!l.email;
+    if (tel) comWhatsapp++;
+    if (mail) comEmail++;
+    if (tel && mail) comAmbos++;
+    if (!tel && !mail) semNada++;
+  }
+  return { comWhatsapp, comEmail, comAmbos, semNada };
+}
+
 export interface CoberturaPrototipos {
   /** Auditados e sem protótipo: o conjunto realmente pronto para gerar. */
   prontosParaGerar: number;

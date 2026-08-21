@@ -38,6 +38,9 @@ export default function TodayTab({
   const semPrototipo = data.cobertura.semPrototipo;
   const comPrototipo = data.cobertura.comPrototipo;
 
+  const contato = data.contato;
+  const alcancaveis = contato.comWhatsapp + contato.comEmail - contato.comAmbos;
+
   const jobsPendentes = data.jobs
     .filter((j) => j.status === "pending" || j.status === "running")
     .reduce((soma, j) => soma + j.count, 0);
@@ -186,6 +189,13 @@ export default function TodayTab({
         </ul>
       )}
 
+      {contato.semNada > 0 && alcancaveis > 0 && contato.semNada / (alcancaveis + contato.semNada) > 0.25 && (
+        <p className="border-warning/25 bg-warning/6 text-warning rounded-lg border px-4 py-3 text-sm">
+          {contato.semNada} leads não têm telefone nem e-mail — não há como abordá-los.
+          Preencher o contato à mão em Leads → Editar é o que os traz de volta.
+        </p>
+      )}
+
       {jobsFalhos > 0 && (
         <p className="border-danger/25 bg-danger/6 text-danger rounded-lg border px-4 py-3 text-sm">
           {jobsFalhos} lead(s) falharam no processamento depois de várias tentativas.
@@ -193,10 +203,21 @@ export default function TodayTab({
         </p>
       )}
 
-      {/* Números de acompanhamento, no rodapé e em uma linha: são contexto, não
-          tarefa. Antes ocupavam uma aba inteira em forma de gráfico e não
-          levavam a nenhuma ação. */}
-      <p className="text-text-muted border-border border-t pt-4 text-xs">
+      {/* Por onde dá para falar com eles. Passou a importar quando o WhatsApp
+          começou a restringir os envios: é este número que diz se o e-mail
+          substitui o canal ou só complementa. */}
+      <p className="text-text-muted border-border mt-1 border-t pt-4 text-xs">
+        <strong className="text-text">Contato:</strong> {contato.comWhatsapp} com
+        telefone · {contato.comEmail} com e-mail · {contato.comAmbos} com os dois
+        {contato.semNada > 0 && ` · ${contato.semNada} sem nenhum`}
+        {contato.comEmail === 0
+          ? " — nenhum lead tem e-mail ainda, então o canal não está disponível"
+          : contato.comAmbos > 0
+            ? " — nos que têm os dois, alterne: WhatsApp pede permissão, e-mail chega a quem decide"
+            : ""}
+      </p>
+
+      <p className="text-text-muted text-xs">
         {totalLeads} leads na base · {comPrototipo} com protótipo publicado ·{" "}
         {semPrototipo} sem ({prontos} já auditados) · {ganhos} ganhos ·{" "}
         {data.grid.totalTasks - data.grid.pendingTasks} de {data.grid.totalTasks} buscas
