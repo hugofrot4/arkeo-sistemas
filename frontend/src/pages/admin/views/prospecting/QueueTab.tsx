@@ -294,9 +294,17 @@ function WhatsAppDoLead({
         verifiedByHuman: true,
       });
       await onSalvo();
+      // Fechar e destravar à mão: o card não remonta depois do refresh, porque
+      // a chave da lista é o id do toque e ele não muda. Contar com a
+      // remontagem deixava o botão preso em "Salvando…" para sempre.
+      setEditando(false);
+      // Trocar o número invalida a conversa que estava aberta: confirmar ali
+      // registraria um envio para o número antigo.
+      setConversaAberta(false);
       showToast(`WhatsApp de ${item.lead.name} salvo.`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Falha ao salvar o número.");
+    } finally {
       setSalvando(false);
     }
   }
