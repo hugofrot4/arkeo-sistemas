@@ -243,7 +243,36 @@ export async function setPrototypePublished(id: number, published: boolean) {
     .eq("id", id)
     .select(PROTOTYPE_META_SELECT)
     .single();
-  return unwrap<PrototypeRecord>(res);
+  const registro = unwrap<PrototypeRecord>(res);
+  await sincronizarEstagio(registro.leadId);
+  return registro;
+}
+
+/**
+ * Alinha o estágio do lead com a existência de protótipo publicado.
+ *
+ * Sem isto o lead segue marcado como "protótipo pronto" depois que o protótipo
+ * é apagado ou tirado do ar — as duas fontes discordam, e quem lê o painel vê
+ * um lead que diz ter protótipo aparecendo na lista de quem precisa de um.
+ *
+ * Só regride quem está exatamente em `prototipo_pronto`: lead já contatado
+ * teve o protótipo enviado de fato, e voltá-lo apagaria história real.
+ */
+async function sincronizarEstagio(leadId: number) {
+  const { count, error } = await supabase
+    .from("prototypes")
+    .select("id", { count: "exact", head: true })
+    .eq("lead_id", leadId)
+    .eq("published", true);
+  if (error) throw new Error(error.message);
+  if ((count ?? 0) > 0) return;
+
+  const { error: stageError } = await supabase
+    .from("leads")
+    .update({ stage: "qualificado" })
+    .eq("id", leadId)
+    .eq("stage", "prototipo_pronto");
+  if (stageError) throw new Error(stageError.message);
 }
 
 export interface PrototypeListItem {
@@ -333,8 +362,14 @@ export async function updatePrototypeHtml(id: number, html: string, pageTitle: s
  * preserva tudo.
  */
 export async function deletePrototype(id: number) {
+  // Guarda o lead antes: depois do delete não há de onde tirar.
+  const alvo = await supabase.from("prototypes").select("lead_id").eq("id", id).single();
+  const leadId = unwrap<{ lead_id: number }>(alvo).lead_id;
+
   const { error } = await supabase.from("prototypes").delete().eq("id", id);
   if (error) throw new Error(error.message);
+
+  await sincronizarEstagio(leadId);
 }
 
 /** Empurra o prazo para frente, a contar de hoje. */
