@@ -230,7 +230,9 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] O ganho está dito em termos do negócio dele, não em termos técnicos
 - [ ] Está claro que o link é uma página funcionando, não um desenho
 - [ ] A gratuidade tem um motivo declarado
-- [ ] A mensagem 1 tem `{{link}}` e termina com **uma** pergunta de sim ou não
+- [ ] `{{link}}` no toque **1 se o canal é e-mail**, no toque **2 se é WhatsApp**
+- [ ] Canal WhatsApp: o toque 1 pede permissão em três linhas, sem link
+- [ ] A mensagem 1 termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] Cada bloco abre com `Assunto:`, até 55 caracteres, diferente dos outros
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
