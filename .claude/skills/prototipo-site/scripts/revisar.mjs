@@ -123,20 +123,42 @@ const auditoria = ({ MIN_FONT, MIN_TOQUE }) => {
   }
 
   // ── cards de alturas diferentes na mesma grade ───────────────────────
+  // Duas ressalvas, sem as quais isto vira ruído:
+  //   • layout de duas colunas assimétricas (rótulo à esquerda, conteúdo à
+  //     direita) é assimétrico DE PROPÓSITO — só interessa quando as colunas
+  //     têm a mesma largura, ou seja, quando é de fato uma fileira de cards;
+  //   • base irregular só incomoda quando há borda visível. Blocos de texto
+  //     sem caixa podem ter alturas diferentes à vontade.
+  const temCaixa = (el) => {
+    const s = getComputedStyle(el);
+    const pai = el.parentElement ? getComputedStyle(el.parentElement).backgroundColor : "";
+    const fundoProprio = s.backgroundColor !== "rgba(0, 0, 0, 0)" && s.backgroundColor !== pai;
+    const borda = parseFloat(s.borderTopWidth) > 0 || parseFloat(s.borderLeftWidth) > 0;
+    return fundoProprio || borda || s.boxShadow !== "none";
+  };
+
   for (const grade of document.querySelectorAll("*")) {
     const s = getComputedStyle(grade);
     if (s.display !== "grid" && s.display !== "flex") continue;
-    if (s.display === "flex" && s.flexWrap === "nowrap" && s.flexDirection.startsWith("column")) continue;
+    if (s.display === "flex" && s.flexDirection.startsWith("column")) continue;
+
     const filhos = [...grade.children].filter(visivel);
     if (filhos.length < 2) continue;
-    const alturas = filhos.map((f) => Math.round(f.getBoundingClientRect().height));
-    const topos = new Set(filhos.map((f) => Math.round(f.getBoundingClientRect().top)));
-    // Só interessa quando estão lado a lado: empilhado no mobile é normal ter alturas diferentes.
-    if (topos.size > 1) continue;
+
+    const caixas = filhos.map((f) => f.getBoundingClientRect());
+    // Só quando estão lado a lado: empilhado no mobile é normal variar.
+    if (new Set(caixas.map((r) => Math.round(r.top))).size > 1) continue;
+
+    const larguras = caixas.map((r) => r.width);
+    const larguraMin = Math.min(...larguras), larguraMax = Math.max(...larguras);
+    if (larguraMax - larguraMin > larguraMax * 0.12) continue;   // colunas desiguais = layout, não cards
+    if (!filhos.every(temCaixa)) continue;                        // sem borda visível, ninguém repara
+
+    const alturas = caixas.map((r) => Math.round(r.height));
     const min = Math.min(...alturas), max = Math.max(...alturas);
     if (max - min > 12) {
       anota("erro", "cards-irregulares", seletor(grade),
-        `Itens lado a lado com alturas de ${min}px a ${max}px — as bases não fecham. ` +
+        `Cards lado a lado com alturas de ${min}px a ${max}px — as bases não fecham. ` +
         `Use align-items: stretch e empurre o rodapé do card com margin-top: auto.`);
     }
   }
