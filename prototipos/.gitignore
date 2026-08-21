@@ -1,0 +1,5 @@
+# Protótipos são trabalho descartável por lead: dezenas de arquivos por mês,
+# e a versão que vale fica no banco depois do upload. Mantém só a pasta.
+*
+!.gitignore
+!README.md

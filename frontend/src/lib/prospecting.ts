@@ -7,7 +7,6 @@
  */
 
 import { supabase } from "./supabase";
-import type { PrototypeCopy } from "../prototypes/types";
 
 export type LeadSegment =
   | "nao_auditado"
@@ -205,15 +204,19 @@ export interface PrototypeRecord {
   id: number;
   leadId: number;
   slug: string;
-  template: string;
-  content: unknown;
+  html: string | null;
+  pageTitle: string | null;
   published: boolean;
   expiresAt: string | null;
   createdAt: string;
 }
 
 const PROTOTYPE_SELECT =
-  "id,leadId:lead_id,slug,template,content,published,expiresAt:expires_at,createdAt:created_at";
+  "id,leadId:lead_id,slug,html,pageTitle:page_title,published,expiresAt:expires_at,createdAt:created_at";
+
+/** Listagem do admin: sem o HTML, que pesa centenas de KB por linha. */
+const PROTOTYPE_META_SELECT =
+  "id,leadId:lead_id,slug,pageTitle:page_title,published,expiresAt:expires_at,createdAt:created_at";
 
 /** Leitura pública — é o link que o prospect abre, sem login. */
 export async function getPrototypeBySlug(slug: string) {
@@ -238,7 +241,7 @@ export async function recordPrototypeView(prototypeId: number) {
 export async function getPrototypeForLead(leadId: number) {
   const res = await supabase
     .from("prototypes")
-    .select(PROTOTYPE_SELECT)
+    .select(PROTOTYPE_META_SELECT)
     .eq("lead_id", leadId)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -251,7 +254,7 @@ export async function setPrototypePublished(id: number, published: boolean) {
     .from("prototypes")
     .update({ published })
     .eq("id", id)
-    .select(PROTOTYPE_SELECT)
+    .select(PROTOTYPE_META_SELECT)
     .single();
   return unwrap<PrototypeRecord>(res);
 }
@@ -682,31 +685,17 @@ function slugify(name: string): string {
 }
 
 /**
- * Publica o protótipo a partir do conteúdo escrito no Claude Code.
+ * Publica o protótipo enviado por upload.
  *
- * `facts` é montado aqui, do lead que veio do banco — o conteúdo colado nunca
- * fornece nota, telefone ou endereço. É o que garante que um erro na geração
- * não vire dado falso sobre o negócio na página.
+ * O HTML é o site do cliente inteiro, autoral, escrito no Claude Code com a
+ * skill `prototipo-site`. O sistema não monta mais nada da página — só guarda,
+ * serve em /p/:slug dentro de um iframe isolado e agenda a abordagem.
  */
 export async function publishPrototype(
   lead: Lead,
-  copy: PrototypeCopy,
+  upload: { html: string; pageTitle: string | null; messages: string[] },
   options: { ttlDays: number },
 ) {
-  const content = {
-    ...copy,
-    facts: {
-      name: lead.name,
-      niche: lead.niche,
-      address: lead.address,
-      neighborhood: lead.neighborhood,
-      phoneDisplay: lead.phone,
-      whatsapp: lead.whatsappValid && lead.phoneE164 ? lead.phoneE164.replace(/\D/g, "") : null,
-      rating: lead.rating,
-      reviewCount: lead.userRatingCount,
-    },
-  };
-
   // O link antigo precisa parar de responder quando um novo entra: o índice
   // parcial no banco só admite um publicado por lead.
   const { error: unpublishError } = await supabase
@@ -728,11 +717,10 @@ export async function publishPrototype(
       .insert({
         lead_id: lead.id,
         slug,
-        template: copy.template,
-        content,
+        html: upload.html,
+        page_title: upload.pageTitle,
         published: true,
         expires_at: expiresAt,
-        model: "claude-code",
       })
       .select("id")
       .single();
@@ -747,7 +735,7 @@ export async function publishPrototype(
   const link = `${window.location.origin}/p/${slug}`;
   const today = Date.now();
   // O link entra só no primeiro toque: repetir em todos soa automatizado.
-  const bodies = [`${copy.outreach.opener}\n\n${link}`, ...copy.outreach.followups];
+  const bodies = upload.messages.map((body, i) => (i === 0 ? `${body}\n\n${link}` : body));
 
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
     bodies.map((body, i) => ({

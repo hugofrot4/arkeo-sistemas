@@ -12,8 +12,6 @@ import {
   type LeadSegment,
   type LeadStage,
 } from "../../../../lib/prospecting";
-import { MAX_BATCH } from "../../../../prototypes/prompt";
-import { templateForNiche } from "../../../../prototypes/playbooks";
 import GenerateModal from "./GenerateModal";
 import { LOST_REASONS, SEGMENT_META, STAGE_META, nicheLabel } from "./meta";
 import { Badge, ScoreDot } from "./ui";
@@ -56,8 +54,7 @@ export default function LeadsTab({
   const [includeClosed, setIncludeClosed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number[]>([]);
-  const [generating, setGenerating] = useState<Lead[] | null>(null);
+  const [generating, setGenerating] = useState<Lead | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -84,22 +81,6 @@ export default function LeadsTab({
     const timer = setTimeout(() => void load(), search ? 350 : 0);
     return () => clearTimeout(timer);
   }, [load, search]);
-
-  const selectedLeads = leads.filter((l) => selected.includes(l.id));
-  // Um prompt carrega um playbook só: misturar templates dilui a orientação e
-  // a copy sai genérica.
-  const mixedTemplates =
-    new Set(selectedLeads.map((l) => templateForNiche(l.niche))).size > 1;
-
-  function toggle(lead: Lead) {
-    setSelected((current) =>
-      current.includes(lead.id)
-        ? current.filter((id) => id !== lead.id)
-        : current.length >= MAX_BATCH
-          ? current
-          : [...current, lead.id],
-    );
-  }
 
   return (
     <div className="space-y-5">
@@ -149,33 +130,6 @@ export default function LeadsTab({
         </label>
       </div>
 
-      {selectedLeads.length > 0 && (
-        <div className="border-accent/30 bg-accent/8 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3">
-          <span className="text-sm font-medium">
-            {selectedLeads.length} selecionado{selectedLeads.length > 1 ? "s" : ""}
-            {selectedLeads.length >= MAX_BATCH && ` (máximo ${MAX_BATCH})`}
-          </span>
-          {mixedTemplates && (
-            <span className="text-warning text-sm">
-              Templates diferentes — selecione ramos parecidos.
-            </span>
-          )}
-          <button
-            onClick={() => setGenerating(selectedLeads)}
-            disabled={mixedTemplates}
-            className="bg-accent ml-auto rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-          >
-            Gerar {selectedLeads.length} protótipo{selectedLeads.length > 1 ? "s" : ""}
-          </button>
-          <button
-            onClick={() => setSelected([])}
-            className="text-text-muted hover:text-text text-sm"
-          >
-            Limpar
-          </button>
-        </div>
-      )}
-
       {loading ? (
         <p className="text-text-muted py-8 text-center text-sm">Carregando…</p>
       ) : leads.length === 0 ? (
@@ -189,10 +143,8 @@ export default function LeadsTab({
               key={lead.id}
               lead={lead}
               expanded={expanded === lead.id}
-              selected={selected.includes(lead.id)}
-              onSelect={() => toggle(lead)}
               onToggle={() => setExpanded(expanded === lead.id ? null : lead.id)}
-              onGenerate={() => setGenerating([lead])}
+              onGenerate={() => setGenerating(lead)}
               onChanged={async () => {
                 await load();
                 await onChanged();
@@ -204,12 +156,11 @@ export default function LeadsTab({
 
       {generating && (
         <GenerateModal
-          leads={generating}
+          lead={generating}
           cityName={cityName}
           ttlDays={ttlDays}
           onClose={() => setGenerating(null)}
           onPublished={async () => {
-            setSelected([]);
             await load();
             await onChanged();
           }}
@@ -222,16 +173,12 @@ export default function LeadsTab({
 function LeadRow({
   lead,
   expanded,
-  selected,
-  onSelect,
   onToggle,
   onGenerate,
   onChanged,
 }: {
   lead: Lead;
   expanded: boolean;
-  selected: boolean;
-  onSelect: () => void;
   onToggle: () => void;
   onGenerate: () => void;
   onChanged: () => Promise<void>;
@@ -254,23 +201,11 @@ function LeadRow({
     }
   }
 
-  const canGenerate = lead.segment !== "nao_auditado";
-
   return (
-    <li className="border-border bg-surface flex items-center gap-2 rounded-xl border pl-3">
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={onSelect}
-        disabled={!canGenerate}
-        aria-label={`Selecionar ${lead.name} para gerar protótipo`}
-        title={canGenerate ? undefined : "Precisa da auditoria antes."}
-        className="h-4 w-4 shrink-0 disabled:opacity-30"
-      />
-      <div className="min-w-0 flex-1">
+    <li className="border-border bg-surface rounded-xl border">
       <button
         onClick={onToggle}
-        className="hover:bg-surface-hover flex w-full flex-wrap items-center gap-3 rounded-xl px-2 py-3 text-left"
+        className="hover:bg-surface-hover flex w-full flex-wrap items-center gap-3 rounded-xl px-4 py-3 text-left"
         aria-expanded={expanded}
       >
         <ScoreDot score={lead.score} />
@@ -289,7 +224,6 @@ function LeadRow({
       {expanded && (
         <LeadDetail lead={lead} busy={busy} run={run} onGenerate={onGenerate} />
       )}
-      </div>
     </li>
   );
 }

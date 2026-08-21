@@ -1,207 +1,158 @@
 /**
- * Validação do JSON colado de volta do Claude Code.
+ * Conferência do index.html enviado antes de publicar.
  *
- * Escrito à mão, sem biblioteca de schema, por dois motivos: as mensagens
- * saem em português apontando o campo exato ("services.items precisa de 3 a 6
- * itens, veio 2"), que é o que se lê às pressas ao colar; e o mesmo código
- * guarda a página pública em /p/:slug, onde um conteúdo malformado apareceria
- * quebrado na frente do prospect.
+ * A página é servida dentro de um iframe isolado (origem opaca, sem
+ * `allow-same-origin`), então parte das regras não é preferência de estilo —
+ * é o que funciona ou não no destino. Recurso externo não carrega,
+ * `localStorage` lança exceção, e `<form>` não submete.
+ *
+ * Separado em erro e aviso de propósito: como agora o conteúdo pode ser
+ * reaproveitado do site atual do próprio negócio, um preço na página pode ser
+ * legítimo. Quem decide isso é você, que já viu o protótipo no navegador —
+ * o aviso serve para você olhar de novo, não para barrar.
  */
 
-import { TEMPLATE_IDS } from "./types";
-import type { PrototypeContent, PrototypeCopy, TemplateId } from "./types";
+/** O banco recusa acima disto; a skill mira em 400 KB. */
+const MAX_BYTES = 800_000;
+const ALERTA_BYTES = 400_000;
 
-type Check = (value: unknown, path: string, errors: string[]) => void;
+const HOSTS_PERMITIDOS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
-const HEX = /^#[0-9a-fA-F]{6}$/;
-
-function str(max: number, min = 1): Check {
-  return (value, path, errors) => {
-    if (typeof value !== "string") {
-      errors.push(`${path}: precisa ser texto.`);
-      return;
-    }
-    const trimmed = value.trim();
-    if (trimmed.length < min) errors.push(`${path}: está vazio.`);
-    // Limite de caractere não é capricho: o template quebra o layout se o
-    // título ocupar três linhas onde cabia uma.
-    else if (trimmed.length > max) {
-      errors.push(`${path}: ${trimmed.length} caracteres, o limite é ${max}.`);
-    }
-  };
+export interface HtmlValidation {
+  errors: string[];
+  warnings: string[];
+  title: string | null;
+  bytes: number;
 }
 
-const hex: Check = (value, path, errors) => {
-  if (typeof value !== "string" || !HEX.test(value)) {
-    errors.push(`${path}: precisa ser cor em hex no formato #RRGGBB (veio ${JSON.stringify(value)}).`);
+function subrecursosExternos(html: string): string[] {
+  const encontrados = new Set<string>();
+  // Só subrecursos: link para Instagram ou wa.me é normal e não quebra nada.
+  const padroes = [
+    /<script[^>]+src=["'](https?:\/\/[^"']+)["']/gi,
+    /<link[^>]+rel=["']stylesheet["'][^>]*href=["'](https?:\/\/[^"']+)["']/gi,
+    /<link[^>]+href=["'](https?:\/\/[^"']+)["'][^>]*rel=["']stylesheet["']/gi,
+  ];
+  for (const padrao of padroes) {
+    for (const match of html.matchAll(padrao)) {
+      try {
+        const host = new URL(match[1]).hostname.replace(/^www\./, "");
+        if (!HOSTS_PERMITIDOS.includes(host)) encontrados.add(host);
+      } catch {
+        encontrados.add(match[1].slice(0, 60));
+      }
+    }
   }
-};
-
-function obj(shape: Record<string, Check>): Check {
-  return (value, path, errors) => {
-    if (!value || typeof value !== "object" || Array.isArray(value)) {
-      errors.push(`${path}: faltou ou não é um objeto.`);
-      return;
-    }
-    const record = value as Record<string, unknown>;
-    for (const [key, check] of Object.entries(shape)) {
-      check(record[key], path ? `${path}.${key}` : key, errors);
-    }
-  };
+  return [...encontrados];
 }
 
-function arr(min: number, max: number, item: Check): Check {
-  return (value, path, errors) => {
-    if (!Array.isArray(value)) {
-      errors.push(`${path}: precisa ser uma lista.`);
-      return;
+function imagensExternas(html: string): string[] {
+  const hosts = new Set<string>();
+  for (const match of html.matchAll(/<img[^>]+src=["'](https?:\/\/[^"']+)["']/gi)) {
+    try {
+      hosts.add(new URL(match[1]).hostname.replace(/^www\./, ""));
+    } catch {
+      /* URL inválida cai no erro de subrecurso, se for o caso */
     }
-    if (value.length < min || value.length > max) {
-      const range = min === max ? `${min}` : `de ${min} a ${max}`;
-      errors.push(`${path}: precisa ${min === max ? "de " : ""}${range} itens, veio ${value.length}.`);
-      return;
-    }
-    value.forEach((entry, i) => item(entry, `${path}[${i}]`, errors));
-  };
-}
-
-const oneOf = (options: readonly string[]): Check => (value, path, errors) => {
-  if (typeof value !== "string" || !options.includes(value)) {
-    errors.push(`${path}: precisa ser um de ${options.join(", ")} (veio ${JSON.stringify(value)}).`);
   }
-};
+  return [...hosts];
+}
 
-const COPY_SHAPE: Record<string, Check> = {
-  template: oneOf(TEMPLATE_IDS),
-  palette: obj({ primary: hex, accent: hex, surface: hex, ink: hex }),
-  tagline: str(60),
-  hero: obj({ headline: str(90), subheadline: str(220), ctaPrimary: str(30) }),
-  services: obj({
-    title: str(80),
-    items: arr(3, 6, obj({ name: str(60), description: str(200) })),
-  }),
-  about: obj({ title: str(80), body: str(700) }),
-  proof: obj({ title: str(80), note: str(400) }),
-  faq: obj({ title: str(80), items: arr(3, 5, obj({ q: str(120), a: str(420) })) }),
-  location: obj({ title: str(80), note: str(300) }),
-  seo: obj({ title: str(65), description: str(160) }),
-  placeholders: arr(2, 6, str(60)),
-  diagnosis: obj({ headline: str(120), points: arr(2, 4, str(220)) }),
-  outreach: obj({ opener: str(420), followups: arr(3, 3, str(420)) }),
-};
-
-const checkCopy = obj(COPY_SHAPE);
-
-/**
- * Rede de segurança contra invenção, do mesmo jeito que rodava no servidor.
- * O prompt já proíbe, mas instrução em linguagem natural falha de vez em
- * quando e isto aqui é determinístico.
- */
-const FORBIDDEN: [RegExp, string][] = [
+/** Padrões que costumam indicar dado inventado. Aviso, não bloqueio. */
+const SUSPEITAS: [RegExp, string][] = [
   [/R\$\s?\d/, "preço em reais"],
   [/\b\d{1,3}\s*(anos|décadas)\s+(de\s+)?(experiência|mercado|atuação|tradição)/i, "tempo de mercado"],
   [/\bdesde\s+(19|20)\d{2}\b/i, "ano de fundação"],
-  [/\b(mais de|\+)\s*\d{2,}\s*(clientes|pacientes|atendimentos|casos|obras|projetos)/i, "quantidade de clientes"],
-  [/\b(prêmio|premiad[ao]|certificad[ao])\b/i, "prêmio ou certificação"],
-  [/\b(garantimos|garantia de resultado|resultado garantido)\b/i, "promessa de resultado"],
+  [/\b(mais de|\+)\s*\d{2,}\s*(clientes|pacientes|atendimentos|casos)/i, "quantidade de clientes"],
+  [/\b(garantimos|resultado garantido|garantia de resultado)\b/i, "promessa de resultado"],
   [/\bantes e depois\b/i, "antes e depois"],
+  [/lorem ipsum/i, "lorem ipsum"],
 ];
 
-export function findFabrications(copy: unknown): string[] {
-  const haystack = JSON.stringify(copy);
-  return FORBIDDEN.filter(([pattern]) => pattern.test(haystack)).map(([, label]) => label);
-}
-
-export interface CopyValidation {
-  copy: PrototypeCopy | null;
-  errors: string[];
-}
-
-export function validateCopy(value: unknown, label = "conteúdo"): CopyValidation {
+export function validateHtml(html: string): HtmlValidation {
   const errors: string[] = [];
-  checkCopy(value, "", errors);
+  const warnings: string[] = [];
+  const bytes = new TextEncoder().encode(html).length;
 
-  // Roda sempre, mesmo com erro de estrutura: um campo faltando é chateação,
-  // um dado inventado sobre a empresa da pessoa é o que encerra a conversa.
-  // Deixar o segundo escondido atrás do primeiro seria o pior dos dois.
-  const fabrications = findFabrications(value);
-  if (fabrications.length > 0) {
-    errors.unshift(
-      `${label}: o texto inventou ${fabrications.join(", ")}. ` +
-        "Peça para reescrever sem isso — o dono do negócio vai reconhecer o dado falso.",
+  if (!html.trim()) {
+    return { errors: ["O arquivo está vazio."], warnings, title: null, bytes: 0 };
+  }
+  if (bytes > MAX_BYTES) {
+    errors.push(
+      `O arquivo tem ${Math.round(bytes / 1024)} KB e o limite é ${MAX_BYTES / 1024} KB. ` +
+        "Quase sempre é uma imagem em data: URI grande demais.",
+    );
+  } else if (bytes > ALERTA_BYTES) {
+    warnings.push(
+      `${Math.round(bytes / 1024)} KB — acima dos 400 KB recomendados. Vai demorar a abrir no celular.`,
     );
   }
 
-  return { copy: errors.length === 0 ? (value as PrototypeCopy) : null, errors };
-}
+  if (!/<html[\s>]/i.test(html) || !/<body[\s>]/i.test(html)) {
+    errors.push("Não parece um HTML completo: faltou <html> ou <body>.");
+  }
+  if (!/<meta[^>]+name=["']viewport["']/i.test(html)) {
+    errors.push("Falta a meta viewport — a página abriria em versão de computador no celular.");
+  }
 
-/**
- * Extrai o JSON da resposta. Aceita bloco cercado com ```json, bloco sem
- * linguagem, ou JSON puro — o modelo varia e não vale forçar o operador a
- * limpar o texto na mão.
- */
-export function extractJson(text: string): unknown {
-  const trimmed = text.trim();
-  if (!trimmed) throw new Error("Cole a resposta do Claude Code aqui.");
-
-  const fenced = trimmed.match(/```(?:json)?\s*\n([\s\S]*?)```/);
-  const candidate = (fenced?.[1] ?? trimmed).trim();
-
-  try {
-    return JSON.parse(candidate);
-  } catch {
-    throw new Error(
-      "Não consegui ler o JSON. Cole a resposta inteira, incluindo o bloco ```json.",
+  const externos = subrecursosExternos(html);
+  if (externos.length > 0) {
+    errors.push(
+      `Carrega recurso externo de ${externos.join(", ")}. Dentro do iframe isso não carrega ` +
+        "e a página quebra. Só Google Fonts é permitido — o resto tem que estar embutido.",
     );
   }
-}
 
-export interface ParsedResponse {
-  copies: PrototypeCopy[];
-  errors: string[];
-}
-
-/** Aceita um objeto ou um array — o prompt em lote devolve array. */
-export function parseCopyResponse(text: string, expected: number): ParsedResponse {
-  const parsed = extractJson(text);
-  const list = Array.isArray(parsed) ? parsed : [parsed];
-
-  if (list.length !== expected) {
-    return {
-      copies: [],
-      errors: [
-        `Vieram ${list.length} resultado(s) e eram esperados ${expected}. ` +
-          "Confira se a resposta está completa.",
-      ],
-    };
+  if (/\b(localStorage|sessionStorage)\b/.test(html)) {
+    errors.push(
+      "Usa localStorage ou sessionStorage. No iframe isolado o acesso lança exceção e o script para.",
+    );
+  }
+  if (/<form[^>]+action=/i.test(html)) {
+    errors.push("Tem um <form> que submete. O envio é bloqueado no iframe — o CTA precisa ser um link wa.me.");
   }
 
-  const copies: PrototypeCopy[] = [];
-  const errors: string[] = [];
-  list.forEach((entry, i) => {
-    const label = expected > 1 ? `Negócio ${i + 1}` : "Conteúdo";
-    const result = validateCopy(entry, label);
-    if (result.copy) copies.push(result.copy);
-    else errors.push(...result.errors.map((e) => (e.startsWith(label) ? e : `${label} — ${e}`)));
-  });
+  const externasImg = imagensExternas(html);
+  if (externasImg.length > 0) {
+    warnings.push(
+      `Imagens vindas de ${externasImg.join(", ")}. Funcionam, mas somem se o site de origem sair do ar. ` +
+        "O extrator já baixa e converte para data: URI.",
+    );
+  }
 
-  return { copies: errors.length === 0 ? copies : [], errors };
+  const title = html.match(/<title[^>]*>([\s\S]{0,300}?)<\/title>/i)?.[1]?.trim() || null;
+  if (!title) warnings.push("Sem <title> — a aba do navegador vai mostrar a URL.");
+
+  if (!/wa\.me|href=["']tel:/i.test(html)) {
+    warnings.push("Não achei link de WhatsApp nem telefone clicável. O protótipo sem CTA não converte.");
+  }
+
+  const suspeitas = SUSPEITAS.filter(([padrao]) => padrao.test(html)).map(([, rotulo]) => rotulo);
+  if (suspeitas.length > 0) {
+    warnings.push(
+      `A página menciona ${suspeitas.join(", ")}. Se veio do site atual do negócio, tudo bem. ` +
+        "Se não, o dono vai reconhecer o dado falso — confira antes de enviar.",
+    );
+  }
+
+  return { errors, warnings, title, bytes };
 }
 
-/** Guarda da página pública: o jsonb do banco tem `facts` além da copy. */
-export function isPrototypeContent(value: unknown): value is PrototypeContent {
+/** As 4 mensagens do `abordagem.txt`, separadas por uma linha com `---`. */
+export function parseAbordagem(texto: string): { messages: string[]; errors: string[] } {
+  const messages = texto
+    .split(/^\s*---\s*$/m)
+    .map((bloco) => bloco.trim())
+    .filter(Boolean);
+
   const errors: string[] = [];
-  checkCopy(value, "", errors);
-  if (errors.length > 0) return false;
+  if (messages.length !== 4) {
+    errors.push(
+      `Esperava 4 mensagens separadas por uma linha com "---", encontrei ${messages.length}.`,
+    );
+  }
+  const longa = messages.findIndex((m) => m.length > 900);
+  if (longa >= 0) errors.push(`A mensagem ${longa + 1} tem mais de 900 caracteres.`);
 
-  const facts = (value as Record<string, unknown>).facts;
-  return (
-    !!facts &&
-    typeof facts === "object" &&
-    typeof (facts as Record<string, unknown>).name === "string"
-  );
-}
-
-export function isTemplateId(value: unknown): value is TemplateId {
-  return typeof value === "string" && (TEMPLATE_IDS as readonly string[]).includes(value);
+  return { messages, errors };
 }
