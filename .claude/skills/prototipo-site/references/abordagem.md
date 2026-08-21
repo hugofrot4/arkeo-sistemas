@@ -4,7 +4,7 @@ O protótipo abre a porta. A mensagem é que faz a venda — e mensagem que só 
 
 ## O teste dos quatro segundos
 
-Ao terminar de ler a primeira mensagem, o dono precisa saber, sem esforço:
+Ao terminar de ler a **mensagem que entrega o protótipo**, o dono precisa saber, sem esforço:
 
 1. **Quem está falando** e o que essa empresa faz
 2. **O que ele ganha** — não o que está errado, o que melhora
@@ -12,6 +12,8 @@ Ao terminar de ler a primeira mensagem, o dono precisa saber, sem esforço:
 4. **O que fazer em seguida** — uma coisa só, fácil de responder
 
 Falhou em qualquer um dos quatro, a mensagem é ignorada. O erro mais comum é falhar no 1 e no 4 ao mesmo tempo: a pessoa entende que alguém analisou o site dela e mandou um link, mas não entende que há um serviço sendo oferecido nem o que se espera dela.
+
+Em e-mail essa é a primeira mensagem. **No WhatsApp é a segunda** — a primeira só precisa dos itens 1 e 4, porque o objetivo dela é conseguir permissão, não convencer.
 
 ## Assunto: a mesma abordagem serve os dois canais
 
@@ -38,14 +40,18 @@ Exemplos por toque: *"Uma prévia do site da Clínica Sorriso Vivo"* · *"Sobre 
 
 O sistema **recusa mensagem acima de 900 caracteres** na conferência do upload. Mas 900 é o teto, não o alvo: mensagem de WhatsApp longa é lida na diagonal, e a parte que se pula costuma ser justamente a pergunta do fim.
 
-| Toque | Alvo | Teto |
-|---|---|---|
-| 1 — entrega | até 750 | 900 |
-| 2 — retomada | até 350 | 900 |
-| 3 — conversa | até 250 | 900 |
-| 4 — encerramento | até 220 | 900 |
+O alvo depende de **qual toque entrega o protótipo** — que muda com o canal:
 
-Cada mensagem menor que a anterior. O toque 1 pode ser o mais longo porque carrega a apresentação, a observação e o link; dali em diante, quanto mais curto, mais responde.
+| | e-mail (entrega no 1) | WhatsApp (entrega no 2) |
+|---|---|---|
+| toque 1 | até 750 | até 380 — é só o pedido de permissão |
+| toque 2 | até 350 | até 750 — carrega o link e o argumento |
+| toque 3 | até 250 | até 250 |
+| toque 4 | até 220 | até 220 |
+
+**A mensagem de entrega é a mais longa**, porque carrega a apresentação, a observação e o link. Da entrega em diante, cada uma menor que a anterior — quanto mais curto, mais responde.
+
+No WhatsApp isso significa que o toque 1 é o mais curto de todos: três linhas e uma pergunta. Ele não precisa convencer de nada, só conseguir um "pode".
 
 O `{{link}}` conta como oito caracteres na conferência, mas vira uma URL de uns sessenta na publicação — deixe essa folga.
 
@@ -78,9 +84,11 @@ O `{{link}}` vai no **toque 2**.
 
 O brief informa o canal do lead. Se ele não disser, assuma WhatsApp — errar para o lado cauteloso custa uma mensagem a mais; errar para o outro custa o número.
 
-## A estrutura da primeira mensagem
+## A estrutura da mensagem de entrega
 
-Seis blocos, nesta ordem. Cada um cabe em uma ou duas frases.
+É a que leva o protótipo: **toque 1 em e-mail, toque 2 em WhatsApp**. Seis blocos, nesta ordem, cada um em uma ou duas frases.
+
+No WhatsApp, o toque 1 que vem antes dela usa só os blocos 1, 2 e 6 — identificação, observação e a pergunta —, e nada mais. É o que cabe numa mensagem fria sem parecer anúncio.
 
 **1. Identificação com a oferta embutida.**
 Nome, empresa e o que a empresa faz — na mesma frase. *"Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para clínicas aqui no Ceará."* Sem isso, tudo o que vem depois é um estranho comentando o negócio alheio.
@@ -149,10 +157,21 @@ Se o lead só tem um dos dois contatos, a sequência inteira vai por ele.
 
 Nenhuma mensagem pede mais do que a anterior conquistou.
 
+**Por e-mail**, onde a entrega vai no toque 1:
+
 | Toque | Objetivo | O que pede |
 |---|---|---|
 | 1 | mostrar que existe uma oferta e entregar valor antes de pedir | um sim ou não |
 | 2 | dar o motivo de negócio que ele não considerou | uma resposta curta |
+| 3 | tirar a conversa do e-mail | dez minutos |
+| 4 | encerrar deixando a porta aberta | nada |
+
+**Por WhatsApp**, onde o toque 1 só abre a porta:
+
+| Toque | Objetivo | O que pede |
+|---|---|---|
+| 1 | conseguir permissão para mandar o link | um "pode" |
+| 2 | entregar o protótipo com o argumento | um sim ou não |
 | 3 | tirar a conversa do WhatsApp | dez minutos |
 | 4 | encerrar deixando a porta aberta | nada |
 

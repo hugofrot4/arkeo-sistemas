@@ -188,7 +188,7 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 `prototipos/<slug>/abordagem.txt` — quatro mensagens separadas por uma linha com `---`.
 
-**Leia `references/abordagem.md` antes de escrever.** É onde estão a estrutura da primeira mensagem, a tradução de achado técnico em consequência de negócio, e o CTA que abre a próxima conversa em vez de pedir opinião.
+**Leia `references/abordagem.md` antes de escrever.** É onde estão a estrutura da mensagem de entrega, a tradução de achado técnico em consequência de negócio, e o CTA que abre a próxima conversa em vez de pedir opinião.
 
 **Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo.
 
@@ -196,7 +196,7 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 **O assunto.** Cada bloco abre com uma linha `Assunto: ...`. No canal e-mail ela vira o assunto da mensagem; no WhatsApp é descartada. Escreva sempre — o canal é decidido no sistema, pelo contato que o lead tem. Regras e exemplos em `references/abordagem.md`.
 
-**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 pede permissão em três linhas. O sistema substitui na publicação. Sem o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
+**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 pede permissão em três linhas. O sistema substitui na publicação e, sem o marcador, deposita o link no toque certo para o canal — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
 
 #### O que a mensagem tem que fazer
 
@@ -236,7 +236,7 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] Cada bloco abre com `Assunto:`, até 55 caracteres, diferente dos outros
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
-- [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. Alvo: 750 no toque 1, 350 no 2, 250 no 3, 220 no 4
+- [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. A mais longa é a que entrega o protótipo (até 750); as outras encolhem a partir dela. Tabela por canal em `references/abordagem.md`
 
 ### 9. Revise como especialista — duas passadas obrigatórias
 
