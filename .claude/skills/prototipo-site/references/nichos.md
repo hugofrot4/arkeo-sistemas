@@ -4,6 +4,20 @@ Leia a seção do ramo do lead **antes** de escrever a primeira linha de copy. E
 
 Regra que vale para todos: escreva para o **cliente final** do negócio — o paciente, quem vai comer, quem vai contratar. Nunca para o dono. O dono é quem recebe o link, mas não é quem o texto precisa convencer.
 
+## Como ler as seções abaixo
+
+Os blocos listados em cada ramo são um **cardápio, não um roteiro**. Escolha de quatro a seis que façam sentido para *aquele* negócio e ordene conforme a decisão de quem vai ler.
+
+Uma policlínica com quatro unidades precisa de um bloco de unidades logo cedo; um consultório de uma sala, não. Um dentista de urgência 24h abre com o plantão, não com a lista de especialidades. Uma clínica com equipe grande ganha bloco de equipe; uma com um profissional só, não.
+
+**Se dois protótipos de ramos iguais saírem com os mesmos blocos na mesma ordem, algo está errado** — provavelmente o cardápio foi lido como roteiro.
+
+## Sobre a direção de cor
+
+A cor de cada ramo abaixo **só vale quando não há logo**. Havendo logo, a paleta vem dela, como manda `design.md` — a identidade do cliente ganha da convenção do setor.
+
+Use a direção do ramo como critério de ajuste, não como paleta: se a logo é laranja, o site é laranja; o que a convenção do setor informa é o *tratamento* — mais sóbrio em saúde, mais quente em alimentação.
+
 Clichês proibidos em qualquer ramo: "soluções", "excelência", "referência no mercado", "inovador", "transformamos", "seu parceiro ideal", "qualidade e compromisso".
 
 ---
@@ -17,13 +31,13 @@ Clichês proibidos em qualquer ramo: "soluções", "excelência", "referência n
 
 **Objeções (é o que a FAQ responde):** Vai doer? · Atendem o meu caso? · Quanto tempo leva o tratamento? · Preciso de exame antes? · Como marco e qual a espera?
 
-**Herói:** nomeie o problema da pessoa, não a especialidade da clínica. *"Dor de dente que não passa"* funciona; *"Odontologia de excelência"* não diz nada a quem está com dor.
+**Herói** (obrigatório): nomeie o problema da pessoa, não a especialidade da clínica. *"Dor de dente que não passa"* funciona; *"Odontologia de excelência"* não diz nada a quem está com dor.
 
 **Serviços:** para QUEM serve e em que situação se procura. Descreva o atendimento, não a técnica — quem busca não sabe o nome do procedimento.
 
 **Sobre:** como é ser atendido ali. O ritmo, o cuidado, o que acontece na primeira consulta. É o bloco que reduz medo.
 
-**Cor:** tons frios e claros — azul, verde-água, teal. Transmitem limpeza e calma, que é o oposto do que a pessoa está sentindo. Evite vermelho saturado (associação direta a sangue) e evite branco puro em tudo.
+**Cor (só sem logo):** o que se busca é sensação de limpeza e calma, o oposto do que a pessoa está sentindo. Frios claros entregam isso com facilidade, mas verde-sálvia, areia e terracota suave também — e saem do azul de clínica que todo mundo usa. Evite vermelho saturado (associação direta a sangue) e branco puro em tudo.
 
 **Proibido:** "sorriso dos sonhos" · "transformamos vidas" · "tecnologia de ponta" sem dizer qual · "atendimento humanizado" como slogan em vez de descrição.
 
@@ -40,7 +54,7 @@ Clichês proibidos em qualquer ramo: "soluções", "excelência", "referência n
 
 **Objeções:** Cuidam do meu tipo de caso? · Como funciona a primeira conversa e ela custa? · Quanto tempo leva? · Que documento preciso separar? · Falo com quem, e com que frequência recebo notícia?
 
-**Herói:** nomeie a situação concreta, não a área técnica. *"Recebeu uma cobrança que não reconhece"* funciona; *"Advocacia cível e empresarial"* só serve para quem já é da área.
+**Herói** (obrigatório): nomeie a situação concreta, não a área técnica. *"Recebeu uma cobrança que não reconhece"* funciona; *"Advocacia cível e empresarial"* só serve para quem já é da área.
 
 **Serviços:** por situação do cliente, não por nomenclatura técnica.
 
@@ -63,11 +77,11 @@ Clichês proibidos em qualquer ramo: "soluções", "excelência", "referência n
 
 **Objeções:** Está aberto agora? · Faz entrega no meu bairro? · Tem opção vegetariana / sem glúten / sem lactose? · Precisa reservar? · Tem estacionamento?
 
-**Herói:** descreva a comida de um jeito que dê vontade, ancorado no que o lugar realmente é. Concreto vence adjetivo — um prato específico funciona melhor que "sabor inesquecível".
+**Herói** (obrigatório): descreva a comida de um jeito que dê vontade, ancorado no que o lugar realmente é. Concreto vence adjetivo — um prato específico funciona melhor que "sabor inesquecível".
 
 **Serviços = cardápio.** Nome do prato e uma linha do que vem nele. **Sem preço** — o preço muda e não temos o valor real.
 
-**Cor:** tons quentes — terracota, mostarda, vinho, verde-oliva. Prática consolidada em comunicação de alimentação: cor quente estimula apetite. Evite azul, que faz o oposto, e pastel, que tira o apetite quando não há foto.
+**Cor (só sem logo):** quente, porque cor quente estimula apetite — terracota, mostarda, vinho, oliva, ferrugem. Evite azul, que faz o oposto, e pastel, que tira o apetite quando não há foto.
 
 **Proibido:** "sabor inesquecível" · "explosão de sabores" · "os melhores da cidade" · "ingredientes selecionados" · "ambiente aconchegante" sem descrever nada.
 
@@ -84,11 +98,11 @@ Clichês proibidos em qualquer ramo: "soluções", "excelência", "referência n
 
 **Objeções:** Atendem meu tipo de cabelo / pele / unha? · Quanto tempo demora? · Precisa marcar? · Dá para fazer mais de um serviço na mesma visita?
 
-**Herói:** o que a pessoa sai levando dali, em linguagem de resultado sensorial, não de técnica.
+**Herói** (obrigatório): o que a pessoa sai levando dali, em linguagem de resultado sensorial, não de técnica.
 
 **Serviços:** por serviço, com duração aproximada quando fizer sentido. Sem preço.
 
-**Cor:** neutros quentes de base — areia, off-white, nude, carvão — com **um** acento saturado só. Elegância vem de contenção e espaço em branco, não de acumular cor. Evite rosa-choque e dourado brilhante: envelheceram mal e viraram sinal de template.
+**Cor (só sem logo):** elegância vem de contenção. Base neutra — areia, off-white, carvão, verde-musgo — com **um** acento saturado só. Evite rosa-choque e dourado brilhante: envelheceram mal e viraram sinal de template.
 
 **Proibido:** "realce sua beleza natural" · "autoestima renovada" · "profissionais altamente qualificados" · "seu momento de cuidar de você".
 
@@ -105,13 +119,13 @@ Clichês proibidos em qualquer ramo: "soluções", "excelência", "referência n
 
 **Objeções:** Atendem no meu bairro? · Conseguem vir hoje? · Cobram a visita? · Fazem esse serviço específico?
 
-**Herói:** o serviço e a região em uma frase. **O telefone tem que estar visível sem rolar a página.**
+**Herói** (obrigatório): o serviço e a região em uma frase. **O telefone tem que estar visível sem rolar a página.**
 
 **Serviços:** lista objetiva, item curto, sem enfeite — a pessoa está escaneando para achar o dela.
 
 **Sobre:** como funciona o atendimento — orçamento, prazo, forma de chamar. Nada de história institucional.
 
-**Cor:** alto contraste e cor funcional — azul forte, laranja, verde-escuro. Legibilidade sob sol, na rua, com pressa, vale mais que sofisticação.
+**Cor (só sem logo):** alto contraste e cor funcional — laranja, amarelo-ocre, azul forte, verde-escuro. Legibilidade sob sol, na rua, com pressa, vale mais que sofisticação.
 
 **Proibido:** "soluções completas" · "seu problema é o nosso problema" · "anos de tradição" (não sabemos quantos).
 

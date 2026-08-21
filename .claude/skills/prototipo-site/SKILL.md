@@ -142,6 +142,8 @@ Risco:            <o que pode não funcionar>
 
 Este passo existe para impedir o padrão automático. Se a direção couber em "hero centrado, três cards com ícone, rodapé escuro", **descarte e escolha outra**.
 
+**Antes de fixar, olhe os protótipos anteriores** — a receita de `references/design.md`, seção *Não repita o protótipo anterior*, lista fonte, paleta e seções de cada um já feito. Leads do mesmo ramo convergem sozinhos, e dois concorrentes recebendo páginas parecidas destrói o argumento. Escolha diferente dos mais recentes em pelo menos duas frentes: par tipográfico, ideia estrutural, ordem das seções, temperatura da paleta.
+
 ### 5. Sem foto própria? Busque imagens de apoio
 
 Só depois de esgotar as fontes reais: site atual (`extrair.py`) e Instagram (`instagram.py`). Foto do próprio negócio ganha de qualquer banco de imagens — mas página sem foto nenhuma parece pobre e derruba o argumento, então quando não houver nenhuma:

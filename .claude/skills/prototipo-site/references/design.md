@@ -57,6 +57,15 @@ Pares que funcionam, todos no Google Fonts:
 | Apetite, artesanal | `Bricolage Grotesque` | `Source Sans 3` |
 | Elegância contida | `Cormorant Garamond` | `Jost` |
 | Técnico, preciso | `Chivo` | `IBM Plex Sans` |
+| Humano, acolhedor | `Newsreader` | `Figtree` |
+| Contemporâneo neutro | `General Sans` | `Supreme` |
+| Editorial condensado | `Bebas Neue` | `Public Sans` |
+| Suave, cuidado | `Gantari` | `Sora` |
+| Clássico revisitado | `Playfair Display` | `Karla` |
+| Direto, sem ornamento | `Manrope` | `Manrope` (pesos 800 e 400) |
+| Institucional moderno | `Outfit` | `Lora` |
+
+**Nenhum destes é o par padrão.** Se você usou um recentemente, use outro — ver *Não repita o protótipo anterior*, abaixo.
 
 **Escala:** contraste forte entre display e corpo. Título de herói entre `clamp(2.5rem, 7vw, 5rem)`; corpo em `1.0625rem` com `line-height: 1.65`. Meio-termo tímido é o que faz a página parecer template.
 
@@ -138,6 +147,30 @@ A restrição é produtiva. O que preenche o espaço:
 - **Padrões** — `repeating-linear-gradient` para listras finas, pontos, grade sutil
 - **Números grandes** — a nota do Google, quando existir no brief, vira elemento gráfico
 - **Grão** — filtro SVG de ruído em baixa opacidade tira o aspecto "chapado" de fundo sólido
+
+## Não repita o protótipo anterior
+
+Protótipos do mesmo ramo tendem a convergir: mesmo playbook, mesmo público, mesmas seções. Convergiram, viraram template — e template é exatamente o que o protótipo existe para não parecer. O dono do negócio pode muito bem conhecer o concorrente que também recebeu um.
+
+**Antes de fixar a direção, olhe o que já foi feito:**
+
+```bash
+for f in prototipos/*/index.html; do
+  echo "--- $(basename $(dirname $f))"
+  grep -oE "family=[A-Za-z+]+" "$f" | sed 's/family=/  fonte: /' | sort -u | head -3
+  grep -oE "\-\-(primary|accent): *#[0-9a-fA-F]{6}" "$f" | head -2 | sed 's/^/  /'
+  grep -oE "<h2[^>]*>[^<]{0,40}" "$f" | sed 's/<h2[^>]*>/  h2: /' | head -6
+done
+```
+
+Do resultado, escolha deliberadamente **diferente** dos dois ou três mais recentes do mesmo ramo, em pelo menos duas destas frentes:
+
+- **par tipográfico** — a lista acima tem quinze; não gravite para o mesmo
+- **ideia estrutural** — se o último foi split assimétrico, faça faixas ou dossiê
+- **ordem e escolha das seções** — o cardápio de `nichos.md` não é um roteiro
+- **temperatura da paleta** — se os últimos foram frios, e a logo permitir, vá para neutro quente ou escuro com acento
+
+A cor da logo não é negociável, mas tudo em volta dela é: a mesma marca azul rende um site claro e arejado ou um escuro e denso, e são páginas completamente diferentes.
 
 ## Espaço e ritmo
 
