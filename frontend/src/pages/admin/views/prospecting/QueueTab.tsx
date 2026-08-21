@@ -271,7 +271,13 @@ function WhatsAppDoLead({
   // Business, e se não tiver o próprio WhatsApp avisa — o custo de tentar é
   // zero, e antes o lead ficava parado na fila sem ação nenhuma.
   const temNumero = !!item.lead.phoneE164;
-  const incerto = temNumero && !item.lead.whatsappValid;
+
+  // A marca "(fixo)" sai do formato do número que está na tela, não só da
+  // coluna `whatsapp_valid`. A coluna é gravada quando o lead é coletado e
+  // pode ficar para trás — e ver "(fixo)" ao lado de um celular contradiz o
+  // que o operador está lendo.
+  const pareceCelular = parseTelefoneBr(item.lead.phone ?? item.lead.phoneE164 ?? "").isMobile;
+  const incerto = temNumero && !item.lead.whatsappValid && !pareceCelular;
   const telefone = parseTelefoneBr(valor);
 
   function abrir() {
