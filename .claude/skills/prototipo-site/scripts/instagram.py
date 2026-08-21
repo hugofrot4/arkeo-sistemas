@@ -7,20 +7,44 @@ fonte de material real. Sem isso o protótipo cai em imagem de banco, que é bem
 pior: as fotos do perfil são do negócio de verdade, do espaço dele, do trabalho
 dele.
 
-## Como funciona, e o que isso implica
+## Dois caminhos, nesta ordem
 
-O `curl` puro num perfil devolve só o shell do aplicativo. Os dados vêm do
-endpoint interno que a própria página consome, e ele responde quando se manda
-o cabeçalho `x-ig-app-id` que o app web usa.
+1. **Endpoint interno** (`/api/v1/users/web_profile_info/`), com o cabeçalho
+   `x-ig-app-id` que o aplicativo web usa. É rápido — dois segundos — e devolve
+   a foto de perfil em alta e as legendas de verdade. Também é o que **responde
+   429 com facilidade**.
 
-Duas consequências que valem saber:
+2. **Navegador de verdade** (Chromium via Playwright), quando o primeiro falha.
+   Mais lento — uns trinta segundos — mas passa onde requisição não passa.
 
-- **É endpoint interno, não API publicada.** Pode mudar ou parar sem aviso. Se
-  parar, o script falha com mensagem clara e o caminho manual continua valendo
-  — abrir o perfil, salvar a logo em `fonte/imagens/` e colar a bio no campo
-  de observações do lead.
+O motivo de precisar do navegador: quando o endpoint bloqueia, `curl` no perfil
+devolve o *login wall* — 600 KB de HTML sem um único `scontent`, sem
+`profile_pic_url`, com `<title>Instagram</title>`. O perfil público é montado
+por JavaScript, e só um navegador o executa.
+
+## O que muda quando cai no navegador
+
+O relatório avisa qual caminho foi usado, porque o material não é equivalente:
+
+- **Foto de perfil pequena.** A URL vem assinada para o recorte servido, quase
+  sempre 150px. Trocar `s150x150` por `s320x320`, `s1080x1080` ou tirar o `stp`
+  invalida a assinatura — 403 nos quatro casos. Quando só houver 150px, **não
+  amplie o selo além disso** no protótipo.
+- **Fotos do feed em 640px**, contra o `display_url` cheio do endpoint.
+- **Texto alternativo no lugar da legenda.** Troca boa: o alternativo do
+  Instagram inclui OCR do texto dentro da imagem, que é justamente o que
+  denuncia card de texto — e às vezes entrega fato do negócio (lista de
+  especialidades, dias de atendimento) que a legenda não traz.
+- **Vídeos entram pela capa**, marcados como tal.
+
+## Limites que continuam valendo
+
+- **É endpoint interno e é navegação automatizada, não API publicada.** Pode
+  mudar ou parar sem aviso.
 - **Só perfil público**, e em volume baixo. Isto roda alguns leads por dia,
   como quem abre o perfil no navegador. Rajada leva a bloqueio de IP.
+- Falhando os dois, o caminho manual continua valendo — abrir o perfil, salvar
+  a logo em `fonte/imagens/` e colar a bio nas observações do lead.
 
 Uso:
     python3 .claude/skills/prototipo-site/scripts/instagram.py <perfil> <slug> [qtd_fotos]
@@ -34,7 +58,10 @@ import base64
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 
@@ -47,6 +74,14 @@ API = "https://www.instagram.com/api/v1/users/web_profile_info/?username="
 
 MAX_FOTOS_PADRAO = 6
 
+# Resolvido a partir do próprio arquivo: o script tem que rodar de qualquer
+# diretório, e o Playwright está instalado aqui dentro, não no projeto.
+DIR_SCRIPTS = os.path.dirname(os.path.abspath(__file__))
+COLETOR = os.path.join(DIR_SCRIPTS, "_ig_navegador.mjs")
+
+# O navegador precisa carregar a página, rolar quatro vezes e baixar as imagens.
+TIMEOUT_NAVEGADOR = 180
+
 
 def handle_de(entrada: str) -> str:
     """Aceita URL completa, @arroba ou o nome puro."""
@@ -58,6 +93,7 @@ def handle_de(entrada: str) -> str:
 
 
 def buscar_perfil(handle: str) -> dict:
+    """Perfil pelo endpoint interno. Levanta HTTPError em 401/429."""
     cabecalhos = {
         "x-ig-app-id": APP_ID,
         "User-Agent": (
@@ -78,8 +114,9 @@ def fotos_do_perfil(usuario: dict, limite: int):
     """
     Fotos do feed, das mais recentes para as mais antigas.
 
-    Vídeo fica de fora: o protótipo é um arquivo único e um MP4 em data: URI
-    estouraria o limite sozinho. Carrossel entra pela imagem de capa.
+    Vídeo fica de fora neste caminho: o endpoint entrega o `display_url` cheio,
+    e um MP4 em data: URI estouraria o limite do arquivo sozinho. Carrossel
+    entra pela imagem de capa.
     """
     selecionadas = []
     for aresta in (usuario.get("edge_owner_to_timeline_media") or {}).get("edges", []):
@@ -96,11 +133,118 @@ def fotos_do_perfil(usuario: dict, limite: int):
         selecionadas.append({
             "url": url,
             "legenda": " ".join(legenda.split()),
-            "curtidas": (no.get("edge_liked_by") or {}).get("count", 0),
         })
         if len(selecionadas) >= limite:
             break
     return selecionadas
+
+
+def coletar_via_api(handle: str, limite: int) -> dict:
+    """Caminho rápido. Baixa as imagens por requisição comum."""
+    usuario = buscar_perfil(handle)
+
+    logo = None
+    url_logo = usuario.get("profile_pic_url_hd") or usuario.get("profile_pic_url")
+    if url_logo:
+        try:
+            logo, _, _ = buscar(url_logo, 8_000_000)
+        except Exception:
+            print("  ! não consegui baixar a foto de perfil")
+
+    posts = []
+    for foto in fotos_do_perfil(usuario, limite):
+        try:
+            bruto, _, _ = buscar(foto["url"], 12_000_000)
+        except Exception:
+            continue
+        posts.append({"bytes": bruto, "legenda": foto["legenda"], "tipo": "foto"})
+
+    return {
+        "via": "endpoint interno",
+        "handle": handle,
+        "nome": usuario.get("full_name"),
+        "categoria": usuario.get("business_category_name") or usuario.get("category_name"),
+        "site": usuario.get("external_url"),
+        "bio": usuario.get("biography") or "",
+        "seguidores": (usuario.get("edge_followed_by") or {}).get("count"),
+        "publicacoes": (usuario.get("edge_owner_to_timeline_media") or {}).get("count"),
+        "destaques": [],
+        "logo": logo,
+        "logo_pequena": False,
+        "posts": posts,
+    }
+
+
+def coletar_via_navegador(handle: str, limite: int) -> dict:
+    """
+    Caminho lento. Abre o perfil no Chromium, que executa o JavaScript e
+    devolve a página pública inteira — onde requisição só recebe o login wall.
+    """
+    if not os.path.exists(COLETOR):
+        raise RuntimeError(f"coletor não encontrado em {COLETOR}")
+    if shutil.which("node") is None:
+        raise RuntimeError("node não está no PATH")
+
+    temporario = tempfile.mkdtemp(prefix="ig-")
+    try:
+        processo = subprocess.run(
+            ["node", COLETOR, handle, temporario, str(limite)],
+            capture_output=True, text=True, timeout=TIMEOUT_NAVEGADOR,
+            cwd=DIR_SCRIPTS,  # o Playwright está no node_modules daqui
+        )
+        if processo.returncode != 0:
+            detalhe = (processo.stderr or processo.stdout or "").strip().splitlines()
+            raise RuntimeError(detalhe[-1] if detalhe else "o coletor falhou sem mensagem")
+
+        colhido = json.loads(processo.stdout.strip().splitlines()[-1])
+
+        def ler(nome):
+            caminho = os.path.join(temporario, nome)
+            if not nome or not os.path.exists(caminho):
+                return None
+            with open(caminho, "rb") as arquivo:
+                return arquivo.read()
+
+        logo_info = colhido.get("logo") or {}
+        logo = ler(logo_info.get("arquivo"))
+
+        posts = []
+        for post in colhido.get("posts", []):
+            bruto = ler(post.get("arquivo"))
+            if bruto:
+                posts.append({
+                    "bytes": bruto,
+                    "legenda": post.get("alt", ""),
+                    "tipo": post.get("tipo", "foto"),
+                })
+
+        return {
+            "via": "navegador",
+            "handle": handle,
+            "nome": colhido.get("nome"),
+            "categoria": None,  # não aparece para quem não está logado
+            "site": colhido.get("site"),
+            "bio": colhido.get("bio") or "",
+            "seguidores": colhido.get("seguidores"),
+            "publicacoes": colhido.get("publicacoes"),
+            "destaques": colhido.get("destaques") or [],
+            "logo": logo,
+            "logo_pequena": not logo_info.get("ampliada", False),
+            "posts": posts,
+        }
+    finally:
+        shutil.rmtree(temporario, ignore_errors=True)
+
+
+def coletar(handle: str, limite: int) -> dict:
+    """Endpoint interno primeiro, navegador quando ele bloquear."""
+    try:
+        return coletar_via_api(handle, limite)
+    except Exception as erro:
+        motivo = f"HTTP {erro.code}" if isinstance(erro, urllib.error.HTTPError) else str(erro)
+        print(f"  endpoint interno falhou ({motivo}) — abrindo o perfil no navegador")
+
+    return coletar_via_navegador(handle, limite)
 
 
 def salvar(dados: bytes, contexto: str, nome: str, destino: str):
@@ -136,60 +280,68 @@ def main():
     os.makedirs(os.path.join(destino, "datauris"), exist_ok=True)
 
     try:
-        usuario = buscar_perfil(handle)
-    except urllib.error.HTTPError as erro:
-        print(f"ERRO: o Instagram respondeu {erro.code}.")
-        print("Se for 401 ou 429, é bloqueio — espere um pouco ou siga pelo caminho manual:")
-        print("abra o perfil, salve a logo em fonte/imagens/ e cole a bio nas observações do lead.")
-        sys.exit(1)
+        perfil = coletar(handle, limite)
     except Exception as erro:
-        print(f"ERRO: {type(erro).__name__}: {erro}")
-        print("Siga pelo caminho manual — abra o perfil e salve a logo em fonte/imagens/.")
+        print(f"ERRO: os dois caminhos falharam — {type(erro).__name__}: {erro}")
+        print("Siga pelo caminho manual: abra o perfil, salve a logo em")
+        print(f"{os.path.join(destino, 'imagens')}/ e cole a bio nas observações do lead.")
         sys.exit(1)
+
+    print(f"  material colhido pelo {perfil['via']}")
 
     salvas = []
     paleta = None
 
-    url_logo = usuario.get("profile_pic_url_hd") or usuario.get("profile_pic_url")
-    if url_logo:
-        try:
-            bruto, _, _ = buscar(url_logo, 8_000_000)
-            analise = salvar(bruto, "logo", "ig-logo", destino)
-            if analise:
-                analise["papel"] = "logo / marca"
-                analise["legenda"] = "foto de perfil"
-                salvas.append(analise)
-                paleta = analise.get("paleta")
-        except Exception:
-            print("  ! não consegui baixar a foto de perfil")
-
-    for i, foto in enumerate(fotos_do_perfil(usuario, limite)):
-        try:
-            bruto, _, _ = buscar(foto["url"], 12_000_000)
-            analise = salvar(bruto, "foto", f"ig-post-{i}", destino)
-        except Exception:
-            continue
+    if perfil["logo"]:
+        analise = salvar(perfil["logo"], "logo", "ig-logo", destino)
         if analise:
-            analise["legenda"] = foto["legenda"]
+            analise["papel"] = "logo / marca"
+            analise["legenda"] = "foto de perfil"
+            salvas.append(analise)
+            paleta = analise.get("paleta")
+
+    for i, post in enumerate(perfil["posts"]):
+        analise = salvar(post["bytes"], "foto", f"ig-post-{i}", destino)
+        if analise:
+            analise["legenda"] = post["legenda"]
+            analise["tipo_post"] = post["tipo"]
             salvas.append(analise)
             print(f"  ok {analise['arquivo']}  {analise['formato']}  {analise['bytes_datauri']//1024} KB")
 
     # ── relatório ────────────────────────────────────────────────────────
     linhas = [f"# Material extraído do Instagram @{handle}", ""]
 
+    if perfil["via"] == "navegador":
+        linhas += [
+            "> Colhido **pelo navegador** — o endpoint interno estava bloqueado. As fotos",
+            "> vêm em 640px em vez do tamanho cheio, e no lugar da legenda vem o texto",
+            "> alternativo do Instagram, que inclui OCR do texto dentro da imagem.",
+            "",
+        ]
+
     linhas += ["## Identidade", ""]
     for rotulo, valor in [
-        ("Nome no perfil", usuario.get("full_name")),
-        ("Categoria", usuario.get("business_category_name") or usuario.get("category_name")),
-        ("Site informado na bio", usuario.get("external_url")),
-        ("Seguidores", (usuario.get("edge_followed_by") or {}).get("count")),
-        ("Publicações", (usuario.get("edge_owner_to_timeline_media") or {}).get("count")),
+        ("Nome no perfil", perfil.get("nome")),
+        ("Categoria", perfil.get("categoria")),
+        ("Site informado na bio", perfil.get("site")),
+        ("Seguidores", perfil.get("seguidores")),
+        ("Publicações", perfil.get("publicacoes")),
     ]:
         if valor:
             linhas.append(f"- **{rotulo}:** {valor}")
     linhas.append("")
 
-    bio = usuario.get("biography") or ""
+    if perfil.get("destaques"):
+        linhas += [
+            "## Destaques do perfil", "",
+            "Os nomes dos destaques dizem que informação existe — e onde ela está hoje.",
+            "Um destaque chamado *Horário* ou *Convênios* costuma ser o dado que falta na",
+            "página. **O conteúdo não vem por aqui**: peça ao cliente ou registre em",
+            "placeholders.", "",
+            " · ".join(f"**{d}**" for d in perfil["destaques"]), "",
+        ]
+
+    bio = perfil.get("bio") or ""
     if bio.strip():
         linhas += [
             "## Bio", "",
@@ -197,11 +349,18 @@ def main():
             "```", bio.strip(), "```", "",
         ]
 
-    if usuario.get("external_url"):
+    if perfil.get("site"):
         linhas += [
             "> A bio informa um site. Se ele abrir, rode `extrair.py` nele também —",
             "> site rende mais texto e mais contexto que o perfil.", "",
         ]
+        if "linktr.ee" in (perfil["site"] or ""):
+            linhas += [
+                "> É um Linktree. Vale abrir: costuma trazer o WhatsApp de verdade e as",
+                "> outras redes. **Mas não use o avatar de lá como logo** — ele não",
+                "> acompanha a troca de marca no Instagram e pode estar anos atrasado.",
+                "",
+            ]
 
     if paleta:
         s_ = paleta["sugestao"]
@@ -237,14 +396,31 @@ def main():
             "|---|---|---|---|---|---|---|",
         ]
         for item in sorted(salvas, key=lambda i: ("logo" not in i["papel"], i["bytes_datauri"])):
+            legenda = (item.get("legenda") or "—").replace("|", "/")[:70]
             linhas.append(
                 f'| `{item["arquivo"]}` | {item["formato"]} | {item["razao"]}:1 | {item["tipo"]} | '
-                f'{item["papel"]} | {(item.get("legenda") or "—")[:50]} | '
-                f'{item["bytes_datauri"] // 1024} |'
+                f'{item["papel"]} | {legenda} | {item["bytes_datauri"] // 1024} |'
             )
         linhas += ["",
                    "Fotos do feed costumam ser quadradas ou em retrato 4:5 — encaixam bem em",
                    "grade e coluna, e mal em faixa de largura total.", ""]
+
+        if perfil["via"] == "navegador":
+            linhas += [
+                "A coluna *legenda* aqui é o texto alternativo, não a legenda escrita pelo",
+                "dono. Ele descreve o que está **dentro** da imagem, com OCR — é o jeito",
+                "mais rápido de achar o card de texto (descarte) e, às vezes, entrega fato",
+                "publicado que não está na bio: lista de especialidades, dias de",
+                "atendimento, promoção antiga.", "",
+            ]
+        if perfil.get("logo_pequena"):
+            linhas += [
+                "### A logo veio pequena", "",
+                "A URL da foto de perfil é assinada para o recorte servido, quase sempre",
+                "150px, e as variantes maiores dão 403. **Esse é o tamanho que existe** —",
+                "não amplie o selo além dele no protótipo, ou a logo aparece borrada",
+                "justamente no elemento que o dono olha primeiro.", "",
+            ]
     else:
         linhas += ["## Imagens", "", "Nenhuma imagem aproveitável foi baixada.", ""]
 
@@ -258,10 +434,12 @@ def main():
 
     print(json.dumps({
         "perfil": handle,
+        "via": perfil["via"],
         "relatorio": caminho_relatorio,
         "imagens": len(salvas),
         "kb_datauri_total": sum(i["bytes_datauri"] for i in salvas) // 1024,
-        "site_na_bio": usuario.get("external_url"),
+        "site_na_bio": perfil.get("site"),
+        "destaques": perfil.get("destaques"),
     }, ensure_ascii=False, indent=2))
 
 

@@ -74,13 +74,15 @@ Antes de transformar qualquer observação em frase de venda:
 2. **Distinga defeito do site de falha da captura.** Conteúdo misto (HTTPS pedindo HTTP) atinge todo visitante e é fato. Fonte que não baixou pode ser só o nosso acesso.
 3. **Na dúvida, não cite.** Há sempre outro ângulo, e um errado custa o lead inteiro.
 
-#### Equilíbrio
+#### Equilíbrio, sem virar elogio vazio
 
-Olhe os prints procurando também **o que está bom** — marca bonita, conteúdo forte, foto decente. Aproveite isso no protótipo em vez de descartar, e reconheça na abordagem.
+Olhe os prints procurando também **o que está bom** — marca bonita, conteúdo forte, foto decente. Aproveite no protótipo em vez de descartar, e reconheça na abordagem: coloca o dono do seu lado em vez de na defensiva.
 
-Abordagem que só lista defeito soa como ataque e coloca o dono na defensiva; abordagem que reconhece o que funciona e mostra o que dá para melhorar abre conversa. **No máximo duas críticas na sequência inteira**, e nunca as duas na mesma mensagem.
+Mas **elogio é uma cláusula, não é o corpo da mensagem**. Reconhecer o que funciona não substitui dizer o que você faz, o que ele ganha e o que fazer em seguida — a mensagem que só elogia e manda link é educada e não vende nada. As regras de venda estão em `references/abordagem.md`.
 
-Se o site estiver em dia, **não force o argumento de modernização** — insistir que está velho um site que está bom queima a credibilidade. Procure outro ângulo, ou aceite que talvez não seja o lead certo agora.
+**No máximo duas críticas na sequência inteira**, nunca as duas na mesma mensagem. E toda crítica vem com a consequência para o negócio dele, senão só constrange.
+
+Se o site estiver em dia, **não force o argumento de modernização** — insistir que está velho um site que está bom queima a credibilidade. Nesse caso o ângulo é outro: o que o site ainda não faz (captar contato, mostrar um serviço, abrir bem no celular), não o que ele tem de errado.
 
 **Lead sem site, só com Instagram.** Há extrator para isso também:
 
@@ -167,81 +169,46 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 `prototipos/<slug>/abordagem.txt` — quatro mensagens separadas por uma linha com `---`.
 
-**Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo. Pessoa com nome responde melhor que empresa; empresa por trás da pessoa dá seriedade. Precisa dos dois.
+**Leia `references/abordagem.md` antes de escrever.** É onde estão a estrutura da primeira mensagem, a tradução de achado técnico em consequência de negócio, e o CTA que abre a próxima conversa em vez de pedir opinião.
 
-**O link.** Escreva `{{link}}` onde o endereço encaixa na frase. O sistema substitui na publicação — o endereço só existe lá, porque leva um sufixo único. Se você não colocar o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
+**Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo.
+
+**O link.** Escreva `{{link}}` onde o endereço encaixa na frase. O sistema substitui na publicação. Sem o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
+
+#### O que a mensagem tem que fazer
+
+Ao terminar de ler a primeira, o dono precisa saber quatro coisas: **quem está falando e o que a empresa faz**, **o que ele ganha**, **o que foi feito para ele**, e **o que fazer em seguida**. Falhou em qualquer uma, a mensagem é ignorada.
+
+O erro mais comum — e o mais caro — é a mensagem simpática que elogia o site, manda o link e termina com "me diga o que achou". Ela nunca diz que existe um serviço à venda, e pede uma opinião em vez da próxima conversa. Educada e inútil.
 
 #### Como se apresenta a empresa
 
 | Nunca | Sempre |
 |---|---|
 | "eu mexo com sites" | "somos especializados em criação de sites" |
-| "trabalho com criação de sites" | "trabalhamos com sites para clínicas aqui em Fortaleza" |
+| "trabalho com criação de sites" | "a gente cria sites para clínicas aqui no Ceará" |
 | "faço sites pra empresas" | "desenvolvemos sites para pequenos negócios da região" |
 
-Primeira pessoa do plural para a empresa, primeira do singular para o que a pessoa fez: *"somos especializados em sites para clínicas, e preparei uma prévia da página de vocês"*.
+Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a gente cria sites para clínicas, e eu preparei uma prévia da página de vocês"*.
 
 #### Tom
 
 - Português correto, frases completas. Nada de `vc`, `blz`, `pfv`, `tbm`.
 - Sem gíria e sem intimidade forçada. Trate por "você" e "vocês".
 - No máximo um emoji na conversa inteira, e só se cair natural. Zero é melhor que forçado.
-- Nenhum superlativo sobre a própria empresa: nada de "a melhor", "referência", "líder".
-- Nenhuma promessa de resultado — nem de posição no Google, nem de aumento de clientes.
-- Cada mensagem mais curta que a anterior.
-- Abra com saudação ("Oi, bom dia!") — mensagem de WhatsApp sem saudação soa como disparo em massa.
-
-#### As quatro mensagens
-
-**1 — entrega (dia 0).** Identifica pessoa e empresa, diz a especialização, cita um fato verificável do negócio, entrega o protótipo e não pede nada em troca.
-
-**2 — retomada (+2 dias).** Volta com um achado concreto — da auditoria do brief ou da análise de modernização — e o motivo de ele importar. Nada de "só passando para saber se viu" sozinho.
-
-Vale a régua do passo 2: só entra o que o dono confirmaria olhando o próprio celular, e o que a seção de ressalvas do relatório não colocou em dúvida. **Uma crítica por mensagem, no máximo duas na sequência inteira.**
-
-**3 — conversa (+5 dias).** Oferece dez minutos, no canal que a pessoa preferir.
-
-**4 — encerramento (+9 dias).** Encerra com educação e avisa o prazo em que o protótipo sai do ar.
-
-#### Exemplo completo
-
-Dentista com site que não abre no celular, atendimento assinado por Sara:
-
-```
-Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — somos especializados em
-criação de sites para clínicas e consultórios em Fortaleza.
-
-Reparei que o site da Clínica Sorriso Vivo não abre corretamente no celular.
-Como boa parte das buscas por dentista na região vem do telefone, preparei uma
-prévia de como a página de vocês poderia ficar:
-
-{{link}}
-
-É uma demonstração, sem custo e sem compromisso. Se puder dar uma olhada e me
-dizer o que achou, fico à disposição.
----
-Oi! Sara aqui, da Arkeo Sistemas. Passando para saber se conseguiu ver a
-prévia.
-
-Um ponto que costuma pesar: quando a página não se adapta ao celular, ela
-perde posição nas buscas locais do Google, que é justamente de onde vem a
-maior parte dos contatos de clínica.
----
-Oi! Se ficar mais fácil, posso explicar a proposta em uns dez minutos, por
-aqui mesmo ou por ligação — como preferir. Sem compromisso de fechar nada.
----
-Oi! Vou encerrar o contato por aqui para não incomodar. A prévia fica no ar
-por mais alguns dias, caso queira mostrar para alguém da equipe. Se precisar,
-é só me chamar. Obrigada!
-```
+- Nenhum jargão: responsivo, SEO, conversão, otimizado, engajamento. O dono da clínica não usa nenhuma dessas palavras.
+- Nenhum superlativo sobre a própria empresa, nenhuma promessa de resultado.
+- Cada mensagem mais curta que a anterior. Abra com saudação.
 
 #### Antes de salvar
 
-- [ ] A mensagem 1 tem `{{link}}` e está pronta para enviar como está
-- [ ] Pessoa e empresa aparecem na abertura da mensagem 1
-- [ ] A especialização está no plural ("somos especializados"), nunca "eu mexo com"
-- [ ] Cada mensagem cita algo do negócio, não é texto genérico
-- [ ] Nenhuma abreviação de internet, nenhum superlativo, nenhuma promessa de resultado
+- [ ] A primeira frase diz o nome, a empresa **e o que ela faz**
+- [ ] Há uma observação específica do negócio, com nome próprio
+- [ ] O ganho está dito em termos do negócio dele, não em termos técnicos
+- [ ] Está claro que o link é uma página funcionando, não um desenho
+- [ ] A gratuidade tem um motivo declarado
+- [ ] A mensagem 1 tem `{{link}}` e termina com **uma** pergunta de sim ou não
+- [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 
 ### 9. Revise como especialista — duas passadas obrigatórias
@@ -312,4 +279,5 @@ Depois de ver no navegador, o usuário vai pedir ajuste. Edite o mesmo arquivo. 
 | `references/nichos.md` | Sempre, a seção do ramo do lead. Público, objeções, cor e restrições de publicidade da profissão. |
 | `references/composicao.md` | Antes do markup. **Como** construir: tokens, container único, grade, casting de imagem, armadilhas de alinhamento. |
 | `references/tecnico.md` | Antes de construir e antes de entregar. Restrições do arquivo, ícones e checklist de conteúdo. |
-| `references/revisao.md` | No passo 8. As duas passadas de especialista e a rubrica visual. |
+| `references/abordagem.md` | No passo 8, antes de escrever a mensagem. Estrutura de venda, CTA e os erros que matam. |
+| `references/revisao.md` | No passo 9. As duas passadas de especialista e a rubrica visual. |

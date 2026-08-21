@@ -142,6 +142,24 @@ def _escurecer_ate_contrastar(cor, fundo=(255, 255, 255), minimo=4.5):
     return tuple(atual)
 
 
+def _distancia_matiz(a, b):
+    """Distância entre dois matizes em graus, no círculo (0..180)."""
+    d = abs(a - b) % 360
+    return min(d, 360 - d)
+
+
+def _representante(cores, criterio):
+    """
+    Escolhe a cor que representa um grupo de matiz.
+
+    Prefere as vívidas: a antialiasing da logo produz muita variação pálida da
+    mesma cor, e é a versão saturada que a marca de fato usa.
+    """
+    vividas = [c for c in cores if _hsl(*c)[1] >= 0.35]
+    candidatas = vividas or list(cores)
+    return criterio(candidatas)
+
+
 def paleta_da_logo(imagem):
     """
     Cores da marca a partir da logo, e uma paleta de quatro papéis derivada
@@ -153,37 +171,86 @@ def paleta_da_logo(imagem):
 
     Pixel transparente é descartado (logo costuma vir recortada), e cinza,
     branco e preto também: são o texto da logo, não a cor da marca.
+
+    ## Por que agrupar por matiz, e não contar pixel
+
+    Contar pixel elege a cor que ocupa mais área, que quase nunca é a cor de
+    acento. Numa logo com monograma teal e uma letra laranja, o teal e as suas
+    variações pálidas tomam as três primeiras posições e o laranja não aparece
+    — o acento acaba saindo de um teal desbotado, que ao ser escurecido para
+    passar no contraste vira cinza.
+
+    Então os pixels são agrupados por **faixa de matiz**, e cada faixa pesa
+    pela soma da saturação e não pela contagem. Uma área pequena e vívida
+    ganha de uma área grande e lavada, que é exatamente o critério de quem
+    olha a logo.
+
+    O acento é obrigado a vir de um matiz **distante** do primary. Sem isso o
+    acento vira um tom do primary, e a página perde a segunda cor da marca.
     """
     from PIL import Image
 
     if imagem.mode == "P":
         imagem = imagem.convert("RGBA")
     tem_alfa = imagem.mode in ("RGBA", "LA")
-    amostra = imagem.convert("RGBA").resize((100, 100), Image.LANCZOS)
+    amostra = imagem.convert("RGBA").resize((120, 120), Image.LANCZOS)
 
-    contagem = {}
+    # 24 faixas de 15° cada — fino o bastante para separar laranja de amarelo.
+    FAIXAS = 24
+    largura_faixa = 360 / FAIXAS
+    faixas = {}
+
     for r, g, b, a in amostra.getdata():
         if tem_alfa and a < 200:
             continue
-        _, sat, luz = _hsl(r, g, b)
+        matiz, sat, luz = _hsl(r, g, b)
         # Neutro e quase-neutro não são a cor da marca.
         if sat < 0.18 or luz < 0.08 or luz > 0.94:
             continue
+        faixa = int(matiz * 360 // largura_faixa) % FAIXAS
+        alvo = faixas.setdefault(faixa, {"peso": 0.0, "cores": {}})
+        # Peso pela saturação: área grande e lavada não ganha de área
+        # pequena e vívida.
+        alvo["peso"] += sat * sat
         chave = (r // 24 * 24, g // 24 * 24, b // 24 * 24)
-        contagem[chave] = contagem.get(chave, 0) + 1
+        alvo["cores"][chave] = alvo["cores"].get(chave, 0) + 1
 
-    if not contagem:
+    if not faixas:
         return None
 
-    ordenadas = sorted(contagem.items(), key=lambda kv: -kv[1])
-    marca = [cor for cor, _ in ordenadas[:3]]
+    ordenadas = sorted(faixas.items(), key=lambda kv: -kv[1]["peso"])[:3]
 
-    # A mais escura vira faixa de destaque (texto branco por cima); a mais
-    # saturada vira o acento de botão e link.
-    primary = min(marca, key=lambda c: _hsl(*c)[2])
-    accent = max(marca, key=lambda c: _hsl(*c)[1])
-    if accent == primary and len(marca) > 1:
-        accent = [c for c in marca if c != primary][0]
+    # De cada faixa saem dois representantes: o mais escuro, que serve de fundo
+    # de faixa, e o mais vívido, que serve de botão.
+    candidatas = []
+    for _, dados in ordenadas:
+        escura = _representante(dados["cores"], lambda cs: min(cs, key=lambda c: _hsl(*c)[2]))
+        vivida = _representante(dados["cores"], lambda cs: max(cs, key=lambda c: _hsl(*c)[1]))
+        candidatas.append({"escura": escura, "vivida": vivida})
+
+    # Primary é a faixa que **consegue ficar escura** — vai levar texto branco
+    # por cima. Laranja e amarelo nunca escurecem sem virar marrom, então
+    # perdem esse papel para o azul ou o verde da mesma logo, mesmo quando
+    # ocupam mais área.
+    dono_primary = min(candidatas, key=lambda c: _hsl(*c["escura"])[2])
+    primary = dono_primary["escura"]
+    matiz_primary = _hsl(*primary)[0] * 360
+
+    # Accent é a faixa mais vívida entre as de matiz distante. Perto demais
+    # seria um tom do primary, não a segunda cor da marca.
+    distantes = [
+        c for c in candidatas
+        if c is not dono_primary
+        and _distancia_matiz(_hsl(*c["vivida"])[0] * 360, matiz_primary) >= 40
+    ]
+    if distantes:
+        accent = max(distantes, key=lambda c: _hsl(*c["vivida"])[1])["vivida"]
+    else:
+        # Logo de uma cor só: o acento sai da própria faixa, na versão vívida.
+        accent = dono_primary["vivida"]
+
+    # As cores mostradas no relatório: uma por faixa, na versão vívida.
+    marca = [c["vivida"] for c in candidatas]
 
     accent_legivel = _escurecer_ate_contrastar(accent)
     return {
@@ -191,7 +258,10 @@ def paleta_da_logo(imagem):
         "accent_ajustado": accent_legivel != accent,
         "contraste_accent": round(_contraste(accent_legivel, (255, 255, 255)), 2),
         "sugestao": {
-            "primary": _hex(*_misturar(primary, (0, 0, 0), 0.25)),
+            # Escurecido até o texto branco por cima ficar legível — faixa de
+            # marca com contraste insuficiente é o erro mais visível no celular.
+            "primary": _hex(*_escurecer_ate_contrastar(
+                _misturar(primary, (0, 0, 0), 0.25), (255, 255, 255), 4.5)),
             "accent": _hex(*accent_legivel),
             # Tinta clara da própria marca: tira o branco puro sem trair a cor.
             "surface": _hex(*_misturar(primary, (255, 255, 255), 0.94)),
