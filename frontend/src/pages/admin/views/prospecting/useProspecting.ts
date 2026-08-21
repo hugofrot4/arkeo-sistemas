@@ -18,6 +18,22 @@ import {
   type QueueItem,
 } from "../../../../lib/prospecting";
 
+/**
+ * O que espera ação hoje.
+ *
+ * Calculado num lugar só porque estava em dois e divergiu: o crachá da aba
+ * somava fila mais quentes sem deduplicar — lead que abriu o protótipo E tem
+ * toque vencido contava duas vezes — e ignorava a régua diária, que a aba
+ * aplica ao exibir. Onze no crachá, cinco na tela.
+ */
+export interface Pendencias {
+  /** Abriram o protótipo. Vêm antes de tudo. */
+  quentes: number;
+  /** Toques vencidos que cabem na régua de hoje, sem os que já estão em `quentes`. */
+  naFila: number;
+  total: number;
+}
+
 export interface ProspectingData {
   queue: QueueItem[];
   hot: HotLead[];
@@ -26,6 +42,7 @@ export interface ProspectingData {
   jobs: JobQueueSummary[];
   grid: { totalTasks: number; pendingTasks: number; deadCells: number };
   cobertura: CoberturaPrototipos;
+  pendencias: Pendencias;
   contato: CoberturaContato;
   settings: ProspectingSettings | null;
 }
@@ -38,6 +55,7 @@ const EMPTY: ProspectingData = {
   jobs: [],
   grid: { totalTasks: 0, pendingTasks: 0, deadCells: 0 },
   cobertura: { prontosParaGerar: 0, semPrototipo: 0, comPrototipo: 0 },
+  pendencias: { quentes: 0, naFila: 0, total: 0 },
   contato: { comWhatsapp: 0, comEmail: 0, comAmbos: 0, semNada: 0 },
   settings: null,
 };
@@ -56,7 +74,20 @@ async function fetchAll(): Promise<ProspectingData> {
       getCoberturaContato(),
       getProspectingSettings(),
     ]);
-  return { queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato, settings };
+  const quentes = new Set(hot.map((h) => h.leadId));
+  const capDiaria = settings?.dailyOutreachCap ?? 40;
+  const restamHoje = Math.max(0, capDiaria - sentToday);
+  // Lead quente já está sendo cobrado no bloco de cima: contá-lo de novo na
+  // fila infla o número e não corresponde a nenhum card a mais na tela.
+  const naFila = Math.min(
+    queue.filter((t) => !quentes.has(t.leadId)).length,
+    restamHoje,
+  );
+
+  return {
+    queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato, settings,
+    pendencias: { quentes: quentes.size, naFila, total: quentes.size + naFila },
+  };
 }
 
 /**

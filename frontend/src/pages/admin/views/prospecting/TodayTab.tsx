@@ -49,8 +49,7 @@ export default function TodayTab({
     .reduce((soma, j) => soma + j.count, 0);
 
   const capDiaria = data.settings?.dailyOutreachCap ?? 40;
-  const restamHoje = Math.max(0, capDiaria - data.sentToday);
-  const naFila = Math.min(data.queue.length, restamHoje);
+  const naFila = data.pendencias.naFila;
 
   async function buscar() {
     setRodando("busca");

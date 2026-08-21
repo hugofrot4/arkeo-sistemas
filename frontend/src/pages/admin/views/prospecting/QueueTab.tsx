@@ -35,6 +35,12 @@ export default function QueueTab({
   const cap = data.settings?.dailyOutreachCap ?? 40;
   const remaining = Math.max(0, cap - data.sentToday);
 
+  // Lead quente já aparece no bloco de cima, com ação própria. Deixá-lo
+  // também aqui embaixo mostrava o mesmo negócio duas vezes na tela e inflava
+  // a contagem da aba.
+  const quentes = new Set(data.hot.map((h) => h.leadId));
+  const fila = data.queue.filter((t) => !quentes.has(t.leadId));
+
   /**
    * Registra o envio. Só roda depois de o operador confirmar que mandou —
    * abrir a conversa não é enviar, e marcar no clique registrava envio que
@@ -119,18 +125,18 @@ export default function QueueTab({
           </div>
         </header>
 
-        {remaining === 0 && data.queue.length > 0 && (
+        {remaining === 0 && fila.length > 0 && (
           <p className="border-warning/30 bg-warning/8 text-warning mb-4 rounded-lg border px-4 py-3 text-sm">
             Régua do dia atingida. Parar aqui é de propósito: volume alto num dia só
             é o que faz número ser marcado como spam.
           </p>
         )}
 
-        {data.queue.length === 0 ? (
+        {fila.length === 0 ? (
           <EmptyQueue />
         ) : (
           <ul className="space-y-3">
-            {data.queue.slice(0, remaining || undefined).map((item) => (
+            {fila.slice(0, remaining || undefined).map((item) => (
               <QueueCard
                 key={item.id}
                 item={item}

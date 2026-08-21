@@ -35,7 +35,7 @@ export default function Prospecting() {
   const tab: TabId = TABS.some((t) => t.id === sub) ? (sub as TabId) : "hoje";
   const setTab = (proxima: TabId) => navigate(`/admin/prospects/${proxima}`);
 
-  const pendenteHoje = data.queue.length + data.hot.length;
+  const pendenteHoje = data.pendencias.total;
 
   return (
     <div>
