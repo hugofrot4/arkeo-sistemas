@@ -36,6 +36,7 @@ export default function GenerateModal({
   const [erros, setErros] = useState<string[]>([]);
   const [avisos, setAvisos] = useState<string[]>([]);
   const [publicando, setPublicando] = useState(false);
+  const [arrastando, setArrastando] = useState(false);
   const [link, setLink] = useState<string | null>(null);
   const inputArquivo = useRef<HTMLInputElement>(null);
 
@@ -78,6 +79,12 @@ export default function GenerateModal({
   }
 
   async function escolherArquivo(arquivo: File) {
+    // O navegador nem sempre preenche o type de .html vindo do sistema de
+    // arquivos, então a extensão é o critério confiável.
+    if (!/\.html?$/i.test(arquivo.name)) {
+      setErros([`"${arquivo.name}" não é um arquivo .html.`]);
+      return;
+    }
     const conteudo = await arquivo.text();
     const resultado = validateHtml(conteudo);
     setHtml(resultado.errors.length === 0 ? conteudo : null);
@@ -201,13 +208,61 @@ export default function GenerateModal({
                     if (arquivo) void escolherArquivo(arquivo);
                   }}
                 />
-                <button
+
+                {/* Arrastar do gerenciador de arquivos é o gesto natural aqui:
+                    o index.html acabou de ser aberto no navegador ao lado. */}
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setArrastando(true);
+                  }}
+                  onDragLeave={() => setArrastando(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setArrastando(false);
+                    const arquivo = e.dataTransfer.files?.[0];
+                    if (arquivo) void escolherArquivo(arquivo);
+                  }}
                   onClick={() => inputArquivo.current?.click()}
-                  className="border-border hover:bg-surface-hover mb-3 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      inputArquivo.current?.click();
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Arraste o index.html aqui ou clique para escolher"
+                  className={`mb-3 flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-2 border-dashed px-4 py-7 text-center transition-colors ${
+                    arrastando
+                      ? "border-accent bg-accent/8"
+                      : html
+                        ? "border-good/40 bg-good/6"
+                        : "border-border hover:border-accent/50 hover:bg-surface-hover"
+                  }`}
                 >
-                  <Upload size={15} aria-hidden />
-                  {nomeArquivo ?? "Escolher index.html"}
-                </button>
+                  <Upload
+                    size={20}
+                    aria-hidden
+                    className={html ? "text-good" : "text-text-muted"}
+                  />
+                  {nomeArquivo ? (
+                    <>
+                      <span className="text-sm font-semibold">{nomeArquivo}</span>
+                      <span className="text-text-muted text-xs">
+                        {html ? "Pronto para publicar" : "Confira os erros abaixo"} · clique
+                        ou arraste outro para trocar
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm font-semibold">
+                        Arraste o <code className="bg-bg rounded px-1">index.html</code> aqui
+                      </span>
+                      <span className="text-text-muted text-xs">ou clique para escolher</span>
+                    </>
+                  )}
+                </div>
 
                 <textarea
                   value={abordagem}

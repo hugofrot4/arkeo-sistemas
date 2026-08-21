@@ -54,6 +54,18 @@ O relatório informa quantos KB cada imagem custa em `data:` URI. O arquivo fina
 
 Se o script falhar, é lead de site quebrado — siga sem material e trate a falta de imagem como em `references/design.md`.
 
+**Analise também o quanto o site está datado.** Um site pode passar em toda checagem técnica e ainda parecer 2012, e é disso que sai a proposta de nova versão:
+
+```bash
+node .claude/skills/prototipo-site/scripts/modernidade.mjs <url-do-site> <slug>
+```
+
+Abre o site no Chromium, tira print em celular e computador e mede sinais de época: largura fixa, ausência de regra de tela, marcação de tabela, biblioteca antiga, tipografia miúda, falta de respiro. Devolve um **índice de atraso de 0 a 100** e cada achado já escrito como frase para dizer ao dono.
+
+**Abra `atual/mobile.png` e `atual/desktop.png` e olhe.** A medição pega o que é contável; o que parece velho aos olhos — cor, ícone, estilo de botão, foto — só se vê olhando, e costuma render a melhor frase da abordagem. Também é a referência do "antes": o protótipo precisa ser visivelmente melhor que aquilo.
+
+Se o índice vier abaixo de 12, **não force o argumento de modernização** — o site está em dia e insistir nisso queima a credibilidade. Procure outro ângulo (captação, conteúdo, velocidade) ou considere que talvez não seja o lead certo agora.
+
 **Lead sem site, só com Instagram.** Há extrator para isso também:
 
 ```bash
@@ -167,7 +179,9 @@ Primeira pessoa do plural para a empresa, primeira do singular para o que a pess
 
 **1 — entrega (dia 0).** Identifica pessoa e empresa, diz a especialização, cita um fato verificável do negócio, entrega o protótipo e não pede nada em troca.
 
-**2 — retomada (+2 dias).** Volta com um achado concreto da auditoria e o motivo de ele importar. Nada de "só passando para saber se viu" sozinho.
+**2 — retomada (+2 dias).** Volta com um achado concreto — da auditoria do brief ou da análise de modernização — e o motivo de ele importar. Nada de "só passando para saber se viu" sozinho.
+
+Os achados de `atual/relatorio.md` já vêm escritos como frase para o dono. Use **no máximo dois por mensagem**: lista de defeitos soa como ataque, e o objetivo é abrir conversa, não constranger.
 
 **3 — conversa (+5 dias).** Oferece dez minutos, no canal que a pessoa preferir.
 
