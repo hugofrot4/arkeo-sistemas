@@ -168,11 +168,14 @@ export function buildBrief({
     );
   }
 
+  const temAmbos = !!lead.email && !!lead.phoneE164;
   const canal = lead.preferredChannel === "email" ? "e-mail" : "WhatsApp";
   linhas.push(
     "## Canal da abordagem",
     "",
-    `**${canal}.**`,
+    temAmbos
+      ? "**WhatsApp e e-mail.** Os dois contatos costumam ser pessoas diferentes — o WhatsApp é a recepção, o e-mail chega mais perto de quem decide. Toque 1 por WhatsApp pedindo permissão e sem link; toque 2 por e-mail, com `{{link}}`. Nunca oito mensagens."
+      : `**${canal}.**`,
     "",
     lead.preferredChannel === "email"
       ? [

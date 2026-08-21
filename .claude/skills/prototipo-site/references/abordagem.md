@@ -122,6 +122,29 @@ Peça algo que **abra o próximo passo** e que se responda em uma palavra:
 
 Repare no padrão: **sim ou não**, e o "sim" já é o próximo passo. Nada de duas perguntas, nada de pergunta aberta, nada de "qualquer coisa estou à disposição" — isso encerra a conversa em vez de abrir.
 
+## Quando o lead tem WhatsApp e e-mail
+
+Os dois contatos costumam ser **pessoas diferentes**, e isso decide a estratégia.
+
+O WhatsApp que aparece no Google de clínica, restaurante ou escritório é quase sempre **a recepção**: quem marca consulta, atende pedido, tira dúvida. Essa pessoa não decide sobre site. Na melhor das hipóteses ela repassa; na pior, ignora — e se achar que é propaganda, denuncia, que é o que derruba o número.
+
+O e-mail do rodapé (`contato@`, `administrativo@`) chega mais perto de quem decide, ou pelo menos cai numa caixa que o dono lê.
+
+**Alterne os canais dentro dos mesmos quatro toques**, em vez de fazer quatro de cada:
+
+| Toque | Canal | Por quê |
+|---|---|---|
+| 1 | WhatsApp | pede permissão; se a recepção repassar, ótimo |
+| 2 | e-mail | leva o link direto a quem decide, sem depender do repasse |
+| 3 | e-mail | retoma onde a conversa tem mais chance de existir |
+| 4 | qualquer um | encerramento, onde houve mais sinal |
+
+Oito mensagens para um negócio que nunca respondeu não é persistência, é assédio — e é o comportamento que gera denúncia. Quatro toques bem distribuídos alcançam as duas pessoas sem esse custo.
+
+Se o lead só tem um dos dois contatos, a sequência inteira vai por ele.
+
+**No toque de WhatsApp que pede repasse**, diga isso abertamente: *"Se não for você quem cuida do site, pode me dizer com quem eu falo?"* — é uma pergunta fácil de responder, e a recepção costuma responder porque não custa nada a ela.
+
 ## A escada de compromisso
 
 Nenhuma mensagem pede mais do que a anterior conquistou.

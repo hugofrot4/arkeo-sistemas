@@ -194,6 +194,7 @@ function QueueCard({
         <div className="flex shrink-0 items-center gap-2">
           <Badge className={segment.className}>{segment.label}</Badge>
           <Badge className="bg-text-muted/12 text-text-muted">Toque {item.step}</Badge>
+          <CanalDoToque item={item} refresh={refresh} />
         </div>
       </div>
 
@@ -240,6 +241,65 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Canal deste toque, trocável.
+ *
+ * Fica no toque e não só no lead porque os dois contatos costumam ser pessoas
+ * diferentes: o WhatsApp que o Google mostra é quase sempre a recepção, que
+ * não decide sobre site, enquanto o e-mail do rodapé chega mais perto de quem
+ * decide. Alternar os toques cobre as duas sem dobrar o número de mensagens —
+ * oito contatos a quem nunca respondeu é o que gera denúncia, e denúncia é o
+ * que derruba o número.
+ */
+function CanalDoToque({
+  item,
+  refresh,
+}: {
+  item: QueueItem;
+  refresh: () => Promise<void>;
+}) {
+  const { showToast } = useAdmin();
+  const [trocando, setTrocando] = useState(false);
+
+  const outro = item.channel === "whatsapp" ? "email" : "whatsapp";
+  const podeTrocar = outro === "email" ? !!item.lead.email : !!item.lead.phoneE164;
+
+  async function trocar() {
+    setTrocando(true);
+    try {
+      await updateTouch(item.id, { channel: outro });
+      await refresh();
+      showToast(`Toque ${item.step} passa a sair por ${outro === "email" ? "e-mail" : "WhatsApp"}.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao trocar o canal.");
+    } finally {
+      setTrocando(false);
+    }
+  }
+
+  return (
+    <button
+      onClick={trocar}
+      disabled={!podeTrocar || trocando}
+      title={
+        podeTrocar
+          ? `Enviar este toque por ${outro === "email" ? "e-mail" : "WhatsApp"}`
+          : outro === "email"
+            ? "O lead não tem e-mail cadastrado."
+            : "O lead não tem telefone cadastrado."
+      }
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
+        item.channel === "email"
+          ? "bg-accent/15 text-accent hover:bg-accent/25"
+          : "bg-good/15 text-good hover:bg-good/25"
+      }`}
+    >
+      {item.channel === "email" ? <Mail size={11} aria-hidden /> : <MessageCircle size={11} aria-hidden />}
+      {item.channel === "email" ? "e-mail" : "WhatsApp"}
+    </button>
   );
 }
 

@@ -192,6 +192,8 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 **Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo.
 
+**Os dois contatos são pessoas diferentes.** O WhatsApp do Google é quase sempre a recepção, que não decide sobre site; o e-mail do rodapé chega mais perto de quem decide. Quando o brief trouxer os dois, escreva pensando que o toque 1 vai por WhatsApp e o 2 por e-mail — e nunca proponha oito mensagens. Ver `references/abordagem.md`.
+
 **O assunto.** Cada bloco abre com uma linha `Assunto: ...`. No canal e-mail ela vira o assunto da mensagem; no WhatsApp é descartada. Escreva sempre — o canal é decidido no sistema, pelo contato que o lead tem. Regras e exemplos em `references/abordagem.md`.
 
 **O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 pede permissão em três linhas. O sistema substitui na publicação. Sem o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.

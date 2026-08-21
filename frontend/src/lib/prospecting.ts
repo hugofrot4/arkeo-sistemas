@@ -877,11 +877,12 @@ export async function reopenTouch(touch: OutreachTouch) {
  */
 export async function updateTouch(
   touchId: number,
-  campos: { body?: string; subject?: string | null },
+  campos: { body?: string; subject?: string | null; channel?: "whatsapp" | "email" },
 ) {
   const payload: Record<string, unknown> = {};
   if (campos.body !== undefined) payload.body = campos.body;
   if (campos.subject !== undefined) payload.subject = campos.subject;
+  if (campos.channel !== undefined) payload.channel = campos.channel;
 
   const { error } = await supabase
     .from("outreach_touches")
