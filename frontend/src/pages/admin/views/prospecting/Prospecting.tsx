@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import TodayTab from "./TodayTab";
 import QueueTab from "./QueueTab";
 import LeadsTab from "./LeadsTab";
@@ -27,7 +27,13 @@ type TabId = (typeof TABS)[number]["id"];
 
 export default function Prospecting() {
   const { data, loading, error, refresh } = useProspecting();
-  const [tab, setTab] = useState<TabId>("hoje");
+
+  // A sub-aba também vai para a URL: é onde se passa o dia, e recarregar a
+  // página no meio da fila devolvia para o começo.
+  const navigate = useNavigate();
+  const { sub } = useParams<{ sub?: string }>();
+  const tab: TabId = TABS.some((t) => t.id === sub) ? (sub as TabId) : "hoje";
+  const setTab = (proxima: TabId) => navigate(`/admin/prospects/${proxima}`);
 
   const pendenteHoje = data.queue.length + data.hot.length;
 

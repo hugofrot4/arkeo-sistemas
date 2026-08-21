@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   createMessageManual as createMessageManualApi,
   deleteMessage as deleteMessageApi,
@@ -74,9 +75,24 @@ const listApis: Partial<Record<EntityKey, ListApiAdapter>> = {
   portfolio: adaptListApi(portfolioApi),
 };
 
+/** Endereço desconhecido cai no dashboard em vez de renderizar tela vazia. */
+const VIEWS_VALIDAS = new Set<ViewKey>([
+  "dashboard", "hero", "metrics", "services", "process", "differentials",
+  "portfolio", "faq", "messages", "prospects", "settings",
+]);
+
 export function AdminProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AdminState>(() => createInitialState());
-  const [view, setView] = useState<ViewKey>("dashboard");
+
+  // A view mora na URL, não no estado: recarregar a página mantinha o
+  // trabalho só enquanto o React vivesse, e voltava tudo para o dashboard.
+  // Assim também dá para guardar o endereço de uma tela e o botão de voltar
+  // do navegador passa a funcionar.
+  const navigate = useNavigate();
+  const { view: viewNaUrl } = useParams<{ view?: string }>();
+  const view: ViewKey = VIEWS_VALIDAS.has(viewNaUrl as ViewKey)
+    ? (viewNaUrl as ViewKey)
+    : "dashboard";
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastEntry[]>([]);
   const toastId = useRef(0);
@@ -102,11 +118,14 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     Object.fromEntries(Object.keys(listApis).map((key) => [key, true])),
   );
 
-  const goToView = useCallback((next: ViewKey) => {
-    setView(next);
-    setSidebarOpen(false);
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, []);
+  const goToView = useCallback(
+    (next: ViewKey) => {
+      navigate(`/admin/${next}`);
+      setSidebarOpen(false);
+      window.scrollTo({ top: 0, behavior: "auto" });
+    },
+    [navigate],
+  );
 
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);

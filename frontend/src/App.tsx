@@ -41,8 +41,10 @@ function App() {
       {/* Protótipo público enviado ao prospect. Sem Navbar/Footer da Arkeo:
           a página se apresenta como o site do cliente. */}
       <Route path="/p/:slug" element={<Prototype />} />
+      {/* A view e a sub-aba ficam na URL para sobreviver ao recarregamento e
+          fazer o voltar do navegador funcionar. */}
       <Route
-        path="/admin"
+        path="/admin/:view?/:sub?"
         element={
           <RequireAuth>
             <Admin />
