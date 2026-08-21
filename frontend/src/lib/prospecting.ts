@@ -867,6 +867,30 @@ export async function reopenTouch(touch: OutreachTouch) {
   }
 }
 
+/**
+ * Corrige o texto de um toque que ainda não saiu.
+ *
+ * Sequência já publicada fica congelada no banco, e às vezes precisa mudar:
+ * corrigir o texto, trocar o assunto ao mudar de canal, ou tirar o link da
+ * primeira mensagem de WhatsApp — que era o que fazia a plataforma restringir
+ * o número. Sem isto, a única saída era gerar o protótipo de novo.
+ */
+export async function updateTouch(
+  touchId: number,
+  campos: { body?: string; subject?: string | null },
+) {
+  const payload: Record<string, unknown> = {};
+  if (campos.body !== undefined) payload.body = campos.body;
+  if (campos.subject !== undefined) payload.subject = campos.subject;
+
+  const { error } = await supabase
+    .from("outreach_touches")
+    .update(payload)
+    .eq("id", touchId)
+    .eq("status", "pending"); // toque enviado guarda o que foi dito de fato
+  if (error) throw new Error(error.message);
+}
+
 export async function skipTouch(touchId: number) {
   const { error } = await supabase
     .from("outreach_touches")

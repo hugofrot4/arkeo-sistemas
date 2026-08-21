@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Ban, Check, ExternalLink, Flame, Mail, MessageCircle, SkipForward } from "lucide-react";
+import { Ban, Check, ExternalLink, Flame, Mail, MessageCircle, Pencil, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
   emailLink,
   markTouchSent,
   updateLead,
+  updateTouch,
   markViewed,
   skipTouch,
   whatsappLink,
@@ -196,9 +197,7 @@ function QueueCard({
         </div>
       </div>
 
-      <p className="bg-bg text-text-muted mb-3 max-h-32 overflow-y-auto rounded-lg p-3 text-sm leading-relaxed whitespace-pre-wrap">
-        {item.body}
-      </p>
+      <TextoDoToque item={item} refresh={refresh} />
 
       <div className="flex flex-wrap items-center gap-2">
         {item.channel === "email" ? (
@@ -241,6 +240,119 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * O texto do toque, editável.
+ *
+ * A sequência é escrita na geração e fica congelada. Precisa mudar quando o
+ * lead troca de canal — e nos leads gerados antes, onde a primeira mensagem de
+ * WhatsApp carrega o link, que é o padrão que restringe o número.
+ */
+function TextoDoToque({
+  item,
+  refresh,
+}: {
+  item: QueueItem;
+  refresh: () => Promise<void>;
+}) {
+  const { showToast } = useAdmin();
+  const [editando, setEditando] = useState(false);
+  const [corpo, setCorpo] = useState(item.body);
+  const [assunto, setAssunto] = useState(item.subject ?? "");
+  const [salvando, setSalvando] = useState(false);
+
+  const temLink = /https?:\/\/\S+\/p\//.test(item.body);
+  const alertaLink = item.channel === "whatsapp" && item.step === 1 && temLink;
+
+  async function salvar() {
+    setSalvando(true);
+    try {
+      await updateTouch(item.id, {
+        body: corpo,
+        subject: item.channel === "email" ? assunto.trim() || null : undefined,
+      });
+      await refresh();
+      setEditando(false);
+      showToast("Mensagem atualizada.");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao salvar.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  if (editando) {
+    return (
+      <div className="mb-3">
+        {item.channel === "email" && (
+          <input
+            value={assunto}
+            onChange={(e) => setAssunto(e.target.value)}
+            placeholder="Assunto do e-mail"
+            className="border-border bg-bg mb-2 w-full rounded-lg border px-3 py-2 text-sm"
+          />
+        )}
+        <textarea
+          value={corpo}
+          onChange={(e) => setCorpo(e.target.value)}
+          rows={7}
+          className="border-border bg-bg w-full rounded-lg border p-3 text-sm leading-relaxed"
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            onClick={salvar}
+            disabled={salvando || !corpo.trim()}
+            className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {salvando ? "Salvando…" : "Salvar"}
+          </button>
+          <button
+            onClick={() => {
+              setCorpo(item.body);
+              setAssunto(item.subject ?? "");
+              setEditando(false);
+            }}
+            className="text-text-muted hover:text-text px-2 py-2 text-sm"
+          >
+            Cancelar
+          </button>
+          <span className="text-text-muted ml-auto text-xs tabular-nums">
+            {corpo.length}/900
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3">
+      {alertaLink && (
+        <p className="border-warning/30 bg-warning/8 text-warning mb-2 rounded-lg border px-3 py-2 text-xs">
+          Esta mensagem foi gerada antes da correção e leva o link já no primeiro
+          toque — é o padrão que faz o WhatsApp restringir o número. Reescreva
+          pedindo permissão e deixe o link para o toque 2.
+        </p>
+      )}
+      {item.channel === "email" && item.subject && (
+        <p className="text-text-muted mb-1 text-xs">
+          <strong>Assunto:</strong> {item.subject}
+        </p>
+      )}
+      <div className="bg-bg relative rounded-lg p-3">
+        <p className="text-text-muted max-h-32 overflow-y-auto pr-16 text-sm leading-relaxed whitespace-pre-wrap">
+          {item.body}
+        </p>
+        <button
+          onClick={() => setEditando(true)}
+          className="text-accent absolute top-2 right-2 inline-flex items-center gap-1 text-xs underline underline-offset-2"
+        >
+          <Pencil size={11} aria-hidden />
+          editar
+        </button>
+      </div>
+    </div>
   );
 }
 
