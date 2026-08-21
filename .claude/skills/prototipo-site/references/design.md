@@ -2,6 +2,8 @@
 
 O protótipo compete com o site que o negócio já tem — e com a impressão de que "site de agência é tudo igual". A diferença aparece em três decisões: uma ideia estrutural, um par tipográfico com personalidade, e cor escolhida em vez de herdada.
 
+Aqui está **o que** decidir. **Como** construir sem erro de layout — tokens, container, grade, casting de imagem — está em `composicao.md`.
+
 ---
 
 ## O padrão proibido
@@ -100,11 +102,9 @@ Isso é uma restrição produtiva. O que preencher o espaço:
 
 ## Espaço e ritmo
 
-Base de 8px. Espaçamento entre seções generoso: `clamp(4rem, 10vw, 8rem)` de padding vertical. Aperto é o que faz a página parecer amadora.
+Base de 8px, espaçamento generoso entre seções, largura de leitura em torno de 65ch. Aperto é o que faz a página parecer amadora.
 
-Largura de leitura: `max-width: 65ch` em blocos de texto corrido. Container geral entre 1100px e 1240px — mas quebre isso de propósito pelo menos uma vez, com um elemento sangrando até a borda.
-
----
+Os valores concretos e o contrato que impede o desalinhamento estão em `composicao.md` — escreva os tokens antes da primeira seção, não depois.
 
 ## Movimento
 

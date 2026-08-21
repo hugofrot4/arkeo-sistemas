@@ -1,0 +1,4 @@
+# Playwright vive aqui e não no app: o frontend não deve carregar um navegador
+# headless. Reinstale com `npm install` dentro desta pasta.
+node_modules/
+package-lock.json

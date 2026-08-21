@@ -9,13 +9,15 @@ O sistema serve esse HTML dentro de um **iframe isolado** em `arkeosistemas.com.
 ### Permitido
 
 - **Google Fonts** — único host externo que carrega. `<link>` para `fonts.googleapis.com` funciona normalmente.
-- **SVG inline** e `data:` URI para ícones ou texturas pequenas.
+- **Material Symbols** — a biblioteca de ícones do Google, servida por `fonts.googleapis.com`. É a forma padrão de colocar ícone no protótipo. Ver **Ícones** abaixo.
+- **SVG inline** e `data:` URI para texturas pequenas e marcas de rede social.
 - **JS baunilha** — `IntersectionObserver`, `querySelector`, listeners. Roda normalmente.
 - `target="_blank"` em links — abre certo.
 
 ### Proibido
 
-- **Qualquer outro host externo** — sem CDN, sem Tailwind por CDN, sem Font Awesome, sem imagem de Unsplash. Não carrega e a página quebra.
+- **Qualquer outro host externo** — sem CDN, sem Tailwind por CDN, sem Font Awesome, sem Lucide, sem Iconify, sem imagem de Unsplash. Não carrega e a página quebra.
+- **Ícone desenhado à mão em SVG** quando existe equivalente no Material Symbols. Ver **Ícones**.
 - **`localStorage` e `sessionStorage`** — o iframe roda em origem opaca e o acesso **lança exceção**. Se usar, envolva em `try/catch` — ou melhor, não use.
 - **`<form>` que submete** — o envio é bloqueado. O CTA é sempre um link `wa.me`.
 - **Framework** — sem React, sem Vue, sem build. É um arquivo estático.
@@ -36,6 +38,50 @@ O sistema serve esse HTML dentro de um **iframe isolado** em `arkeosistemas.com.
 ### Tamanho
 
 Abaixo de **400 KB**. O sistema recusa acima de 800 KB. Se estiver passando, o culpado é quase sempre um `data:` URI grande — troque por CSS.
+
+---
+
+## Ícones
+
+**Use biblioteca, não desenhe.** Ícone traçado à mão em `<path>` sai com peso de traço, canto e grade óptica diferentes do resto e é o que denuncia protótipo montado às pressas. A biblioteca resolve consistência de graça.
+
+A única biblioteca que carrega dentro do iframe é o **Material Symbols**, servido pelo Google Fonts. Peça só os ícones que for usar, por `icon_names`:
+
+```html
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=call,place,schedule,arrow_outward,dentistry&display=block">
+```
+
+```css
+.ms{font-family:'Material Symbols Rounded';font-weight:normal;font-style:normal;
+    line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;
+    white-space:nowrap;direction:ltr;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
+```
+
+```html
+<span class="ms" aria-hidden="true">call</span>
+```
+
+Variantes: `Material+Symbols+Rounded`, `+Outlined` ou `+Sharp`. Escolha uma e não misture — o arredondamento tem que combinar com o raio de canto do layout.
+
+### Valide os nomes antes de entregar
+
+Duas armadilhas silenciosas:
+
+1. **Nome inexistente** não dá erro — o Google devolve a **fonte inteira, de 1,2 MB**, e a ligadura não renderiza: a página mostra a palavra crua (`call`) no lugar do desenho.
+2. **`icon_names` fora de ordem alfabética** faz a requisição voltar como página de erro HTML, e aí *nenhum* ícone carrega. Ordene a lista.
+
+Subset correto pesa 2 a 7 KB. Confira:
+
+```bash
+u=$(curl -s "https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=call,place,dentistry" | grep -o 'https://fonts.gstatic.com[^)]*')
+curl -s "$u" | wc -c   # milhares = ok · ~1200000 = nome errado · 0 = lista fora de ordem
+```
+
+Use `&display=block` no `<link>`: enquanto a fonte carrega, o texto da ligadura fica invisível em vez de piscar a palavra na tela.
+
+### A exceção: marca de rede social
+
+WhatsApp, Instagram e Facebook não existem no Material Symbols, e não há host permitido que os sirva. Esses ficam em **SVG inline**, com o `viewBox` e o traçado oficiais da marca. É a única exceção — para tudo mais, biblioteca.
 
 ---
 
@@ -92,6 +138,7 @@ Para **cada** afirmação sobre o negócio na página, uma de duas coisas tem qu
 - [ ] Alvos de toque ≥ 44px
 - [ ] Todo link tem `href` real — nenhum `href="#"` sem destino
 - [ ] Nenhum host externo além de `fonts.googleapis.com` / `fonts.gstatic.com`
+- [ ] Ícones vindos do Material Symbols, com os nomes validados pelo `curl` — nada de `<path>` desenhado à mão, exceto marca de rede social
 - [ ] Nenhum `localStorage`, `sessionStorage` ou `<form>` que submete
 - [ ] `<title>` e `<meta description>` preenchidos com o negócio real
 - [ ] `@media (prefers-reduced-motion: reduce)` respeitado

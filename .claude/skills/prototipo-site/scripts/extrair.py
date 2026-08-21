@@ -62,6 +62,7 @@ class Coletor(HTMLParser):
         self.imagens = []          # (url, contexto)
         self.links = []
         self.titulos = []          # (nivel, texto)
+        self._ultimo_titulo = None
         self._nivel_atual = None
         self._buffer = []
         self.texto = []
@@ -81,7 +82,8 @@ class Coletor(HTMLParser):
         elif tag == "link":
             rel = (a.get("rel") or "").lower()
             if "icon" in rel and a.get("href"):
-                self.imagens.append((a["href"], "favicon"))
+                self.imagens.append({"src": a["href"], "contexto": "favicon",
+                                     "alt": "", "secao": None})
         elif tag == "img":
             src = a.get("src") or a.get("data-src")
             if not src and a.get("srcset"):
@@ -91,7 +93,14 @@ class Coletor(HTMLParser):
                     a.get("class", ""), a.get("id", ""), a.get("alt", ""),
                 ])).lower()
                 contexto = "logo" if ("logo" in pistas or self._profundidade_cabecalho > 0) else "foto"
-                self.imagens.append((src, contexto))
+                # `alt` e o título logo acima dizem em que seção a imagem vivia
+                # no site original — é a melhor pista de para que ela serve.
+                self.imagens.append({
+                    "src": src,
+                    "contexto": contexto,
+                    "alt": (a.get("alt") or "").strip()[:120],
+                    "secao": self._ultimo_titulo,
+                })
         elif tag in ("header", "nav"):
             self._profundidade_cabecalho += 1
         elif tag == "a" and a.get("href"):
@@ -111,6 +120,7 @@ class Coletor(HTMLParser):
             texto = " ".join("".join(self._buffer).split())
             if texto:
                 self.titulos.append((self._nivel_atual, texto))
+                self._ultimo_titulo = texto[:80]
             self._nivel_atual = None
             self._buffer = []
 
@@ -148,6 +158,78 @@ def cores_do_css(html):
     return sorted(contagem.items(), key=lambda kv: -kv[1])[:12]
 
 
+def classificar_formato(largura, altura):
+    """Proporção manda no uso: faixa larga não vira card quadrado sem cortar."""
+    razao = largura / altura if altura else 1
+    if razao >= 2.5:
+        return "faixa", razao
+    if razao >= 1.4:
+        return "paisagem", razao
+    if razao >= 0.85:
+        return "quadrada", razao
+    if razao >= 0.5:
+        return "retrato", razao
+    return "muito-estreita", razao
+
+
+def analisar_conteudo(imagem):
+    """
+    Separa foto de elemento gráfico, e detecta recorte transparente.
+
+    Importa para o casting: logo com fundo transparente pode ir sobre faixa de
+    cor; foto não pode virar ícone; gráfico chapado não aguenta ampliação de
+    tela cheia.
+    """
+    from PIL import Image
+
+    amostra = imagem.convert("RGB").resize((80, 80), Image.LANCZOS)
+    cores = amostra.getcolors(maxcolors=80 * 80)
+    variedade = len(cores) if cores else 6400
+    if variedade < 60:
+        tipo = "grafico"          # logo, selo, ilustração chapada
+    elif variedade < 900:
+        tipo = "misto"            # banner com texto sobre foto
+    else:
+        tipo = "foto"
+
+    transparente = False
+    if imagem.mode in ("RGBA", "LA"):
+        canal = imagem.getchannel("A")
+        transparente = canal.getextrema()[0] < 250
+
+    dominantes = []
+    try:
+        reduzida = amostra.quantize(colors=5, method=Image.MEDIANCUT)
+        paleta = reduzida.getpalette()[:15]
+        contagens = sorted(reduzida.getcolors(), reverse=True)
+        for _, indice in contagens[:3]:
+            r, g, b = paleta[indice * 3: indice * 3 + 3]
+            dominantes.append(f"#{r:02x}{g:02x}{b:02x}")
+    except Exception:
+        pass
+
+    return tipo, transparente, dominantes
+
+
+def sugerir_papel(contexto, formato, tipo, transparente, largura):
+    """Sugestão de uso. É ponto de partida — quem decide é quem olha a imagem."""
+    if contexto == "favicon" or (transparente and tipo == "grafico" and largura <= 600):
+        return "logo / marca"
+    if contexto == "logo":
+        return "logo / marca"
+    if tipo == "grafico":
+        return "selo ou elemento gráfico — não amplie"
+    if formato == "faixa":
+        return "faixa de largura total ou fundo de herói"
+    if formato == "paisagem":
+        return "herói, capa de seção ou card largo"
+    if formato == "quadrada":
+        return "grade de serviços, card ou miniatura"
+    if formato == "retrato":
+        return "coluna lateral, card alto ou destaque vertical"
+    return "uso restrito — proporção difícil de encaixar"
+
+
 def processar_imagem(bytes_originais, contexto):
     """Redimensiona e converte para WebP. Devolve (bytes, largura, altura, formato)."""
     from PIL import Image
@@ -171,9 +253,23 @@ def processar_imagem(bytes_originais, contexto):
         altura = round(altura_original * alvo / largura_original)
         imagem = imagem.resize((alvo, altura), Image.LANCZOS)
 
+    tipo, transparente, dominantes = analisar_conteudo(imagem)
+    largura, altura = imagem.size
+    formato, razao = classificar_formato(largura, altura)
+
     saida = io.BytesIO()
     imagem.save(saida, format="WEBP", quality=QUALIDADE_WEBP, method=4)
-    return saida.getvalue(), imagem.size[0], imagem.size[1], "webp"
+    return {
+        "bytes": saida.getvalue(),
+        "largura": largura,
+        "altura": altura,
+        "formato": formato,
+        "razao": round(razao, 2),
+        "tipo": tipo,
+        "transparente": transparente,
+        "dominantes": dominantes,
+        "papel": sugerir_papel(contexto, formato, tipo, transparente, largura),
+    }
 
 
 def main():
@@ -219,8 +315,8 @@ def main():
     # ── imagens ──────────────────────────────────────────────────────────
     vistas = set()
     salvas = []
-    for origem, contexto in coletor.imagens:
-        alvo = absolutizar(url_final, origem)
+    for item in coletor.imagens:
+        alvo = absolutizar(url_final, item["src"])
         if not alvo or alvo in vistas:
             continue
         vistas.add(alvo)
@@ -231,39 +327,52 @@ def main():
         except Exception:
             continue
 
-        tipo = (cabecalhos.get("Content-Type") or "").lower()
+        tipo_http = (cabecalhos.get("Content-Type") or "").lower()
         nome_base = re.sub(r"[^a-z0-9]+", "-", os.path.basename(urllib.parse.urlparse(alvo).path).lower())[:40] or f"img{len(salvas)}"
 
         # SVG já é leve e escala sem perda — vai inteiro, sem passar pelo PIL.
-        if "svg" in tipo or alvo.lower().endswith(".svg"):
+        if "svg" in tipo_http or alvo.lower().endswith(".svg"):
             if len(dados) > 120_000:
                 continue
             caminho = os.path.join(destino, "imagens", f"{nome_base}.svg")
             with open(caminho, "wb") as arquivo:
                 arquivo.write(dados)
             uri = "data:image/svg+xml;base64," + base64.b64encode(dados).decode()
-            salvas.append({"origem": alvo, "contexto": contexto, "arquivo": caminho,
-                           "dimensoes": "vetor", "bytes_datauri": len(uri)})
             with open(os.path.join(destino, "datauris", f"{nome_base}.txt"), "w") as arquivo:
                 arquivo.write(uri)
+            salvas.append({
+                "arquivo": os.path.basename(caminho), "origem": alvo,
+                "alt": item["alt"], "secao": item["secao"],
+                "formato": "vetor", "razao": None, "tipo": "grafico",
+                "transparente": True, "dominantes": [],
+                "papel": "logo / marca" if item["contexto"] in ("logo", "favicon") else "elemento gráfico",
+                "bytes_datauri": len(uri),
+            })
             continue
 
         try:
-            resultado = processar_imagem(dados, contexto)
+            analise = processar_imagem(dados, item["contexto"])
         except Exception:
             continue
-        if not resultado:
+        if not analise:
             continue
 
-        conteudo, largura, altura, _ = resultado
         caminho = os.path.join(destino, "imagens", f"{nome_base}.webp")
         with open(caminho, "wb") as arquivo:
-            arquivo.write(conteudo)
-        uri = "data:image/webp;base64," + base64.b64encode(conteudo).decode()
+            arquivo.write(analise["bytes"])
+        uri = "data:image/webp;base64," + base64.b64encode(analise["bytes"]).decode()
         with open(os.path.join(destino, "datauris", f"{nome_base}.txt"), "w") as arquivo:
             arquivo.write(uri)
-        salvas.append({"origem": alvo, "contexto": contexto, "arquivo": caminho,
-                       "dimensoes": f"{largura}x{altura}", "bytes_datauri": len(uri)})
+
+        salvas.append({
+            "arquivo": os.path.basename(caminho), "origem": alvo,
+            "alt": item["alt"], "secao": item["secao"],
+            "formato": analise["formato"], "razao": analise["razao"],
+            "tipo": analise["tipo"], "transparente": analise["transparente"],
+            "dominantes": analise["dominantes"], "papel": analise["papel"],
+            "largura": analise["largura"], "altura": analise["altura"],
+            "bytes_datauri": len(uri),
+        })
 
     # ── relatório ────────────────────────────────────────────────────────
     linhas = [f"# Material extraído de {url_final}", ""]
@@ -299,15 +408,30 @@ def main():
 
     if salvas:
         total = sum(i["bytes_datauri"] for i in salvas)
-        linhas += ["## Imagens baixadas", "",
-                   f"Convertidas para WebP e redimensionadas. O data: URI de cada uma está em "
-                   f"`fonte/datauris/`. **Somando todas: {total // 1024} KB** — o arquivo final "
-                   f"deve ficar abaixo de 400 KB, então escolha.", "",
-                   "| arquivo | papel | dimensões | data URI |", "|---|---|---|---|"]
-        for item in sorted(salvas, key=lambda i: (i["contexto"] != "logo", i["bytes_datauri"])):
-            linhas.append(f"| `{os.path.basename(item['arquivo'])}` | {item['contexto']} | "
-                          f"{item['dimensoes']} | {item['bytes_datauri'] // 1024} KB |")
-        linhas.append("")
+        linhas += ["## Elenco de imagens", "",
+                   f"Somando todas: **{total // 1024} KB** em data: URI. O arquivo final fica "
+                   f"abaixo de 400 KB, então escolha — não use todas.", "",
+                   "**Abra os arquivos em `fonte/imagens/` e olhe cada um antes de decidir onde "
+                   "vai.** A coluna *papel sugerido* vem da proporção e do tipo de conteúdo; "
+                   "ela evita erro grosseiro (foto de faixa virando ícone), mas não sabe o que "
+                   "está retratado.", "",
+                   "| arquivo | formato | proporção | tipo | cores | papel sugerido | alt / seção | KB |",
+                   "|---|---|---|---|---|---|---|---|"]
+        # Marca primeiro, depois da mais leve para a mais pesada.
+        for item in sorted(salvas, key=lambda i: ("logo" not in i["papel"], i["bytes_datauri"])):
+            razao = f'{item["razao"]}:1' if item.get("razao") else "vetor"
+            cores = " ".join(item["dominantes"]) or "—"
+            contexto = " / ".join(filter(None, [item["alt"], item["secao"]])) or "—"
+            transp = " (fundo transparente)" if item["transparente"] else ""
+            linhas.append(
+                f'| `{item["arquivo"]}` | {item["formato"]} | {razao} | {item["tipo"]}{transp} | '
+                f'{cores} | {item["papel"]} | {contexto} | {item["bytes_datauri"] // 1024} |'
+            )
+        linhas += ["",
+                   "Como ler: **faixa** (≥2.5:1) só funciona em largura total ou fundo de herói. "
+                   "**quadrada** é a única que entra em grade sem cortar. **retrato** pede coluna. "
+                   "**gráfico** não aguenta ampliação — não use em tela cheia. "
+                   "**fundo transparente** pode ir sobre faixa de cor.", ""]
     else:
         linhas += ["## Imagens", "", "Nenhuma imagem aproveitável encontrada.", ""]
 

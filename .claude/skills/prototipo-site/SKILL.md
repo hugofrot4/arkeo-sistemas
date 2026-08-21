@@ -16,11 +16,15 @@ O padrão a bater não é "um site aceitável". É o dono do negócio olhar no c
 Você precisa de:
 
 - **Brief** — colado da aba Prospecção do admin, ou informado na conversa. Traz nome, ramo, bairro, cidade, situação da presença digital atual, os achados da auditoria e o endereço do site atual, quando existir.
-- **Inspirações** (opcional, mas muda o resultado) — imagens que o usuário anexar.
+- **Referência visual** — print de site, peça gráfica, foto de fachada, paleta. É o insumo que mais separa protótipo autoral de template, então **peça sempre**, não espere ser oferecido:
+
+  > Tem alguma referência visual? Print de um site que você gosta, do ramo ou não, ou qualquer peça que dê o clima. Se não tiver, eu escolho a direção e te mostro antes de construir.
+
+  Peça antes de declarar a direção do passo 4 — chegar com referência depois do site pronto custa uma reconstrução.
 
 Se faltar o essencial (nome e ramo), pergunte. Não invente para preencher.
 
-Se não houver inspiração nenhuma, siga assim mesmo — mas escolha uma direção deliberada em vez de cair no padrão. Ver `references/design.md`.
+Se o usuário disser que não tem referência, siga assim mesmo — mas escolha uma direção deliberada em vez de cair no padrão. Ver `references/design.md`.
 
 ### 2. Se o lead já tem site, extraia o material dele
 
@@ -50,9 +54,9 @@ O relatório informa quantos KB cada imagem custa em `data:` URI. O arquivo fina
 
 Se o script falhar, é lead de site quebrado — siga sem material e trate a falta de imagem como em `references/design.md`.
 
-### 3. Leia as inspirações
+### 3. Leia as referências visuais
 
-Para cada imagem anexada, extraia e anote:
+Para cada imagem enviada, extraia e anote:
 
 - **Paleta** — nomeie os hexadecimais que você vê, não "azul e branco".
 - **Tipografia** — a personalidade (grotesca, serifada editorial, condensada, geométrica) e o contraste de tamanho entre título e corpo.
@@ -75,15 +79,31 @@ Risco:            <o que pode não funcionar>
 
 Este passo existe para impedir o padrão automático. Se a direção couber em "hero centrado, três cards com ícone, rodapé escuro", **descarte e escolha outra**.
 
-### 5. Construa
+### 5. Faça o casting das imagens e fixe as medidas
+
+Duas decisões que, tomadas antes do markup, evitam a maior parte do retrabalho.
+
+**Casting.** O `fonte/relatorio.md` traz um elenco com formato, proporção, tipo e papel sugerido de cada arquivo. **Abra as imagens e olhe** — o script sabe a proporção, não sabe o que está retratado. Para cada uma que for usar, anote:
+
+```
+<arquivo>  →  <papel na página>  |  proporção <x:y>  |  não cortar: <o quê>
+```
+
+Proporção errada é o que produz foto esticada e corte no meio do rosto. A tabela de qual formato serve para qual papel está em `references/composicao.md`.
+
+**Medidas.** Escreva o `:root` com a escala de espaço, o container e o ritmo vertical **antes** da primeira seção. Depois disso, nenhum valor solto no CSS. É o que impede as bordas de cada seção começarem num lugar diferente.
+
+### 6. Construa
 
 Um arquivo: `prototipos/<slug>/index.html`.
 
 `<slug>` é o nome do negócio em minúsculas, sem acento, com hífen. Ex.: `clinica-sorriso-vivo`.
 
-Regras em `references/tecnico.md`. Doutrina de layout, cor e tipografia em `references/design.md`. O que cada ramo precisa em `references/nichos.md` — **leia a seção do ramo do lead antes de escrever a primeira linha de copy**.
+Ícone é sempre de biblioteca — **Material Symbols pelo Google Fonts**, com os nomes validados. Nada de `<path>` desenhado à mão, fora marca de rede social. O porquê e o como estão em `references/tecnico.md`.
 
-### 6. Escreva a abordagem
+Contrato de layout — container único, grade que fecha a base, imagem com proporção reservada — em `references/composicao.md`. Restrições do arquivo em `references/tecnico.md`. O que cada ramo precisa em `references/nichos.md` — **leia a seção do ramo do lead antes de escrever a primeira linha de copy**.
+
+### 7. Escreva a abordagem
 
 `prototipos/<slug>/abordagem.txt` — quatro mensagens de WhatsApp separadas por uma linha com `---`, nesta ordem:
 
@@ -94,17 +114,30 @@ Regras em `references/tecnico.md`. Doutrina de layout, cor e tipografia em `refe
 
 Primeira pessoa do singular, como quem escreve na hora. Cada uma mais curta que a anterior.
 
-### 7. Confira antes de entregar
+### 8. Revise como especialista — duas passadas obrigatórias
 
-Rode a checklist de `references/tecnico.md`. Ela não é formalidade: o item sobre fato inventado é o que impede o protótipo de queimar o lead.
+Protótipo nenhum vai para o usuário sem isto. O protocolo completo está em `references/revisao.md`.
 
-### 8. Entregue
+**Passada 1 — inspetor de frontend.** Abre o arquivo no Chromium a 390px e 1280px, mede o DOM renderizado e aponta o elemento culpado de cada problema:
+
+```bash
+node .claude/skills/prototipo-site/scripts/revisar.mjs prototipos/<slug>/index.html
+```
+
+Pega desalinhamento de borda, container divergente, card com base irregular, foto esticada, estouro horizontal, contraste insuficiente, fonte pequena, texto vazando e erro de JavaScript. **Todo `ERRO` é corrigido antes de seguir**, e o script roda de novo até zerar.
+
+**Passada 2 — designer de UI/UX.** Abra `revisao/mobile.png` e `revisao/desktop.png` e **olhe**. Descreva o que vê antes de julgar, percorra a rubrica de sete pontos de `references/revisao.md` e liste ao menos três melhorias concretas. Aplique e rode a passada 1 outra vez — mudança de layout costuma criar problema novo.
+
+Depois disso, a checklist de verdade e conteúdo de `references/tecnico.md`. Ela não é formalidade: o item sobre fato inventado é o que impede o protótipo de queimar o lead.
+
+### 9. Entregue
 
 Informe:
 
 - caminho do arquivo e como abrir (`file://` direto no navegador serve)
 - a direção de design em uma frase
-- o que você deixou como placeholder e por quê
+- **o que a revisão pegou e o que você mudou** — é o que dá ao usuário motivo para confiar sem reconferir
+- o que ficou como placeholder e por quê
 - tamanho do arquivo
 
 ## Regra absoluta: não invente fato sobre o negócio
@@ -145,6 +178,8 @@ Depois de ver no navegador, o usuário vai pedir ajuste. Edite o mesmo arquivo. 
 
 | Arquivo | Quando ler |
 |---|---|
-| `references/design.md` | Sempre, antes de escolher a direção. Layout, cor, tipografia, e os padrões proibidos. |
+| `references/design.md` | Antes de escolher a direção. **O que** a página vai ser: ideia estrutural, cor, tipografia, e o padrão proibido. |
 | `references/nichos.md` | Sempre, a seção do ramo do lead. Público, objeções, cor e restrições de publicidade da profissão. |
-| `references/tecnico.md` | Antes de construir e antes de entregar. Restrições do arquivo e checklist. |
+| `references/composicao.md` | Antes do markup. **Como** construir: tokens, container único, grade, casting de imagem, armadilhas de alinhamento. |
+| `references/tecnico.md` | Antes de construir e antes de entregar. Restrições do arquivo, ícones e checklist de conteúdo. |
+| `references/revisao.md` | No passo 8. As duas passadas de especialista e a rubrica visual. |
