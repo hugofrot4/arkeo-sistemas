@@ -148,9 +148,38 @@ A restrição é produtiva. O que preenche o espaço:
 - **Números grandes** — a nota do Google, quando existir no brief, vira elemento gráfico
 - **Grão** — filtro SVG de ruído em baixa opacidade tira o aspecto "chapado" de fundo sólido
 
+## O que é convenção e o que é autoral
+
+Duas coisas diferentes se misturam quando se fala em "todo site do ramo parece igual", e tratar as duas do mesmo jeito estraga o protótipo por um lado ou por outro.
+
+**A estrutura de conversão é convenção. Respeite.**
+
+Ela é igual entre concorrentes porque funciona: quem procura dentista com dor quer saber, nessa ordem, se atendem o caso dele, onde fica e como marcar. Inverter isso para parecer original faz o visitante sair.
+
+Não invente em cima de:
+
+- quais perguntas a página responde, e em que ordem de urgência
+- proeminência e repetição do contato — em serviço de urgência, telefone na primeira tela
+- o vocabulário e o tom do ramo
+- o que o cliente final precisa saber antes de decidir
+
+**A expressão visual é autoral. Não repita.**
+
+A mesma estrutura de conversão cabe em páginas completamente diferentes. É aqui que o protótipo deixa de parecer template:
+
+- par tipográfico
+- tratamento da cor dentro da marca — clara e arejada, ou escura e densa
+- ideia estrutural e composição
+- ritmo, densidade e respiro
+- o detalhe distintivo
+
+Em uma frase: **duas clínicas devem responder às mesmas perguntas, na mesma ordem, e ainda assim parecer sites de empresas diferentes.**
+
+Se uma escolha de design atrapalha a leitura ou esconde o contato, ela perdeu — originalidade não vale um contato a menos. Diferenciação é como você diz, não o que você deixa de dizer.
+
 ## Não repita o protótipo anterior
 
-Protótipos do mesmo ramo tendem a convergir: mesmo playbook, mesmo público, mesmas seções. Convergiram, viraram template — e template é exatamente o que o protótipo existe para não parecer. O dono do negócio pode muito bem conhecer o concorrente que também recebeu um.
+Protótipos do mesmo ramo tendem a convergir na aparência, não só na estrutura — e aí viraram template. O dono do negócio pode muito bem conhecer o concorrente que também recebeu um.
 
 **Antes de fixar a direção, olhe o que já foi feito:**
 
@@ -163,11 +192,11 @@ for f in prototipos/*/index.html; do
 done
 ```
 
-Do resultado, escolha deliberadamente **diferente** dos dois ou três mais recentes do mesmo ramo, em pelo menos duas destas frentes:
+Do resultado, escolha deliberadamente **diferente** dos dois ou três mais recentes do mesmo ramo, em pelo menos duas destas frentes — todas de expressão, nenhuma de conversão:
 
 - **par tipográfico** — a lista acima tem quinze; não gravite para o mesmo
 - **ideia estrutural** — se o último foi split assimétrico, faça faixas ou dossiê
-- **ordem e escolha das seções** — o cardápio de `nichos.md` não é um roteiro
+- **ordem e escolha das seções** — o cardápio de `nichos.md` não é um roteiro, desde que a ordem continue servindo à decisão de quem lê
 - **temperatura da paleta** — se os últimos foram frios, e a logo permitir, vá para neutro quente ou escuro com acento
 
 A cor da logo não é negociável, mas tudo em volta dela é: a mesma marca azul rende um site claro e arejado ou um escuro e denso, e são páginas completamente diferentes.

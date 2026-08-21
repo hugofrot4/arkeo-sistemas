@@ -13,6 +13,23 @@ Ao terminar de ler a primeira mensagem, o dono precisa saber, sem esforço:
 
 Falhou em qualquer um dos quatro, a mensagem é ignorada. O erro mais comum é falhar no 1 e no 4 ao mesmo tempo: a pessoa entende que alguém analisou o site dela e mandou um link, mas não entende que há um serviço sendo oferecido nem o que se espera dela.
 
+## Tamanho
+
+O sistema **recusa mensagem acima de 900 caracteres** na conferência do upload. Mas 900 é o teto, não o alvo: mensagem de WhatsApp longa é lida na diagonal, e a parte que se pula costuma ser justamente a pergunta do fim.
+
+| Toque | Alvo | Teto |
+|---|---|---|
+| 1 — entrega | até 750 | 900 |
+| 2 — retomada | até 350 | 900 |
+| 3 — conversa | até 250 | 900 |
+| 4 — encerramento | até 220 | 900 |
+
+Cada mensagem menor que a anterior. O toque 1 pode ser o mais longo porque carrega a apresentação, a observação e o link; dali em diante, quanto mais curto, mais responde.
+
+O `{{link}}` conta como oito caracteres na conferência, mas vira uma URL de uns sessenta na publicação — deixe essa folga.
+
+Se não couber, corte adjetivo e explicação, nunca a pergunta do fim.
+
 ## A estrutura da primeira mensagem
 
 Seis blocos, nesta ordem. Cada um cabe em uma ou duas frases.

@@ -142,6 +142,8 @@ Risco:            <o que pode não funcionar>
 
 Este passo existe para impedir o padrão automático. Se a direção couber em "hero centrado, três cards com ícone, rodapé escuro", **descarte e escolha outra**.
 
+Diferenciar é escolher **como dizer**, nunca deixar de dizer: a estrutura que converte no ramo é convenção e se respeita, a expressão visual é autoral e não se repete. Duas clínicas respondem às mesmas perguntas, na mesma ordem, e ainda assim parecem sites de empresas diferentes. Ver `references/design.md`, seção *O que é convenção e o que é autoral*.
+
 **Antes de fixar, olhe os protótipos anteriores** — a receita de `references/design.md`, seção *Não repita o protótipo anterior*, lista fonte, paleta e seções de cada um já feito. Leads do mesmo ramo convergem sozinhos, e dois concorrentes recebendo páginas parecidas destrói o argumento. Escolha diferente dos mais recentes em pelo menos duas frentes: par tipográfico, ideia estrutural, ordem das seções, temperatura da paleta.
 
 ### 5. Sem foto própria? Busque imagens de apoio
@@ -227,6 +229,7 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] A mensagem 1 tem `{{link}}` e termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
+- [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. Alvo: 750 no toque 1, 350 no 2, 250 no 3, 220 no 4
 
 ### 9. Revise como especialista — duas passadas obrigatórias
 
