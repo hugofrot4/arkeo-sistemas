@@ -484,7 +484,11 @@ export interface OutreachTouch {
 }
 
 export interface QueueItem extends OutreachTouch {
-  lead: Pick<Lead, "id" | "name" | "niche" | "neighborhood" | "phoneE164" | "whatsappValid" | "score" | "segment" | "stage">;
+  lead: Pick<
+    Lead,
+    | "id" | "name" | "niche" | "neighborhood" | "phone" | "phoneE164"
+    | "whatsappValid" | "score" | "segment" | "stage"
+  >;
   prototypeSlug: string | null;
 }
 
@@ -502,7 +506,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
     .from("outreach_touches")
     .select(
       `${TOUCH_SELECT},
-       leads!inner(id, name, niche, neighborhood, phone_e164, whatsapp_valid, score, segment, stage)`,
+       leads!inner(id, name, niche, neighborhood, phone, phone_e164, whatsapp_valid, score, segment, stage)`,
     )
     .eq("status", "pending")
     .lte("scheduled_for", today)
@@ -513,8 +517,8 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
   type Row = Omit<QueueItem, "lead" | "prototypeSlug"> & {
     leads: {
       id: number; name: string; niche: string; neighborhood: string | null;
-      phone_e164: string | null; whatsapp_valid: boolean; score: number;
-      segment: LeadSegment; stage: LeadStage;
+      phone: string | null; phone_e164: string | null; whatsapp_valid: boolean;
+      score: number; segment: LeadSegment; stage: LeadStage;
     };
   };
   const rows = unwrap<Row[]>(res);
@@ -539,6 +543,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
         name: leads.name,
         niche: leads.niche,
         neighborhood: leads.neighborhood,
+        phone: leads.phone,
         phoneE164: leads.phone_e164,
         whatsappValid: leads.whatsapp_valid,
         score: leads.score,

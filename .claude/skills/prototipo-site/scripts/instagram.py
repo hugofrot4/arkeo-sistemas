@@ -408,11 +408,28 @@ def main():
         if perfil["via"] == "navegador":
             linhas += [
                 "A coluna *legenda* aqui é o texto alternativo, não a legenda escrita pelo",
-                "dono. Ele descreve o que está **dentro** da imagem, com OCR — é o jeito",
-                "mais rápido de achar o card de texto (descarte) e, às vezes, entrega fato",
-                "publicado que não está na bio: lista de especialidades, dias de",
-                "atendimento, promoção antiga.", "",
+                "dono, e está cortada para caber na tabela. O texto inteiro vem abaixo.", "",
             ]
+
+            # O alternativo do Instagram inclui OCR do texto dentro da imagem, e
+            # é onde costuma estar o conteúdo que a bio não tem. Cortado na
+            # tabela ele não serve para nada — aqui vai inteiro.
+            com_texto = [i for i in salvas if len(i.get("legenda") or "") > 60]
+            if com_texto:
+                linhas += [
+                    "### Texto dentro das imagens", "",
+                    "O Instagram descreve o que está **dentro** de cada imagem, com OCR.",
+                    "Serve para duas coisas, nesta ordem de valor:", "",
+                    "1. **Achar fato publicado que não está na bio** — lista de serviços, dias",
+                    "   de atendimento, telefone, slogan. É afirmação do próprio negócio e",
+                    "   pode ir para a página, citada com fidelidade.",
+                    "2. **Descartar card de texto**, que não serve como foto de site.", "",
+                    "O OCR erra e repete palavra. **Confira na imagem antes de copiar para a",
+                    "página** — dado errado sobre o próprio negócio é o que queima o lead.", "",
+                ]
+                for item in com_texto:
+                    texto = " ".join((item.get("legenda") or "").split())[:400]
+                    linhas += [f'**`{item["arquivo"]}`** — {texto}', ""]
         if perfil.get("logo_pequena"):
             linhas += [
                 "### A logo veio pequena", "",

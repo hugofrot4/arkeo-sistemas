@@ -90,13 +90,28 @@ Se o site estiver em dia, **não force o argumento de modernização** — insis
 python3 .claude/skills/prototipo-site/scripts/instagram.py <perfil-ou-url> <slug> 6
 ```
 
-Traz a foto de perfil como logo, as fotos recentes do feed, a bio, a categoria e o site que estiver informado na bio. Escreve em `fonte/`, no mesmo formato do outro extrator — com a paleta da marca já derivada da foto de perfil.
+Traz a foto de perfil como logo, as fotos recentes do feed, a bio, os nomes dos destaques e o site informado na bio. Escreve em `fonte/`, no mesmo formato do outro extrator — com a paleta da marca já derivada da foto de perfil.
+
+O script tenta **dois caminhos**, nesta ordem, e o relatório diz qual foi usado:
+
+1. **Endpoint interno** — dois segundos, foto de perfil em alta, legendas de verdade. Também é o que responde **429** com facilidade.
+2. **Navegador de verdade** (Chromium via Playwright) — uns trinta segundos, mas passa onde requisição não passa. Quando o endpoint bloqueia, `curl` no perfil só devolve o *login wall*: o perfil público é montado por JavaScript.
+
+**O que muda quando cai no navegador**, e o relatório avisa:
+
+- **A logo vem em 150px** e não dá para ampliar — a URL é assinada para aquele recorte, e `s320`, `s1080` ou tirar o `stp` dão 403. Dimensione o selo para 150px no máximo, ou a logo aparece borrada justamente no elemento que o dono olha primeiro.
+- **As fotos vêm em 640px** em vez do tamanho cheio.
+- **No lugar da legenda vem o texto alternativo**, que inclui OCR do texto dentro da imagem. Troca boa: é o jeito mais rápido de achar card de texto para descartar, e às vezes entrega fato publicado que a bio não traz — lista de especialidades, dias de atendimento, promoção antiga. **Leia essa coluna do relatório**, ela costuma render mais conteúdo que a bio.
 
 São **fotos reais do negócio**, o que vale muito mais que imagem de banco. Mas nem toda foto de feed serve num site: descarte print, card de texto, foto escura e imagem com promoção antiga embutida. Feed costuma ser quadrado ou 4:5, então encaixa em grade e coluna, e mal em faixa de largura total.
 
+**Os nomes dos destaques dizem que informação existe.** Um destaque chamado *Horário* ou *Convênios* é a confirmação de que o dado existe — e de que ele não está em lugar nenhum que dê para ler. O conteúdo não vem pelo script: vai para placeholders, e é bom gancho de conversa.
+
 Se a bio informar um site, rode `extrair.py` nele também — site rende mais texto e contexto que o perfil.
 
-**Se o script falhar**, e ele pode: o endpoint é interno do Instagram, não uma API publicada, e responde 429 quando se insiste. Nesse caso o caminho manual continua valendo:
+**Se a bio apontar para um Linktree**, vale abrir: costuma trazer o WhatsApp de verdade e as outras redes. **Mas nunca use o avatar do Linktree como logo.** Ele não acompanha a troca de marca no Instagram e pode estar anos atrasado — já aconteceu de um protótipo inteiro ser construído na paleta da placa antiga, e ter que ser refeito.
+
+**Se os dois caminhos falharem**, o caminho manual continua valendo:
 
 1. Confira a seção **Observações do admin** no brief — é onde a bio e os serviços costumam estar colados.
 2. Veja se há imagens em `fonte/imagens/`; quem preparou o lead pode ter salvo a logo à mão.

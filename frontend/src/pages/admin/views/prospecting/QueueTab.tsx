@@ -4,6 +4,7 @@ import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
   markTouchSent,
+  updateLead,
   markViewed,
   skipTouch,
   whatsappLink,
@@ -11,6 +12,7 @@ import {
   type QueueItem,
 } from "../../../../lib/prospecting";
 import { SEGMENT_META, nicheLabel, relativeTime } from "./meta";
+import { formatarTelefoneBr, parseTelefoneBr } from "../../../../lib/phoneBr";
 import { Badge, ScoreDot } from "./ui";
 import type { ProspectingData } from "./useProspecting";
 
@@ -123,6 +125,7 @@ export default function QueueTab({
                 onRemove={() =>
                   handleRemoveFromQueue(item.leadId, item.lead.name, item.id)
                 }
+                refresh={refresh}
               />
             ))}
           </ul>
@@ -150,12 +153,14 @@ function QueueCard({
   onSend,
   onSkip,
   onRemove,
+  refresh,
 }: {
   item: QueueItem;
   busy: boolean;
   onSend: () => void;
   onSkip: () => void;
   onRemove: () => void;
+  refresh: () => Promise<void>;
 }) {
   const segment = SEGMENT_META[item.lead.segment];
   return (
@@ -192,9 +197,7 @@ function QueueCard({
             {busy ? "Enviando…" : "Enviar no WhatsApp"}
           </button>
         ) : (
-          <span className="border-danger/30 text-danger rounded-lg border px-3 py-2 text-xs">
-            Sem WhatsApp válido — só telefone fixo ou número ausente.
-          </span>
+          <AdicionarWhatsApp item={item} onSalvo={refresh} />
         )}
 
         {item.prototypeSlug && (
@@ -231,6 +234,104 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Sem WhatsApp válido, o card ficava sem ação nenhuma — e corrigir exigia sair
+ * da fila, achar o lead na outra aba e abrir o modal de edição. Como isto é a
+ * tela de trabalho do dia, o número entra aqui mesmo.
+ *
+ * Salvar marca `verifiedByHuman`: número conferido por gente não é sobrescrito
+ * pela coleta automática depois.
+ */
+function AdicionarWhatsApp({
+  item,
+  onSalvo,
+}: {
+  item: QueueItem;
+  onSalvo: () => Promise<void>;
+}) {
+  const { showToast } = useAdmin();
+  const [aberto, setAberto] = useState(false);
+  const [valor, setValor] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  const telefone = parseTelefoneBr(valor);
+
+  async function salvar() {
+    if (!telefone.isMobile) return;
+    setSalvando(true);
+    try {
+      await updateLead(item.leadId, {
+        phone: valor,
+        phoneE164: telefone.e164,
+        whatsappValid: true,
+        verifiedByHuman: true,
+      });
+      await onSalvo();
+      showToast(`WhatsApp de ${item.lead.name} salvo.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao salvar o número.");
+      setSalvando(false);
+    }
+  }
+
+  if (!aberto) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
+          {item.lead.phone
+            ? `Sem WhatsApp — o número cadastrado (${item.lead.phone}) é fixo.`
+            : "Sem telefone cadastrado."}
+        </span>
+        <button
+          onClick={() => setAberto(true)}
+          className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white"
+        >
+          Adicionar WhatsApp
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          autoFocus
+          value={valor}
+          onChange={(e) => setValor(formatarTelefoneBr(e.target.value))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && telefone.isMobile) void salvar();
+            if (e.key === "Escape") setAberto(false);
+          }}
+          placeholder="(85) 98765-4321"
+          className="border-border bg-bg w-44 rounded-lg border px-3 py-2 text-sm"
+        />
+        <button
+          onClick={salvar}
+          disabled={!telefone.isMobile || salvando}
+          className="bg-good rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+        >
+          {salvando ? "Salvando…" : "Salvar"}
+        </button>
+        <button
+          onClick={() => setAberto(false)}
+          className="text-text-muted hover:text-text px-2 py-2 text-sm"
+        >
+          Cancelar
+        </button>
+      </div>
+      {valor.trim() && !telefone.isMobile && (
+        <p className="text-warning mt-1.5 text-xs">{telefone.motivo ?? "Número incompleto."}</p>
+      )}
+      {item.lead.phone && (
+        <p className="text-text-muted mt-1.5 text-xs">
+          Fixo cadastrado: {item.lead.phone} — dá para ligar e pedir o WhatsApp da recepção.
+        </p>
+      )}
+    </div>
   );
 }
 

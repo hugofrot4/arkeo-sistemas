@@ -258,10 +258,10 @@ def paleta_da_logo(imagem):
         "accent_ajustado": accent_legivel != accent,
         "contraste_accent": round(_contraste(accent_legivel, (255, 255, 255)), 2),
         "sugestao": {
-            # Escurecido até o texto branco por cima ficar legível — faixa de
-            # marca com contraste insuficiente é o erro mais visível no celular.
-            "primary": _hex(*_escurecer_ate_contrastar(
-                _misturar(primary, (0, 0, 0), 0.25), (255, 255, 255), 4.5)),
+            # Escurecido só o quanto o texto branco por cima exigir. Faixa de
+            # marca com contraste insuficiente é o erro mais visível no
+            # celular, e escurecer além disso já trai a cor da logo.
+            "primary": _hex(*_escurecer_ate_contrastar(primary, (255, 255, 255), 4.5)),
             "accent": _hex(*accent_legivel),
             # Tinta clara da própria marca: tira o branco puro sem trair a cor.
             "surface": _hex(*_misturar(primary, (255, 255, 255), 0.94)),
