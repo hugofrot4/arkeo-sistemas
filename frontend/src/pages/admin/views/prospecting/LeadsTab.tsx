@@ -341,7 +341,7 @@ function LeadDetail({
           disabled={busy}
           title={
             naoAuditado
-              ? "Dá para gerar, mas a auditoria ainda não rodou — a abordagem sai com menos argumento. Rode \"Processar fila\" na aba Operação."
+              ? "Dá para gerar, mas a auditoria ainda não rodou — a abordagem sai com menos argumento. Rode \"Processar agora\" na aba Hoje."
               : undefined
           }
           className="bg-accent inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"

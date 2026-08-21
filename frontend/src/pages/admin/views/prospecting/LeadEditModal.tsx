@@ -87,7 +87,7 @@ export default function LeadEditModal({
       await onSaved();
       showToast(
         mudouPresenca
-          ? `${form.name.trim()} atualizado. Rode "Processar fila" na aba Operação para auditar.`
+          ? `${form.name.trim()} atualizado. Rode "Processar agora" na aba Hoje para auditar.`
           : `${form.name.trim()} atualizado e marcado como conferido.`,
       );
       onClose();

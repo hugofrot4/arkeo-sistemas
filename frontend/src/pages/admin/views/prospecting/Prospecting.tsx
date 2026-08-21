@@ -1,26 +1,35 @@
 import { useState } from "react";
+import TodayTab from "./TodayTab";
 import QueueTab from "./QueueTab";
 import LeadsTab from "./LeadsTab";
 import PrototypesTab from "./PrototypesTab";
-import OperationTab from "./OperationTab";
 import SettingsTab from "./SettingsTab";
 import { useProspecting } from "./useProspecting";
 
+/**
+ * As abas seguem a ordem do trabalho: o que fazer agora, depois a fila do dia,
+ * depois a base de leads, depois o que já foi publicado.
+ *
+ * A antiga aba "Operação" foi dissolvida. Ela juntava dois botões de ação com
+ * três blocos de números, e nada ali dizia o que fazer com a informação. Os
+ * botões viraram a resposta de um passo em "Hoje"; os números viraram uma
+ * linha de rodapé.
+ */
 const TABS = [
-  { id: "fila", label: "Fila de hoje" },
+  { id: "hoje", label: "Hoje" },
+  { id: "fila", label: "Fila" },
   { id: "leads", label: "Leads" },
   { id: "prototipos", label: "Protótipos" },
-  { id: "operacao", label: "Operação" },
-  { id: "config", label: "Configuração" },
+  { id: "config", label: "Ajustes" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
 export default function Prospecting() {
   const { data, loading, error, refresh } = useProspecting();
-  const [tab, setTab] = useState<TabId>("fila");
+  const [tab, setTab] = useState<TabId>("hoje");
 
-  const pending = data.queue.length + data.hot.length;
+  const pendenteHoje = data.queue.length + data.hot.length;
 
   return (
     <div>
@@ -36,9 +45,9 @@ export default function Prospecting() {
             }`}
           >
             {item.label}
-            {item.id === "fila" && pending > 0 && (
-              <span className="bg-accent ml-2 rounded-full px-1.75 py-0.25 text-[0.68rem] font-bold text-white">
-                {pending}
+            {item.id === "fila" && pendenteHoje > 0 && (
+              <span className="bg-accent ml-2 rounded-full px-1.75 py-px text-[0.68rem] font-bold text-white">
+                {pendenteHoje}
               </span>
             )}
           </button>
@@ -55,6 +64,13 @@ export default function Prospecting() {
         <p className="text-text-muted py-12 text-center text-sm">Carregando prospecção…</p>
       ) : (
         <>
+          {tab === "hoje" && (
+            <TodayTab
+              data={data}
+              refresh={refresh}
+              irPara={(aba) => setTab(aba)}
+            />
+          )}
           {tab === "fila" && <QueueTab data={data} refresh={refresh} />}
           {tab === "leads" && (
             <LeadsTab onChanged={refresh} settings={data.settings} />
@@ -62,7 +78,6 @@ export default function Prospecting() {
           {tab === "prototipos" && (
             <PrototypesTab ttlDays={data.settings?.prototypeTtlDays ?? 45} />
           )}
-          {tab === "operacao" && <OperationTab data={data} refresh={refresh} />}
           {tab === "config" && <SettingsTab settings={data.settings} refresh={refresh} />}
         </>
       )}
