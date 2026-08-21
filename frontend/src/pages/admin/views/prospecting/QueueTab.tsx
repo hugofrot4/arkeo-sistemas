@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Ban, Check, ExternalLink, Flame, MessageCircle, SkipForward } from "lucide-react";
+import { Ban, Check, ExternalLink, Flame, Mail, MessageCircle, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
+  emailLink,
   markTouchSent,
   updateLead,
   markViewed,
@@ -200,7 +201,11 @@ function QueueCard({
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
-        <WhatsAppDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
+        {item.channel === "email" ? (
+          <EmailDoLead item={item} busy={busy} onConfirm={onConfirm} />
+        ) : (
+          <WhatsAppDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
+        )}
 
         {item.prototypeSlug && (
           <a
@@ -236,6 +241,81 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Toque por e-mail: abre o cliente com destinatário, assunto e texto prontos.
+ *
+ * Mesmo desenho de dois passos do WhatsApp — abrir não é enviar, e só a
+ * confirmação registra o toque. Aqui isso pesa ainda mais: o cliente de
+ * e-mail abre numa aba separada e é fácil fechar sem mandar.
+ */
+function EmailDoLead({
+  item,
+  busy,
+  onConfirm,
+}: {
+  item: QueueItem;
+  busy: boolean;
+  onConfirm: () => void;
+}) {
+  const [aberto, setAberto] = useState(false);
+  const assunto = item.subject ?? `Uma prévia do site da ${item.lead.name}`;
+
+  if (!item.lead.email) {
+    return (
+      <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
+        Sem e-mail cadastrado. Adicione em Leads → Editar, ou troque o canal para WhatsApp.
+      </span>
+    );
+  }
+
+  return (
+    <div className="flex w-full flex-wrap items-center gap-2">
+      <button
+        onClick={() => {
+          window.location.href = emailLink(item.lead.email!, assunto, item.body);
+          setAberto(true);
+        }}
+        disabled={busy}
+        className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
+          aberto ? "border-border text-text-muted border" : "bg-accent text-white"
+        }`}
+      >
+        <Mail size={16} aria-hidden />
+        {aberto ? "Abrir de novo" : "Abrir e-mail"}
+      </button>
+
+      {aberto && (
+        <>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            <Check size={15} className="mr-1.5 inline" aria-hidden />
+            {busy ? "Registrando…" : "Confirmar envio"}
+          </button>
+          <button
+            onClick={() => setAberto(false)}
+            disabled={busy}
+            className="text-text-muted hover:text-text px-2 py-2 text-sm disabled:opacity-50"
+          >
+            Não enviei
+          </button>
+        </>
+      )}
+
+      <span className="text-text-muted text-xs">{item.lead.email}</span>
+
+      {aberto && (
+        <p className="text-text-muted w-full text-xs">
+          Confira o texto no seu cliente de e-mail antes de mandar. O toque só é
+          registrado depois da confirmação.
+        </p>
+      )}
+    </div>
   );
 }
 

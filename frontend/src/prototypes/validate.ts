@@ -146,13 +146,28 @@ export function validateHtml(html: string): HtmlValidation {
  */
 export function parseAbordagem(texto: string): {
   messages: string[];
+  subjects: (string | null)[];
   errors: string[];
   warnings: string[];
 } {
-  const messages = texto
+  const blocos = texto
     .split(/^\s*---\s*$/m)
     .map((bloco) => bloco.trim())
     .filter(Boolean);
+
+  // Um bloco pode abrir com "Assunto: ..." numa linha só. Serve ao canal
+  // e-mail; no WhatsApp a linha é ignorada, então a mesma abordagem atende os
+  // dois canais sem o autor precisar escrever duas versões.
+  const subjects: (string | null)[] = [];
+  const messages = blocos.map((bloco) => {
+    const m = bloco.match(/^\s*assunto:\s*(.+?)\s*\n+([\s\S]*)$/i);
+    if (m) {
+      subjects.push(m[1].trim());
+      return m[2].trim();
+    }
+    subjects.push(null);
+    return bloco;
+  });
 
   const errors: string[] = [];
   const warnings: string[] = [];
@@ -178,5 +193,12 @@ export function parseAbordagem(texto: string): {
     );
   }
 
-  return { messages, errors, warnings };
+  const semAssunto = subjects.filter((a) => !a).length;
+  if (semAssunto > 0 && semAssunto < subjects.length) {
+    warnings.push(
+      `${semAssunto} mensagem(ns) sem linha "Assunto:". No canal e-mail elas caem num assunto genérico.`,
+    );
+  }
+
+  return { messages, subjects, errors, warnings };
 }

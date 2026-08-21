@@ -61,6 +61,7 @@ export interface Lead {
   rating: number | null;
   userRatingCount: number | null;
   verifiedByHuman: boolean;
+  preferredChannel: "whatsapp" | "email";
   notes: string;
   auditedAt: string | null;
   contactedAt: string | null;
@@ -87,6 +88,7 @@ const LEAD_SELECT = [
   "rating",
   "userRatingCount:user_rating_count",
   "verifiedByHuman:verified_by_human",
+  "preferredChannel:preferred_channel",
   "notes",
   "auditedAt:audited_at",
   "contactedAt:contacted_at",
@@ -131,6 +133,21 @@ export async function listLeads(filter: LeadFilter = {}) {
   return unwrap<Lead[]>(await query);
 }
 
+/**
+ * Troca o canal dos toques que ainda não saíram.
+ *
+ * Toque já enviado guarda por onde foi de fato — reescrevê-lo apagaria o
+ * histórico do que aconteceu.
+ */
+export async function setLeadChannel(leadId: number, channel: "whatsapp" | "email") {
+  const { error } = await supabase
+    .from("outreach_touches")
+    .update({ channel })
+    .eq("lead_id", leadId)
+    .eq("status", "pending");
+  if (error) throw new Error(error.message);
+}
+
 export async function updateLead(id: number, patch: Partial<Lead>) {
   const columns: Record<keyof Lead & string, string> = {
     id: "id",
@@ -152,6 +169,7 @@ export async function updateLead(id: number, patch: Partial<Lead>) {
     rating: "rating",
     userRatingCount: "user_rating_count",
     verifiedByHuman: "verified_by_human",
+    preferredChannel: "preferred_channel",
     notes: "notes",
     auditedAt: "audited_at",
     contactedAt: "contacted_at",
@@ -658,6 +676,7 @@ export interface OutreachTouch {
   leadId: number;
   step: number;
   channel: "whatsapp" | "email";
+  subject: string | null;
   body: string;
   scheduledFor: string;
   sentAt: string | null;
@@ -668,13 +687,13 @@ export interface QueueItem extends OutreachTouch {
   lead: Pick<
     Lead,
     | "id" | "name" | "niche" | "neighborhood" | "phone" | "phoneE164"
-    | "whatsappValid" | "score" | "segment" | "stage"
+    | "whatsappValid" | "email" | "preferredChannel" | "score" | "segment" | "stage"
   >;
   prototypeSlug: string | null;
 }
 
 const TOUCH_SELECT =
-  "id,leadId:lead_id,step,channel,body,scheduledFor:scheduled_for,sentAt:sent_at,status";
+  "id,leadId:lead_id,step,channel,subject,body,scheduledFor:scheduled_for,sentAt:sent_at,status";
 
 /**
  * Fila do dia: toques vencidos e ainda não enviados, do maior score para o
@@ -687,7 +706,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
     .from("outreach_touches")
     .select(
       `${TOUCH_SELECT},
-       leads!inner(id, name, niche, neighborhood, phone, phone_e164, whatsapp_valid, score, segment, stage)`,
+       leads!inner(id, name, niche, neighborhood, phone, phone_e164, whatsapp_valid, email, preferred_channel, score, segment, stage)`,
     )
     .eq("status", "pending")
     .lte("scheduled_for", today)
@@ -699,6 +718,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
     leads: {
       id: number; name: string; niche: string; neighborhood: string | null;
       phone: string | null; phone_e164: string | null; whatsapp_valid: boolean;
+      email: string | null; preferred_channel: "whatsapp" | "email";
       score: number; segment: LeadSegment; stage: LeadStage;
     };
   };
@@ -726,6 +746,8 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
         neighborhood: leads.neighborhood,
         phone: leads.phone,
         phoneE164: leads.phone_e164,
+        email: leads.email,
+        preferredChannel: leads.preferred_channel,
         whatsappValid: leads.whatsapp_valid,
         score: leads.score,
         segment: leads.segment,
@@ -910,6 +932,18 @@ export async function closeLead(leadId: number, won: boolean, reason?: LostReaso
   await cancelRemainingTouches(leadId);
 }
 
+/**
+ * Abre o cliente de e-mail com tudo preenchido.
+ *
+ * Manual de propósito: e-mail escrito de uma caixa real passa em filtro onde
+ * disparo em massa não passa, e não arrisca a reputação do domínio que atende
+ * cliente. O rastreio continua vindo da visita ao protótipo, que é sinal
+ * melhor que "abriu o e-mail".
+ */
+export function emailLink(para: string, assunto: string, corpo: string): string {
+  return `mailto:${encodeURIComponent(para)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+}
+
 /** Mensagem pronta para o wa.me, com o texto do toque já embutido. */
 export function whatsappLink(phoneE164: string, body: string): string {
   return `https://wa.me/${phoneE164.replace(/\D/g, "")}?text=${encodeURIComponent(body)}`;
@@ -954,7 +988,13 @@ function slugify(name: string): string {
  */
 export async function publishPrototype(
   lead: Lead,
-  upload: { html: string; pageTitle: string | null; messages: string[] },
+  upload: {
+    html: string;
+    pageTitle: string | null;
+    messages: string[];
+    /** Assunto por toque, quando a abordagem trouxer. Só usado no canal e-mail. */
+    subjects?: (string | null)[];
+  },
   options: { ttlDays: number },
 ) {
   // O link antigo precisa parar de responder quando um novo entra: o índice
@@ -1005,11 +1045,21 @@ export async function publishPrototype(
     return i === 0 ? `${body}\n\n${link}` : body;
   });
 
+  // Canal decidido pelo contato que existe: sem celular e com e-mail, a
+  // sequência já nasce por e-mail em vez de o lead ficar parado na fila
+  // esperando um número que ninguém vai conseguir.
+  const canal: "whatsapp" | "email" =
+    lead.whatsappValid || lead.phoneE164 ? "whatsapp" : lead.email ? "email" : "whatsapp";
+  if (canal !== lead.preferredChannel) {
+    await supabase.from("leads").update({ preferred_channel: canal }).eq("id", lead.id);
+  }
+
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
     bodies.map((body, i) => ({
       lead_id: lead.id,
       step: i + 1,
-      channel: "whatsapp",
+      channel: canal,
+      subject: upload.subjects?.[i] ?? null,
       body,
       scheduled_for: new Date(today + TOUCH_SCHEDULE[i] * 86_400_000).toISOString().slice(0, 10),
       status: "pending",

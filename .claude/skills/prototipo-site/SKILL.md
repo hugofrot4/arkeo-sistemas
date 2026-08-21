@@ -192,6 +192,8 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 **Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo.
 
+**O assunto.** Cada bloco abre com uma linha `Assunto: ...`. No canal e-mail ela vira o assunto da mensagem; no WhatsApp é descartada. Escreva sempre — o canal é decidido no sistema, pelo contato que o lead tem. Regras e exemplos em `references/abordagem.md`.
+
 **O link.** Escreva `{{link}}` onde o endereço encaixa na frase. O sistema substitui na publicação. Sem o marcador, o link é colado no fim da primeira mensagem, o que funciona mas fica pior.
 
 #### O que a mensagem tem que fazer
@@ -228,6 +230,7 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] A gratuidade tem um motivo declarado
 - [ ] A mensagem 1 tem `{{link}}` e termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
+- [ ] Cada bloco abre com `Assunto:`, até 55 caracteres, diferente dos outros
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 - [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. Alvo: 750 no toque 1, 350 no 2, 250 no 3, 220 no 4
 

@@ -109,7 +109,12 @@ export default function GenerateModal({
     try {
       const resultado = await publishPrototype(
         lead,
-        { html, pageTitle: conferido.title, messages: mensagens.messages },
+        {
+          html,
+          pageTitle: conferido.title,
+          messages: mensagens.messages,
+          subjects: mensagens.subjects,
+        },
         { ttlDays: settings.prototypeTtlDays },
       );
       setLink(resultado.link);

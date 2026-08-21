@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Info, X } from "lucide-react";
 import { useAdmin } from "../../context";
-import { requestReaudit, updateLead, type Lead } from "../../../../lib/prospecting";
+import {
+  requestReaudit,
+  setLeadChannel,
+  updateLead,
+  type Lead,
+} from "../../../../lib/prospecting";
 import { formatarTelefoneBr, parseTelefoneBr } from "../../../../lib/phoneBr";
 
 /**
@@ -34,6 +39,7 @@ export default function LeadEditModal({
     neighborhood: lead.neighborhood ?? "",
     notes: lead.notes ?? "",
   });
+  const [canal, setCanal] = useState<"whatsapp" | "email">(lead.preferredChannel);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -72,10 +78,13 @@ export default function LeadEditModal({
         whatsappValid: telefone.isMobile,
         email: form.email.trim() || null,
         neighborhood: form.neighborhood.trim() || null,
+        preferredChannel: canal,
         notes: form.notes,
         // A partir daqui a coleta automática não mexe mais nestes campos.
         verifiedByHuman: true,
       });
+      if (canal !== lead.preferredChannel) await setLeadChannel(lead.id, canal);
+
       // Mudou o site ou a rede social? A auditoria anterior não vale mais.
       // Enfileira sem travar o salvamento: se falhar, o botão "Reauditar" no
       // detalhe do lead continua disponível.
@@ -185,6 +194,22 @@ export default function LeadEditModal({
               />
             </Campo>
           </div>
+
+          <Campo
+            label="Canal de abordagem"
+            dica="Por onde as mensagens da sequência vão sair. Muda os toques que ainda não foram enviados."
+          >
+            <select
+              value={canal}
+              onChange={(e) => setCanal(e.target.value as "whatsapp" | "email")}
+              className={entrada}
+            >
+              <option value="whatsapp">WhatsApp</option>
+              <option value="email" disabled={!form.email.trim()}>
+                E-mail{form.email.trim() ? "" : " — preencha o e-mail acima"}
+              </option>
+            </select>
+          </Campo>
 
           <Campo label="Bairro">
             <input

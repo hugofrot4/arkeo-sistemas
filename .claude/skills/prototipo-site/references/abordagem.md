@@ -13,6 +13,27 @@ Ao terminar de ler a primeira mensagem, o dono precisa saber, sem esforço:
 
 Falhou em qualquer um dos quatro, a mensagem é ignorada. O erro mais comum é falhar no 1 e no 4 ao mesmo tempo: a pessoa entende que alguém analisou o site dela e mandou um link, mas não entende que há um serviço sendo oferecido nem o que se espera dela.
 
+## Assunto: a mesma abordagem serve os dois canais
+
+O WhatsApp começou a marcar disparo de prospecção como spam, então parte dos leads é abordada por e-mail. Para não escrever duas versões, **cada bloco pode abrir com uma linha `Assunto:`**:
+
+```
+Assunto: Uma prévia do site da Clínica Sorriso Vivo
+Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — a gente cria sites…
+```
+
+No canal e-mail a linha vira o assunto; no WhatsApp ela é descartada e o corpo segue igual. Escreva as quatro sempre — o canal é decidido no sistema, pelo contato que o lead tem, e pode mudar depois.
+
+**O assunto decide se o e-mail é aberto.** Regras:
+
+- **Até 55 caracteres**, senão o celular corta.
+- **Concreto e sobre ele**, não sobre você: *"Uma prévia do site da Clínica Sorriso Vivo"* ganha de *"Proposta de criação de site"*.
+- **Sem gatilho de spam**: nada de "GRÁTIS", "promoção", "oportunidade única", ponto de exclamação múltiplo ou MAIÚSCULAS.
+- **Sem `Re:` ou `Enc:` falsos.** Fingir que é resposta de uma conversa que não existiu é o tipo de truque que queima a confiança na primeira leitura.
+- **Cada toque com assunto próprio**, e não o mesmo repetido — a caixa de entrada agrupa e vira uma pilha ignorada.
+
+Exemplos por toque: *"Uma prévia do site da Clínica Sorriso Vivo"* · *"Sobre a prévia que enviei"* · *"Dez minutos essa semana?"* · *"Encerrando por aqui"*.
+
 ## Tamanho
 
 O sistema **recusa mensagem acima de 900 caracteres** na conferência do upload. Mas 900 é o teto, não o alvo: mensagem de WhatsApp longa é lida na diagonal, e a parte que se pula costuma ser justamente a pergunta do fim.
@@ -108,6 +129,7 @@ Se você reservou dois parágrafos para dizer o que está bom e nenhum para dize
 Policlínica com quatro unidades, site que esconde o contato no celular:
 
 ```
+Assunto: Uma prévia do site da Policlínica Quality
 Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
 clínicas aqui no Ceará.
 
@@ -126,17 +148,20 @@ justamente para você ver o resultado antes de decidir qualquer coisa.
 
 Faz sentido para vocês? Se sim, te mostro como ficaria o restante do site.
 ---
+Assunto: Sobre a prévia que enviei
 Oi! Sara aqui, da Arkeo Sistemas. Um dado que costuma pesar nessa decisão:
 quando a página não se adapta ao celular, o Google reduz a exibição dela nas
 buscas locais — que é de onde vem a maior parte dos contatos de clínica.
 
 Chegou a abrir a prévia que mandei?
 ---
+Assunto: Dez minutos essa semana?
 Oi! Se ficar mais fácil conversar do que ler, posso te explicar em uns dez
 minutos como seria o processo e o prazo — por aqui mesmo ou por ligação.
 
 Tem algum horário melhor essa semana?
 ---
+Assunto: Encerrando por aqui
 Oi! Vou encerrar o contato por aqui para não incomodar. A prévia fica no ar
 por mais alguns dias, caso queira mostrar para alguém da equipe.
 
@@ -157,5 +182,6 @@ Tudo ali é educado e nada vende: não diz que a Arkeo faz sites, não diz o que
 - [ ] Está claro que o link é uma página funcionando, não um desenho
 - [ ] A gratuidade tem um motivo declarado
 - [ ] Termina com **uma** pergunta, de sim ou não, que abre o próximo passo
+- [ ] Cada bloco abre com `Assunto:`, com até 55 caracteres e diferente dos outros
 - [ ] Nenhum jargão, nenhuma promessa de resultado, nenhum "fico à disposição"
 - [ ] No máximo uma crítica nesta mensagem
