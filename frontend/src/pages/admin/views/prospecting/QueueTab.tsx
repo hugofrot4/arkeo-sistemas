@@ -35,11 +35,20 @@ export default function QueueTab({
   const cap = data.settings?.dailyOutreachCap ?? 40;
   const remaining = Math.max(0, cap - data.sentToday);
 
-  // Lead quente já aparece no bloco de cima, com ação própria. Deixá-lo
-  // também aqui embaixo mostrava o mesmo negócio duas vezes na tela e inflava
-  // a contagem da aba.
-  const quentes = new Set(data.hot.map((h) => h.leadId));
-  const fila = data.queue.filter((t) => !quentes.has(t.leadId));
+  // Quem abriu o protótipo e TEM toque vencido fica na fila, marcado e no
+  // topo: é lá que estão a mensagem, o editar e o envio em dois passos. O
+  // bloco de cima guarda só quem abriu e não tem toque hoje — para esses não
+  // haveria card nenhum, e o sinal se perderia.
+  const visitasPorLead = new Map(data.hot.map((h) => [h.leadId, h]));
+  const naFila = new Set(data.queue.map((t) => t.leadId));
+  const quentesSemToque = data.hot.filter((h) => !naFila.has(h.leadId));
+
+  const fila = [...data.queue].sort((a, b) => {
+    const qa = visitasPorLead.has(a.leadId) ? 1 : 0;
+    const qb = visitasPorLead.has(b.leadId) ? 1 : 0;
+    if (qa !== qb) return qb - qa;
+    return b.lead.score - a.lead.score;
+  });
 
   /**
    * Registra o envio. Só roda depois de o operador confirmar que mandou —
@@ -107,7 +116,9 @@ export default function QueueTab({
 
   return (
     <div className="space-y-8">
-      {data.hot.length > 0 && <HotBlock hot={data.hot} refresh={refresh} />}
+      {quentesSemToque.length > 0 && (
+        <HotBlock hot={quentesSemToque} refresh={refresh} />
+      )}
 
       <section>
         <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -140,6 +151,7 @@ export default function QueueTab({
               <QueueCard
                 key={item.id}
                 item={item}
+                visita={visitasPorLead.get(item.leadId)}
                 busy={busy === item.id}
                 onConfirm={() => handleConfirm(item)}
                 onSkip={() => handleSkip(item)}
@@ -171,12 +183,14 @@ function EmptyQueue() {
 function QueueCard({
   item,
   busy,
+  visita,
   onConfirm,
   onSkip,
   onRemove,
   refresh,
 }: {
   item: QueueItem;
+  visita?: HotLead;
   busy: boolean;
   onConfirm: () => void;
   onSkip: () => void;
@@ -198,6 +212,12 @@ function QueueCard({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {visita && (
+            <Badge className="bg-good/20 text-good">
+              <Flame size={11} className="mr-1 inline" aria-hidden />
+              abriu {visita.views}× · {relativeTime(visita.lastViewedAt)}
+            </Badge>
+          )}
           <Badge className={segment.className}>{segment.label}</Badge>
           <Badge className="bg-text-muted/12 text-text-muted">Toque {item.step}</Badge>
           <CanalDoToque item={item} refresh={refresh} />

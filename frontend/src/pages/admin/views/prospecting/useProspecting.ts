@@ -74,19 +74,18 @@ async function fetchAll(): Promise<ProspectingData> {
       getCoberturaContato(),
       getProspectingSettings(),
     ]);
-  const quentes = new Set(hot.map((h) => h.leadId));
   const capDiaria = settings?.dailyOutreachCap ?? 40;
   const restamHoje = Math.max(0, capDiaria - sentToday);
-  // Lead quente já está sendo cobrado no bloco de cima: contá-lo de novo na
-  // fila infla o número e não corresponde a nenhum card a mais na tela.
-  const naFila = Math.min(
-    queue.filter((t) => !quentes.has(t.leadId)).length,
-    restamHoje,
-  );
+  // Quem tem toque vencido é contado na fila, mesmo tendo aberto o protótipo:
+  // é lá que ele aparece. O bloco quente só carrega quem abriu e não tem toque
+  // hoje — senão o mesmo lead entrava duas vezes.
+  const idsNaFila = new Set(queue.map((t) => t.leadId));
+  const quentesSemToque = hot.filter((h) => !idsNaFila.has(h.leadId)).length;
+  const naFila = Math.min(queue.length, restamHoje);
 
   return {
     queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato, settings,
-    pendencias: { quentes: quentes.size, naFila, total: quentes.size + naFila },
+    pendencias: { quentes: quentesSemToque, naFila, total: quentesSemToque + naFila },
   };
 }
 
