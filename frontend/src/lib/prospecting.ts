@@ -618,6 +618,52 @@ export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> 
   };
 }
 
+/** Toques de um lead, com o estado de cada um. */
+export async function listTouches(leadId: number) {
+  const res = await supabase
+    .from("outreach_touches")
+    .select(TOUCH_SELECT)
+    .eq("lead_id", leadId)
+    .order("step", { ascending: true });
+  return unwrap<OutreachTouch[]>(res);
+}
+
+/**
+ * Devolve um toque para a fila de hoje.
+ *
+ * Existe porque envio registrado por engano acontece — pop-up bloqueado,
+ * mensagem que não foi mandada, número errado. Sem isto o lead sai da fila e
+ * não há caminho de volta pela interface.
+ *
+ * Zera o `sent_at` e reagenda para hoje. Se o lead tinha avançado para
+ * "contatado" por causa deste toque e não há outro enviado, o estágio volta.
+ */
+export async function reopenTouch(touch: OutreachTouch) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const { error } = await supabase
+    .from("outreach_touches")
+    .update({ status: "pending", sent_at: null, scheduled_for: hoje })
+    .eq("id", touch.id);
+  if (error) throw new Error(error.message);
+
+  const { count, error: countError } = await supabase
+    .from("outreach_touches")
+    .select("id", { count: "exact", head: true })
+    .eq("lead_id", touch.leadId)
+    .eq("status", "sent");
+  if (countError) throw new Error(countError.message);
+
+  // Nenhum toque enviado sobrou: o lead nunca foi de fato abordado.
+  if ((count ?? 0) === 0) {
+    const { error: stageError } = await supabase
+      .from("leads")
+      .update({ stage: "prototipo_pronto", contacted_at: null })
+      .eq("id", touch.leadId)
+      .eq("stage", "contatado");
+    if (stageError) throw new Error(stageError.message);
+  }
+}
+
 export async function skipTouch(touchId: number) {
   const { error } = await supabase
     .from("outreach_touches")

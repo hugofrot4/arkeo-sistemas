@@ -5,10 +5,13 @@ import {
   closeLead,
   getLeadAudit,
   listLeads,
+  listTouches,
+  reopenTouch,
   requestReaudit,
   type Finding,
   type Lead,
   type LeadSegment,
+  type OutreachTouch,
   type LeadStage,
   type ProspectingSettings,
 } from "../../../../lib/prospecting";
@@ -301,6 +304,8 @@ function LeadDetail({
         </Field>
       </dl>
 
+      <SequenciaDeToques lead={lead} run={run} />
+
       {findings && findings.length > 0 && (
         <div>
           <p className="text-text-muted mb-2 text-xs font-semibold tracking-wide uppercase">
@@ -418,6 +423,76 @@ function LeadDetail({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const STATUS_TOQUE: Record<OutreachTouch["status"], { label: string; cor: string }> = {
+  pending: { label: "na fila", cor: "text-text-muted" },
+  sent: { label: "enviado", cor: "text-good" },
+  skipped: { label: "pulado", cor: "text-warning" },
+  cancelled: { label: "cancelado", cor: "text-text-muted" },
+};
+
+/**
+ * Estado da sequência de abordagem, com o caminho de volta.
+ *
+ * Sem isto não havia como ver se um toque foi enviado nem como desfazer: envio
+ * registrado por engano tirava o lead da fila para sempre, e a única saída era
+ * mexer no banco.
+ */
+function SequenciaDeToques({
+  lead,
+  run,
+}: {
+  lead: Lead;
+  run: (action: () => Promise<unknown>, message: string) => Promise<void>;
+}) {
+  const [toques, setToques] = useState<OutreachTouch[] | null>(null);
+
+  useEffect(() => {
+    listTouches(lead.id)
+      .then(setToques)
+      .catch(() => setToques([]));
+  }, [lead.id]);
+
+  if (!toques?.length) return null;
+
+  return (
+    <div>
+      <p className="text-text-muted mb-2 text-xs font-semibold tracking-wide uppercase">
+        Sequência de abordagem
+      </p>
+      <ul className="space-y-1">
+        {toques.map((toque) => {
+          const meta = STATUS_TOQUE[toque.status];
+          const data = new Date(`${toque.scheduledFor}T12:00:00`).toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+          });
+          return (
+            <li key={toque.id} className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-text-muted w-16 shrink-0">Toque {toque.step}</span>
+              <span className={`w-20 shrink-0 ${meta.cor}`}>{meta.label}</span>
+              <span className="text-text-muted text-xs">{data}</span>
+              {toque.status === "sent" && (
+                <button
+                  onClick={() =>
+                    run(
+                      () => reopenTouch(toque),
+                      `Toque ${toque.step} devolvido à fila de hoje.`,
+                    )
+                  }
+                  title="Marca como não enviado e devolve o lead à fila de hoje."
+                  className="text-accent ml-auto text-xs underline underline-offset-2"
+                >
+                  não foi enviado
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
