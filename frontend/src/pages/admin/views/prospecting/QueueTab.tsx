@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { Ban, Check, ClipboardCopy, ExternalLink, Flame, History, Mail, MessageCircle, Pencil, SkipForward } from "lucide-react";
+import { useRef, useState } from "react";
+import { Ban, Check, ClipboardCopy, ExternalLink, Flame, History, Mail, MessageCircle, Pencil, SkipForward, Upload } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
+  canalDoLead,
   cancelRemainingTouches,
   emailLink,
   markTouchSent,
@@ -9,6 +10,7 @@ import {
   updateLead,
   updateTouch,
   markViewed,
+  replaceOutreach,
   restartOutreach,
   skipTouch,
   whatsappLink,
@@ -16,6 +18,7 @@ import {
   type QueueItem,
 } from "../../../../lib/prospecting";
 import { buildHotFollowUp, hotFollowUpSubject } from "../../../../lib/outreachOpener";
+import { parseAbordagem } from "../../../../prototypes/validate";
 import { FASES, SEGMENT_META, nicheLabel, relativeTime } from "./meta";
 import { formatarTelefoneBr, parseTelefoneBr } from "../../../../lib/phoneBr";
 import { Badge, ScoreDot } from "./ui";
@@ -322,6 +325,7 @@ function QueueCard({
             <SkipForward size={15} aria-hidden />
             Pular
           </button>
+          <TrocarAbordagem item={item} refresh={refresh} />
           <ReiniciarSequencia item={item} identity={identity} refresh={refresh} />
           <button
             onClick={onRemove}
@@ -335,6 +339,87 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Sobe um `abordagem.txt` novo para este lead, no meio da sequência.
+ *
+ * A redação envelhece enquanto a conversa anda — o achado muda, o tom não
+ * pegou, a doutrina foi corrigida. Antes disto restava editar quatro toques à
+ * mão, um a um, ou reiniciar a sequência e perder o histórico.
+ *
+ * Os toques já enviados ficam como estão: eles guardam o que foi dito de
+ * fato, e o aviso diz quantos foram poupados, porque a diferença entre "não
+ * mudou" e "não devia mudar" não é óbvia olhando a tela.
+ */
+function TrocarAbordagem({
+  item,
+  refresh,
+}: {
+  item: QueueItem;
+  refresh: () => Promise<void>;
+}) {
+  const { showToast } = useAdmin();
+  const entrada = useRef<HTMLInputElement>(null);
+  const [rodando, setRodando] = useState(false);
+
+  async function receber(arquivo: File) {
+    if (!/\.txt$/i.test(arquivo.name)) {
+      showToast(`"${arquivo.name}" não é um .txt. Mande o abordagem.txt.`);
+      return;
+    }
+    // Pelo contato de agora, não por `preferred_channel`, que guarda o que
+    // valia na última publicação — é o mesmo critério que a troca usa para
+    // montar, e conferir com outro não avisaria do erro que importa.
+    const conferido = parseAbordagem(await arquivo.text(), canalDoLead(item.lead));
+    if (conferido.errors.length > 0) {
+      showToast(conferido.errors[0]);
+      return;
+    }
+    setRodando(true);
+    try {
+      const r = await replaceOutreach(item.lead, {
+        messages: conferido.messages,
+        emailMessages: conferido.emailMessages,
+        subjects: conferido.subjects,
+      });
+      await refresh();
+      const alvo =
+        r.preservados.length > 0
+          ? `Toques ${r.atualizados.join(", ")} trocados. O${r.preservados.length > 1 ? "s" : ""} toque${r.preservados.length > 1 ? "s" : ""} ${r.preservados.join(", ")} já ${r.preservados.length > 1 ? "foram enviados" : "foi enviado"} e ficou como estava.`
+          : `Abordagem de ${item.lead.name} trocada nos ${r.atualizados.length} toques.`;
+      showToast(conferido.warnings.length > 0 ? `${alvo} Aviso: ${conferido.warnings[0]}` : alvo);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao trocar a abordagem.");
+    } finally {
+      setRodando(false);
+    }
+  }
+
+  return (
+    <>
+      <input
+        ref={entrada}
+        type="file"
+        accept=".txt,text/plain"
+        className="hidden"
+        onChange={(e) => {
+          const arquivo = e.target.files?.[0];
+          e.target.value = "";
+          if (arquivo) void receber(arquivo);
+        }}
+      />
+      <button
+        onClick={() => entrada.current?.click()}
+        disabled={rodando}
+        title="Sobe um abordagem.txt novo. Troca este toque e os seguintes; os já enviados ficam como estão."
+        className="text-text-muted hover:text-text inline-flex items-center gap-1.5 px-2 py-2 text-sm disabled:opacity-50"
+      >
+        <Upload size={15} aria-hidden />
+        {rodando ? "Trocando…" : "Trocar abordagem"}
+      </button>
+    </>
   );
 }
 

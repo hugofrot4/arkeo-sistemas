@@ -229,6 +229,8 @@ A diferença vem de um fato só: em e-mail você já sabe para quem escrever, en
 
 **Escreva os oito.** Sem a parte de e-mail o sistema aceita, mas o card cai no texto de WhatsApp quando o canal virar — e o canal vira, porque é para isso que o toque 1 pede o contato.
 
+**Refazer a abordagem de um lead que já está na sequência é normal.** Gere um `abordagem.txt` novo e suba pelo botão "Trocar abordagem", no card da fila, ou arrastando o arquivo na aba Protótipos. O sistema troca o toque atual e os seguintes; os que já saíram ficam como estão, porque guardam o que foi dito de fato. Nesse caso o `{{link}}` continua sendo escrito como marcador — o endereço já existe, e é o sistema que o substitui.
+
 **Leia `references/abordagem.md` antes de escrever.** É onde estão a estrutura da mensagem de entrega, a tradução de achado técnico em consequência de negócio, e o CTA que abre a próxima conversa em vez de pedir opinião.
 
 **Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo.

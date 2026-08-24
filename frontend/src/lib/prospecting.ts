@@ -336,6 +336,8 @@ export interface PrototypeListItem {
   id: number;
   leadId: number;
   leadName: string;
+  /** Decide o canal ao trocar a abordagem por aqui. Ver `canalDoLead`. */
+  leadEmail: string | null;
   slug: string;
   pageTitle: string | null;
   published: boolean;
@@ -354,13 +356,13 @@ export async function listPrototypes(): Promise<PrototypeListItem[]> {
   const res = await supabase
     .from("prototypes")
     .select(
-      "id, leadId:lead_id, slug, pageTitle:page_title, published, expiresAt:expires_at, createdAt:created_at, leads!inner(name)",
+      "id, leadId:lead_id, slug, pageTitle:page_title, published, expiresAt:expires_at, createdAt:created_at, leads!inner(name, email)",
     )
     .order("created_at", { ascending: false })
     .limit(300);
 
-  type Row = Omit<PrototypeListItem, "leadName" | "views" | "lastViewedAt"> & {
-    leads: { name: string };
+  type Row = Omit<PrototypeListItem, "leadName" | "leadEmail" | "views" | "lastViewedAt"> & {
+    leads: { name: string; email: string | null };
   };
   const rows = unwrap<Row[]>(res);
   if (rows.length === 0) return [];
@@ -383,6 +385,7 @@ export async function listPrototypes(): Promise<PrototypeListItem[]> {
   return rows.map(({ leads, ...proto }) => ({
     ...proto,
     leadName: leads.name,
+    leadEmail: leads.email,
     views: porProtótipo.get(proto.id)?.total ?? 0,
     lastViewedAt: porProtótipo.get(proto.id)?.ultima ?? null,
   }));
@@ -1183,17 +1186,96 @@ function slugify(name: string): string {
  * skill `prototipo-site`. O sistema não monta mais nada da página — só guarda,
  * serve em /p/:slug dentro de um iframe isolado e agenda a abordagem.
  */
+export interface AbordagemUpload {
+  messages: string[];
+  /** Redação de e-mail por toque, quando a abordagem trouxer as duas. */
+  emailMessages?: (string | null)[];
+  /** Assunto por toque. Só usado no canal e-mail. */
+  subjects?: (string | null)[];
+}
+
+/**
+ * Transforma as duas escadas do `abordagem.txt` nos quatro toques da
+ * sequência, com o link já no lugar.
+ *
+ * Vive fora da publicação porque não é só dela: trocar a abordagem de um lead
+ * no meio da sequência precisa montar exatamente igual, e duas montagens
+ * paralelas divergem — foi assim que o link foi parar no toque errado antes.
+ */
+export function montarToques({
+  link,
+  canal,
+  messages,
+  emailMessages,
+  subjects,
+}: AbordagemUpload & { link: string; canal: "whatsapp" | "email" }): {
+  body: string;
+  body_email: string | null;
+  subject: string | null;
+}[] {
+  /**
+   * Põe o endereço do protótipo no toque em que ele pertence.
+   *
+   * `indiceDoLink` muda por canal porque a entrega muda de toque: em e-mail
+   * ela é a primeira mensagem, onde link é esperado; no WhatsApp a primeira é
+   * fria, e link nela é o padrão que restringiu o número da Arkeo mesmo com
+   * menos de vinte envios por dia — lá a entrega desce para a segunda.
+   *
+   * No WhatsApp o marcador na primeira mensagem é removido em vez de
+   * substituído: confiar na redação seria deixar um erro de texto custar o
+   * número.
+   */
+  const comLink = (textos: (string | null)[], indiceDoLink: number) => {
+    const temMarcador = textos.some((t) => t?.includes("{{link}}"));
+    return textos.map((texto, i) => {
+      if (texto === null) return null;
+      if (indiceDoLink !== 0 && i === 0) {
+        return texto.replaceAll("{{link}}", "").replace(/[ \t]+\n/g, "\n").trim();
+      }
+      if (texto.includes("{{link}}")) return texto.replaceAll("{{link}}", link);
+      if (!temMarcador && i === indiceDoLink) return `${texto}\n\n${link}`;
+      return texto;
+    });
+  };
+
+  // Sem a parte "=== E-MAIL ===", os quatro blocos são a redação do canal do
+  // lead: é para ele que o brief mandou escrever. Num lead de e-mail, tratá-los
+  // como texto de WhatsApp poria o link no toque errado.
+  const temParteEmail = (emailMessages ?? []).some(Boolean);
+  const soEmail = !temParteEmail && canal === "email";
+
+  const bodies = comLink(messages, soEmail ? 0 : 1) as string[];
+
+  /**
+   * Onde cada bloco de e-mail cai depende de o lead ter e-mail.
+   *
+   * A escada de e-mail é escrita numa ordem só — entrega, retomada, proposta
+   * de conversa, encerramento. Mas quem já tem e-mail entrega no toque 1,
+   * enquanto quem não tem gasta o toque 1 perguntando com quem falar e só
+   * entrega no 2. Um toque à frente, portanto, e o resto acompanha.
+   *
+   * A entrega ocupa os dois primeiros toques no segundo caso porque só um
+   * deles chega a sair: o toque 1 vai por WhatsApp, e sua redação de e-mail
+   * fica de reserva para o lead que ganhar um e-mail antes da hora.
+   */
+  const escada = emailMessages ?? [null, null, null, null];
+  const emailBodies = soEmail
+    ? bodies
+    : comLink(
+        canal === "email" ? escada : [escada[0], escada[0], escada[2], escada[3]],
+        0,
+      );
+
+  return bodies.map((body, i) => ({
+    body,
+    body_email: emailBodies[i] ?? null,
+    subject: subjects?.[i] ?? null,
+  }));
+}
+
 export async function publishPrototype(
   lead: Lead,
-  upload: {
-    html: string;
-    pageTitle: string | null;
-    messages: string[];
-    /** Redação de e-mail por toque, quando a abordagem trouxer as duas. */
-    emailMessages?: (string | null)[];
-    /** Assunto por toque, quando a abordagem trouxer. Só usado no canal e-mail. */
-    subjects?: (string | null)[];
-  },
+  upload: AbordagemUpload & { html: string; pageTitle: string | null },
   options: { ttlDays: number },
 ) {
   // O link antigo precisa parar de responder quando um novo entra: o índice
@@ -1240,78 +1322,14 @@ export async function publishPrototype(
     await supabase.from("leads").update({ preferred_channel: canal }).eq("id", lead.id);
   }
 
-  // O texto marca `{{link}}` onde o endereço encaixa na frase — o slug só
-  // existe aqui, na publicação, então não há como escrevê-lo antes.
-  //
-  // Sem marcador, onde o link cai depende do canal, e isso não é detalhe de
-  // formatação: no WhatsApp, mandar link na primeira mensagem para quem não
-  // tem você nos contatos é o padrão que a plataforma penaliza — foi o que
-  // restringiu o número mesmo com menos de vinte envios por dia. Lá o primeiro
-  // toque pede permissão e o link vem no segundo. Em e-mail, link na primeira
-  // é normal e esperado.
-  /**
-   * Põe o endereço do protótipo no toque em que ele pertence.
-   *
-   * `indiceDoLink` muda por canal porque a entrega muda de toque: em e-mail
-   * ela é a primeira mensagem, onde link é esperado; no WhatsApp a primeira é
-   * fria, e link nela é o padrão que restringiu o número da Arkeo mesmo com
-   * menos de vinte envios por dia — lá a entrega desce para a segunda.
-   *
-   * No WhatsApp o marcador na primeira mensagem é removido em vez de
-   * substituído: confiar na redação seria deixar um erro de texto custar o
-   * número.
-   */
-  function comLink(textos: (string | null)[], indiceDoLink: number) {
-    const temMarcador = textos.some((t) => t?.includes("{{link}}"));
-    return textos.map((texto, i) => {
-      if (texto === null) return null;
-      if (indiceDoLink !== 0 && i === 0) {
-        return texto.replaceAll("{{link}}", "").replace(/[ \t]+\n/g, "\n").trim();
-      }
-      if (texto.includes("{{link}}")) return texto.replaceAll("{{link}}", link);
-      if (!temMarcador && i === indiceDoLink) return `${texto}\n\n${link}`;
-      return texto;
-    });
-  }
-
-  // Sem a parte "=== E-MAIL ===", os quatro blocos são a redação do canal do
-  // lead: é para ele que o brief mandou escrever. Num lead de e-mail, tratá-los
-  // como texto de WhatsApp poria o link no toque errado.
-  const temParteEmail = (upload.emailMessages ?? []).some(Boolean);
-  const soEmail = !temParteEmail && canal === "email";
-
-  const bodies = comLink(upload.messages, soEmail ? 0 : 1) as string[];
-
-  /**
-   * Onde cada bloco de e-mail cai depende de o lead ter e-mail.
-   *
-   * A escada de e-mail é escrita numa ordem só — entrega, retomada, proposta
-   * de conversa, encerramento. Mas quem já tem e-mail entrega no toque 1,
-   * enquanto quem não tem gasta o toque 1 perguntando com quem falar e só
-   * entrega no 2. Um toque à frente, portanto, e o resto acompanha.
-   *
-   * A entrega ocupa os dois primeiros toques no segundo caso porque só um
-   * deles chega a sair: o toque 1 vai por WhatsApp, e sua redação de e-mail
-   * fica de reserva para o lead que ganhar um e-mail antes da hora.
-   */
-  const escada = upload.emailMessages ?? [null, null, null, null];
-  const emailBodies = soEmail
-    ? bodies
-    : comLink(
-        canal === "email"
-          ? escada
-          : [escada[0], escada[0], escada[2], escada[3]],
-        0,
-      );
+  const toques = montarToques({ link, canal, ...upload });
 
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
-    bodies.map((body, i) => ({
+    toques.map((toque, i) => ({
       lead_id: lead.id,
       step: i + 1,
       channel: canal,
-      subject: upload.subjects?.[i] ?? null,
-      body,
-      body_email: emailBodies[i] ?? null,
+      ...toque,
       scheduled_for: new Date(today + TOUCH_SCHEDULE[i] * 86_400_000).toISOString().slice(0, 10),
       status: "pending",
       sent_at: null,
@@ -1433,4 +1451,76 @@ export async function restartOutreach(
   });
   if (error) throw new Error(error.message);
   return (data as number) ?? 0;
+}
+
+/**
+ * Troca a abordagem de um lead no meio da sequência.
+ *
+ * A redação envelhece enquanto a conversa anda: o achado muda, o tom não
+ * funcionou, a doutrina foi corrigida. Sem isto a única saída era editar
+ * quatro toques à mão pelo card, ou reiniciar a sequência inteira e perder o
+ * histórico de quem já respondeu.
+ *
+ * **Toque enviado não é tocado.** Ele guarda o que foi dito de fato, e
+ * reescrevê-lo apagaria o registro de uma conversa que existiu. Só o toque
+ * atual e os seguintes mudam.
+ *
+ * A montagem passa por `montarToques`, a mesma da publicação: o link entra no
+ * toque certo para o canal, e a escada de e-mail se desloca conforme o lead
+ * tenha e-mail ou não.
+ */
+export async function replaceOutreach(
+  lead: Pick<Lead, "id" | "email">,
+  upload: AbordagemUpload,
+): Promise<{ atualizados: number[]; preservados: number[] }> {
+  const proto = await supabase
+    .from("prototypes")
+    .select("slug")
+    .eq("lead_id", lead.id)
+    .eq("published", true)
+    .maybeSingle();
+  if (proto.error) throw new Error(proto.error.message);
+  const slug = (proto.data as { slug: string } | null)?.slug;
+  if (!slug) {
+    throw new Error("Este lead não tem protótipo publicado — não há link para a abordagem.");
+  }
+
+  const pendentes = await supabase
+    .from("outreach_touches")
+    .select("step, status")
+    .eq("lead_id", lead.id);
+  if (pendentes.error) throw new Error(pendentes.error.message);
+  const linhas = pendentes.data as { step: number; status: string }[];
+  const mutaveis = new Set(linhas.filter((t) => t.status !== "sent").map((t) => t.step));
+  const preservados = linhas
+    .filter((t) => t.status === "sent")
+    .map((t) => t.step)
+    .sort();
+
+  if (mutaveis.size === 0) {
+    throw new Error("Todos os toques deste lead já foram enviados — não há o que trocar.");
+  }
+
+  const canal = canalDoLead(lead);
+  const toques = montarToques({
+    link: `${window.location.origin}/p/${slug}`,
+    canal,
+    ...upload,
+  });
+
+  const atualizados: number[] = [];
+  for (const [i, toque] of toques.entries()) {
+    const step = i + 1;
+    if (!mutaveis.has(step)) continue;
+    const { error } = await supabase
+      .from("outreach_touches")
+      .update(toque)
+      .eq("lead_id", lead.id)
+      .eq("step", step)
+      .neq("status", "sent"); // corrida: alguém pode ter confirmado no meio
+    if (error) throw new Error(error.message);
+    atualizados.push(step);
+  }
+
+  return { atualizados, preservados };
 }

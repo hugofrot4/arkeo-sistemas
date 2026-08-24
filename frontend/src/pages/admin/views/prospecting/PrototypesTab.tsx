@@ -7,10 +7,12 @@ import {
   getPrototypeHtml,
   listPrototypes,
   setPrototypePublished,
+  replaceOutreach,
+  canalDoLead,
   updatePrototypeHtml,
   type PrototypeListItem,
 } from "../../../../lib/prospecting";
-import { validateHtml } from "../../../../prototypes/validate";
+import { parseAbordagem, validateHtml } from "../../../../prototypes/validate";
 import { relativeTime } from "./meta";
 
 /**
@@ -103,7 +105,9 @@ export default function PrototypesTab({ ttlDays }: { ttlDays: number }) {
       <p className="text-text-muted text-sm">
         {itens.length} protótipo{itens.length > 1 ? "s" : ""} · {noAr} no ar.
         Trocar o arquivo mantém o mesmo endereço, então o link que já foi enviado
-        continua valendo.
+        continua valendo. Arraste o <strong>index.html</strong> para trocar a
+        página, ou o <strong>abordagem.txt</strong> para trocar os toques que
+        ainda não saíram.
       </p>
 
       <ul className="space-y-3">
@@ -186,9 +190,17 @@ function Linha({
   const vencido = expirou(item);
   const link = `${window.location.origin}/p/${item.slug}`;
 
+  /**
+   * Aceita os dois arquivos que a skill produz, roteando pela extensão.
+   *
+   * `index.html` troca a página; `abordagem.txt` troca a redação dos toques
+   * que ainda não saíram. São o mesmo gesto para quem gerou os dois na mesma
+   * pasta, e separá-los em dois campos só criaria a chance de errar o alvo.
+   */
   async function receber(arquivo: File) {
+    if (/\.txt$/i.test(arquivo.name)) return receberAbordagem(arquivo);
     if (!/\.html?$/i.test(arquivo.name)) {
-      showToast(`"${arquivo.name}" não é um arquivo .html.`);
+      showToast(`"${arquivo.name}" não é .html nem .txt.`);
       return;
     }
     const conteudo = await arquivo.text();
@@ -198,6 +210,29 @@ function Linha({
       return;
     }
     onTrocar(conteudo, conferido.title);
+  }
+
+  async function receberAbordagem(arquivo: File) {
+    const lead = { id: item.leadId, email: item.leadEmail };
+    const conferido = parseAbordagem(await arquivo.text(), canalDoLead(lead));
+    if (conferido.errors.length > 0) {
+      showToast(conferido.errors[0]);
+      return;
+    }
+    try {
+      const r = await replaceOutreach(lead, {
+        messages: conferido.messages,
+        emailMessages: conferido.emailMessages,
+        subjects: conferido.subjects,
+      });
+      showToast(
+        r.preservados.length > 0
+          ? `Toques ${r.atualizados.join(", ")} de ${item.leadName} trocados. ${r.preservados.join(", ")} já saíram e ficaram como estavam.`
+          : `Abordagem de ${item.leadName} trocada nos ${r.atualizados.length} toques.`,
+      );
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao trocar a abordagem.");
+    }
   }
 
   return (
@@ -264,10 +299,11 @@ function Linha({
       <input
         ref={inputArquivo}
         type="file"
-        accept=".html,text/html"
+        accept=".html,.txt,text/html,text/plain"
         className="hidden"
         onChange={(e) => {
           const arquivo = e.target.files?.[0];
+          e.target.value = ""; // permite subir o mesmo arquivo duas vezes
           if (arquivo) void receber(arquivo);
         }}
       />
@@ -300,7 +336,7 @@ function Linha({
         <button
           onClick={() => inputArquivo.current?.click()}
           disabled={busy}
-          title="Troca o arquivo mantendo o mesmo endereço e o histórico de visitas."
+          title="index.html troca a página, mantendo endereço e visitas. abordagem.txt troca os toques que ainda não saíram."
           className="border-accent/40 text-accent hover:bg-accent/8 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm disabled:opacity-40"
         >
           <Upload size={14} aria-hidden />
