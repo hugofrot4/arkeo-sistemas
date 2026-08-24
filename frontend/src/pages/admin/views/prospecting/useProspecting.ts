@@ -9,6 +9,7 @@ import {
   getProspectingSettings,
   listHotLeads,
   listOutreachQueue,
+  listRestartCandidates,
   type HotLead,
   type JobQueueSummary,
   type CoberturaContato,
@@ -16,6 +17,7 @@ import {
   type PipelineCounts,
   type ProspectingSettings,
   type QueueItem,
+  type RestartCandidate,
 } from "../../../../lib/prospecting";
 
 /**
@@ -44,6 +46,8 @@ export interface ProspectingData {
   cobertura: CoberturaPrototipos;
   pendencias: Pendencias;
   contato: CoberturaContato;
+  /** Sequências escritas com a abordagem antiga, esperando reinício. */
+  paraReiniciar: RestartCandidate[];
   settings: ProspectingSettings | null;
 }
 
@@ -57,12 +61,16 @@ const EMPTY: ProspectingData = {
   cobertura: { prontosParaGerar: 0, semPrototipo: 0, comPrototipo: 0 },
   pendencias: { quentes: 0, naFila: 0, total: 0 },
   contato: { comWhatsapp: 0, comEmail: 0, comAmbos: 0, semNada: 0 },
+  paraReiniciar: [],
   settings: null,
 };
 
 /** Busca pura: não toca em estado, só devolve os dados. */
 async function fetchAll(): Promise<ProspectingData> {
-  const [queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato, settings] =
+  const [
+    queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato,
+    paraReiniciar, settings,
+  ] =
     await Promise.all([
       listOutreachQueue(),
       listHotLeads(),
@@ -72,6 +80,7 @@ async function fetchAll(): Promise<ProspectingData> {
       getGridProgress(),
       getCoberturaPrototipos(),
       getCoberturaContato(),
+      listRestartCandidates(),
       getProspectingSettings(),
     ]);
   const capDiaria = settings?.dailyOutreachCap ?? 40;
@@ -84,7 +93,8 @@ async function fetchAll(): Promise<ProspectingData> {
   const naFila = Math.min(queue.length, restamHoje);
 
   return {
-    queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato, settings,
+    queue, hot, sentToday, pipeline, jobs, grid, cobertura, contato,
+    paraReiniciar, settings,
     pendencias: { quentes: quentesSemToque, naFila, total: quentesSemToque + naFila },
   };
 }

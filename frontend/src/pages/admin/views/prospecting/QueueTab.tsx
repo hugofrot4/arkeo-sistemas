@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, Check, ExternalLink, Flame, Mail, MessageCircle, Pencil, SkipForward } from "lucide-react";
+import { Ban, Check, ExternalLink, Flame, History, Mail, MessageCircle, Pencil, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
@@ -44,10 +44,17 @@ export default function QueueTab({
   const naFila = new Set(data.queue.map((t) => t.leadId));
   const quentesSemToque = data.hot.filter((h) => !naFila.has(h.leadId));
 
+  // Ordem: quem abriu o protótipo, depois quem teve a sequência reiniciada,
+  // depois score. O reinício sobe porque é um lead já trabalhado — tem
+  // protótipo publicado e histórico —, e retomá-lo custa menos que abrir um
+  // novo do zero.
   const fila = [...data.queue].sort((a, b) => {
     const qa = visitasPorLead.has(a.leadId) ? 1 : 0;
     const qb = visitasPorLead.has(b.leadId) ? 1 : 0;
     if (qa !== qb) return qb - qa;
+    const ra = a.lead.outreachRestartedAt ? 1 : 0;
+    const rb = b.lead.outreachRestartedAt ? 1 : 0;
+    if (ra !== rb) return rb - ra;
     return b.lead.score - a.lead.score;
   });
 
@@ -213,6 +220,12 @@ function QueueCard({
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          {!visita && item.lead.outreachRestartedAt && item.step === 1 && (
+            <Badge className="bg-accent/15 text-accent">
+              <History size={11} className="mr-1 inline" aria-hidden />
+              retomado
+            </Badge>
+          )}
           {visita && (
             <Badge className="bg-good/20 text-good">
               <Flame size={11} className="mr-1 inline" aria-hidden />

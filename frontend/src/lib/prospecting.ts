@@ -6,6 +6,7 @@
  * aqui — ele pressupõe `sort_order`, que nenhuma tabela de prospecção tem.
  */
 
+import { buildRoutingOpener } from "./outreachOpener";
 import { supabase } from "./supabase";
 
 export type LeadSegment =
@@ -722,7 +723,10 @@ export interface QueueItem extends OutreachTouch {
     Lead,
     | "id" | "name" | "niche" | "neighborhood" | "phone" | "phoneE164"
     | "whatsappValid" | "email" | "preferredChannel" | "score" | "segment" | "stage"
-  >;
+  > & {
+    /** Quando a sequência foi reiniciada — ordena a fila. Ver `restartOutreach`. */
+    outreachRestartedAt: string | null;
+  };
   prototypeSlug: string | null;
 }
 
@@ -740,7 +744,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
     .from("outreach_touches")
     .select(
       `${TOUCH_SELECT},
-       leads!inner(id, name, niche, neighborhood, phone, phone_e164, whatsapp_valid, email, preferred_channel, score, segment, stage)`,
+       leads!inner(id, name, niche, neighborhood, phone, phone_e164, whatsapp_valid, email, preferred_channel, score, segment, stage, outreach_restarted_at)`,
     )
     .eq("status", "pending")
     .lte("scheduled_for", today)
@@ -754,6 +758,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
       phone: string | null; phone_e164: string | null; whatsapp_valid: boolean;
       email: string | null; preferred_channel: "whatsapp" | "email";
       score: number; segment: LeadSegment; stage: LeadStage;
+      outreach_restarted_at: string | null;
     };
   };
   const rows = unwrap<Row[]>(res);
@@ -786,6 +791,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
         score: leads.score,
         segment: leads.segment,
         stage: leads.stage,
+        outreachRestartedAt: leads.outreach_restarted_at,
       },
       prototypeSlug: slugs.get(leads.id) ?? null,
     }))
@@ -1116,6 +1122,12 @@ export async function publishPrototype(
   const temMarcador = upload.messages.some((m) => m.includes("{{link}}"));
   const indiceDoLink = canal === "whatsapp" ? 1 : 0;
   const bodies = upload.messages.map((body, i) => {
+    // No WhatsApp o toque 1 nunca leva link, mesmo que o texto peça. Confiar no
+    // marcador aqui seria deixar um erro de redação restringir o número: é o
+    // padrão que a plataforma penaliza, e ela penaliza na primeira mensagem.
+    if (canal === "whatsapp" && i === 0) {
+      return body.replaceAll("{{link}}", "").replace(/[ \t]+\n/g, "\n").trim();
+    }
     if (body.includes("{{link}}")) return body.replaceAll("{{link}}", link);
     if (!temMarcador && i === indiceDoLink) return `${body}\n\n${link}`;
     return body;
@@ -1143,4 +1155,110 @@ export async function publishPrototype(
   if (stageError) throw new Error(stageError.message);
 
   return { slug, link };
+}
+
+/**
+ * Data em que a doutrina do primeiro toque mudou.
+ *
+ * Antes dela, o toque 1 de WhatsApp oferecia o protótipo e pedia permissão
+ * para mandar o link. Depois, ele pergunta com quem falar sobre o site — o
+ * WhatsApp do Google é a recepção, que não decide e por isso não responde a
+ * uma oferta. Toque escrito antes desta data carrega o texto velho.
+ *
+ * É uma data fixa de propósito: marca um evento que aconteceu uma vez. Quem já
+ * foi reiniciado fica registrado em `leads.outreach_restarted_at`, então a
+ * lista se esvazia sozinha e não volta a encher.
+ */
+const DOUTRINA_TOQUE_1_DESDE = "2026-08-24T00:00:00Z";
+
+export interface RestartCandidate {
+  leadId: number;
+  name: string;
+  niche: string;
+  segment: LeadSegment;
+  score: number;
+  channel: "whatsapp" | "email";
+  /** Quantos toques já saíram com o texto antigo. */
+  sentCount: number;
+}
+
+/**
+ * Leads cuja sequência foi escrita com a abordagem antiga e ainda não foi
+ * reiniciada.
+ */
+export async function listRestartCandidates(): Promise<RestartCandidate[]> {
+  const res = await supabase
+    .from("outreach_touches")
+    .select(
+      `leadId:lead_id, step, status, channel,
+       leads!inner(id, name, niche, segment, score, stage, outreach_restarted_at)`,
+    )
+    .lt("created_at", DOUTRINA_TOQUE_1_DESDE)
+    .not("leads.stage", "in", "(ganho,perdido)")
+    .is("leads.outreach_restarted_at", null)
+    .limit(500);
+
+  type Row = {
+    leadId: number;
+    step: number;
+    status: string;
+    channel: "whatsapp" | "email";
+    leads: {
+      id: number; name: string; niche: string;
+      segment: LeadSegment; score: number;
+    };
+  };
+
+  const porLead = new Map<number, RestartCandidate>();
+  for (const linha of unwrap<Row[]>(res)) {
+    const atual = porLead.get(linha.leadId) ?? {
+      leadId: linha.leadId,
+      name: linha.leads.name,
+      niche: linha.leads.niche,
+      segment: linha.leads.segment,
+      score: linha.leads.score,
+      channel: linha.channel,
+      sentCount: 0,
+    };
+    // O canal da sequência é o do toque 1: é ele que decide se o texto precisa
+    // ser reescrito, e os toques seguintes podem já ter sido trocados à mão.
+    if (linha.step === 1) atual.channel = linha.channel;
+    if (linha.status === "sent") atual.sentCount += 1;
+    porLead.set(linha.leadId, atual);
+  }
+  return [...porLead.values()].sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Devolve o lead ao começo da sequência, com o toque 1 reescrito.
+ *
+ * Só o toque 1 muda de texto — era ele que carregava a abordagem. Os toques 2
+ * a 4 continuam palavra por palavra: a entrega do protótipo e os argumentos
+ * não mudaram de lugar na sequência, e reescrevê-los jogaria fora copy que foi
+ * feita para aquele lead.
+ *
+ * No canal e-mail nem o toque 1 muda: lá a entrega no primeiro toque continua
+ * sendo a doutrina, e o que precisa de reinício é só o histórico de envio.
+ */
+export async function restartOutreach(
+  lead: Pick<RestartCandidate, "leadId" | "name" | "niche" | "segment" | "channel">,
+  identity: { senderName: string; agencyName: string },
+): Promise<number> {
+  const body =
+    lead.channel === "whatsapp"
+      ? buildRoutingOpener({
+          leadName: lead.name,
+          niche: lead.niche,
+          segment: lead.segment,
+          senderName: identity.senderName,
+          agencyName: identity.agencyName,
+        })
+      : null;
+
+  const { data, error } = await supabase.rpc("restart_outreach", {
+    p_lead_id: lead.leadId,
+    p_body: body,
+  });
+  if (error) throw new Error(error.message);
+  return (data as number) ?? 0;
 }

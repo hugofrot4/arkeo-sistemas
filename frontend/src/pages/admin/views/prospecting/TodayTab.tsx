@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Flame, MessageCircle, Play, RefreshCw, Search, Wand2 } from "lucide-react";
+import { Flame, History, MessageCircle, Play, RefreshCw, Search, Wand2 } from "lucide-react";
 import { useAdmin } from "../../context";
-import { runSourcing, runWorker } from "../../../../lib/prospecting";
+import { restartOutreach, runSourcing, runWorker } from "../../../../lib/prospecting";
 import type { ProspectingData } from "./useProspecting";
 
 /**
@@ -25,7 +25,7 @@ export default function TodayTab({
   irPara: (aba: "leads" | "fila") => void;
 }) {
   const { showToast } = useAdmin();
-  const [rodando, setRodando] = useState<"busca" | "fila" | null>(null);
+  const [rodando, setRodando] = useState<"busca" | "fila" | "reinicio" | null>(null);
 
   const porEstagio = new Map(data.pipeline.map((p) => [p.stage, p.count]));
   const totalLeads = data.pipeline.reduce((soma, p) => soma + p.count, 0);
@@ -88,10 +88,67 @@ export default function TodayTab({
     }
   }
 
+  /**
+   * Reescreve o toque 1 de quem foi abordado com a doutrina antiga e devolve
+   * todos ao começo da sequência.
+   *
+   * Um por um, não em lote: se um falhar, os já reiniciados ficam reiniciados
+   * — a lista se recalcula a cada carga e só mostra quem sobrou.
+   */
+  async function reiniciar() {
+    if (!data.settings) return;
+    setRodando("reinicio");
+    const identidade = {
+      senderName: data.settings.outreachSenderName,
+      agencyName: data.settings.agencyName,
+    };
+    let feitos = 0;
+    const falhas: string[] = [];
+    for (const lead of data.paraReiniciar) {
+      try {
+        await restartOutreach(lead, identidade);
+        feitos++;
+      } catch {
+        falhas.push(lead.name);
+      }
+    }
+    await refresh();
+    setRodando(null);
+    showToast(
+      falhas.length === 0
+        ? `${feitos} sequência(s) reiniciadas. Estão no topo da fila.`
+        : `${feitos} reiniciadas. Falharam: ${falhas.join(", ")}.`,
+    );
+  }
+
   // Ordem de urgência: quem já demonstrou interesse vem antes de tudo, e a
   // descoberta de leads novos vem por último — não adianta encher a base se o
   // que já está nela não foi trabalhado.
   const passos: Passo[] = [];
+
+  // Antes de tudo: enquanto não reiniciar, a fila mostra o texto antigo, e
+  // enviá-lo é justamente o que se quer evitar.
+  if (data.paraReiniciar.length > 0) {
+    const n = data.paraReiniciar.length;
+    const enviados = data.paraReiniciar.filter((l) => l.sentCount > 0).length;
+    passos.push({
+      chave: "reiniciar",
+      tom: "acao",
+      icone: <History size={18} aria-hidden />,
+      titulo: `${n} ${n === 1 ? "sequência escrita" : "sequências escritas"} com a abordagem antiga`,
+      texto:
+        "O toque 1 de WhatsApp oferecia o protótipo; agora ele pergunta com quem " +
+        "falar sobre o site. Reiniciar reescreve só essa primeira mensagem — os " +
+        `toques 2 a 4 continuam iguais — e devolve ${n === 1 ? "o lead" : "os leads"} ao topo da fila.` +
+        (enviados > 0
+          ? ` ${enviados} já ${enviados === 1 ? "recebeu" : "receberam"} mensagem: para ${enviados === 1 ? "esse" : "esses"}, a pergunta nova chega como retomada.`
+          : ""),
+      acao: {
+        rotulo: rodando === "reinicio" ? "Reiniciando…" : "Reiniciar sequências",
+        ao: reiniciar,
+      },
+    });
+  }
 
   if (data.hot.length > 0) {
     passos.push({
