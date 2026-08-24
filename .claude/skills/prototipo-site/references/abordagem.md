@@ -179,6 +179,22 @@ A sequência tem espaçamento — dia 0, +2, +5, +9 — porque duas mensagens se
 
 O sistema faz isso sozinho: registrado o envio, se o próximo toque for de outro canal ele vem para hoje. Acrescentar um e-mail na fila tem o mesmo efeito, porque o contato novo veio para ser usado agora.
 
+## Cada toque pode ser o primeiro que a pessoa lê
+
+Não existe conversa acumulada para apoiar a mensagem. Três motivos, e qualquer um deles basta:
+
+- **O canal muda no meio.** A recepção responde com o e-mail de quem decide, e o toque seguinte sai por lá — para alguém que não viu nada do que veio antes.
+- **O sistema abre uma mensagem nova a cada toque**, não responde à anterior. Não há histórico na tela de quem lê.
+- **Os toques anteriores podem não ter sido lidos.** É a hipótese mais provável, aliás: se tivessem sido, já teria havido resposta.
+
+Disso saem duas regras para os toques 3 e 4:
+
+**Identifique-se sempre.** *"Oi! Aqui é a Sara, da Arkeo Sistemas."* Custa oito palavras. Sem elas, o toque 3 é um estranho cobrando resposta.
+
+**Não diga por onde a prévia foi.** *"a prévia que te mandei aqui"* quebra quando a entrega saiu por e-mail para outra pessoa — e é o caso normal, porque foi para isso que o toque 1 pediu o contato. Escreva *"mandei esta semana uma prévia do site de vocês"*: verdadeiro em qualquer caminho.
+
+Pela mesma razão, **uma mensagem nunca é a continuação sintática da anterior**. Nada de "sobre o que falei", "conforme combinado", "aquela página que te mostrei".
+
 ## A escada de compromisso
 
 Nenhuma mensagem pede mais do que a anterior conquistou.

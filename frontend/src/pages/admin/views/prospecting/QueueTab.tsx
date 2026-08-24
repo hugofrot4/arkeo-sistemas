@@ -591,8 +591,14 @@ function TextoDoToque({
   const [assunto, setAssunto] = useState(item.subject ?? "");
   const [salvando, setSalvando] = useState(false);
 
-  const temLink = /https?:\/\/\S+\/p\//.test(item.body);
-  const alertaLink = item.channel === "whatsapp" && item.step === 1 && temLink;
+  const temLink = (t: string | null) => !!t && /https?:\/\/\S+\/p\//.test(t);
+  const alertaLink = item.channel === "whatsapp" && item.step === 1 && temLink(item.body);
+
+  // O toque 1 e o toque 2 podem os dois carregar o link — só um dos caminhos
+  // acontece por lead, mas nada impede mandar os dois. Mandar a mesma prévia
+  // duas vezes é o que faz a sequência parecer automatizada.
+  const repeteEntrega =
+    item.linkJaEntregue && (temLink(item.body) || temLink(item.bodyEmail));
 
   async function salvar() {
     setSalvando(true);
@@ -675,6 +681,13 @@ function TextoDoToque({
 
   return (
     <div className="mb-3">
+      {repeteEntrega && (
+        <p className="border-warning/30 bg-warning/8 text-warning mb-2 rounded-lg border px-3 py-2 text-xs">
+          A prévia já foi entregue num toque anterior, e este texto manda o link
+          de novo. Reescreva retomando o que já foi dito, ou pule o toque — a
+          mesma mensagem duas vezes é o que faz a sequência parecer disparo.
+        </p>
+      )}
       {alertaLink && (
         <p className="border-warning/30 bg-warning/8 text-warning mb-2 rounded-lg border px-3 py-2 text-xs">
           Esta mensagem leva o link já no primeiro toque — é o padrão que faz o

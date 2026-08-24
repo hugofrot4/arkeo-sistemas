@@ -263,6 +263,8 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] O arquivo tem as duas partes, separadas por `=== E-MAIL ===`, com quatro blocos cada
 - [ ] Bloco a bloco, as duas redações têm o mesmo papel — só o toque 1 diverge
+- [ ] Os toques 3 e 4 se identificam ("Aqui é a Sara, da Arkeo Sistemas") e não dizem por onde a prévia foi
+- [ ] Nenhum bloco abre duas vezes — uma saudação por mensagem
 - [ ] Cada bloco da parte de e-mail abre com `Assunto:`, até 55 caracteres, diferente dos outros
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 - [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. A mais longa é a que entrega o protótipo (até 750); as outras encolhem a partir dela. Tabela por canal em `references/abordagem.md`

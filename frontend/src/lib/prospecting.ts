@@ -788,6 +788,15 @@ export interface QueueItem extends OutreachTouch {
     outreachRestartedAt: string | null;
   };
   prototypeSlug: string | null;
+  /**
+   * A prévia já foi entregue num toque anterior desta sequência.
+   *
+   * O toque 1 e o toque 2 podem os dois carregar o link: o 1 entrega quando o
+   * lead já tem e-mail, o 2 entrega quando o 1 foi gastar perguntando com quem
+   * falar. Só um dos dois caminhos acontece por lead, mas nada impede o
+   * operador de mandar os dois — e aí o mesmo link vai duas vezes.
+   */
+  linkJaEntregue: boolean;
 }
 
 const TOUCH_SELECT =
@@ -836,6 +845,20 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
     unwrap<{ slug: string; leadId: number }[]>(slugRes).map((p) => [p.leadId, p.slug]),
   );
 
+  // Quem já recebeu a prévia. Uma consulta só para a fila inteira, como o slug.
+  const entregueRes = await supabase
+    .from("outreach_touches")
+    .select("leadId:lead_id, body, bodyEmail:body_email, channel")
+    .in("lead_id", rows.map((r) => r.leads.id))
+    .eq("status", "sent");
+  const jaEntregue = new Set(
+    unwrap<{ leadId: number; body: string; bodyEmail: string | null; channel: string }[]>(
+      entregueRes,
+    )
+      .filter((t) => /\/p\//.test(t.channel === "email" ? (t.bodyEmail ?? t.body) : t.body))
+      .map((t) => t.leadId),
+  );
+
   return rows
     .map(({ leads, ...touch }) => ({
       ...touch,
@@ -855,6 +878,7 @@ export async function listOutreachQueue(): Promise<QueueItem[]> {
         outreachRestartedAt: leads.outreach_restarted_at,
       },
       prototypeSlug: slugs.get(leads.id) ?? null,
+      linkJaEntregue: jaEntregue.has(leads.id),
     }))
     .sort((a, b) => b.lead.score - a.lead.score);
 }

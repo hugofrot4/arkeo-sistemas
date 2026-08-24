@@ -221,6 +221,32 @@ export function parseAbordagem(
     );
   }
 
+  // Duas saudações no mesmo bloco significam dois textos colados sem revisão —
+  // aconteceu ao fundir o cutucão com o pedido de conversa, e passou até o
+  // operador ler a mensagem na fila, prestes a mandar.
+  const saudacao = /(^|\n)\s*(oi|olá|ola|bom dia|boa tarde|boa noite)\b/gi;
+  [...messages, ...emailMessages].forEach((m, i) => {
+    if (!m) return;
+    const n = (m.match(saudacao) ?? []).length;
+    if (n > 1) {
+      const onde = i < 4 ? `${i + 1} de WhatsApp` : `${i - 3} de e-mail`;
+      errors.push(`A mensagem ${onde} abre duas vezes — tem ${n} saudações.`);
+    }
+  });
+
+  // O sistema abre uma conversa nova a cada toque, não responde à anterior, e
+  // o canal pode ter mudado no caminho. Quem lê o toque 3 pode nunca ter lido
+  // o 1: sem identificação, é um estranho cobrando resposta.
+  [2, 3].forEach((i) => {
+    const m = messages[i];
+    if (m && !/\barkeo\b/i.test(m)) {
+      warnings.push(
+        `A mensagem ${i + 1} de WhatsApp não diz quem está falando. Cada toque ` +
+          "pode ser o primeiro que a pessoa lê — o canal muda no meio da sequência.",
+      );
+    }
+  });
+
   if (messages.length !== 4) {
     errors.push(
       `Esperava 4 mensagens separadas por uma linha com "---", encontrei ${messages.length}.`,
