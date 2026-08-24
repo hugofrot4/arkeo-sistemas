@@ -168,36 +168,46 @@ export function buildBrief({
     );
   }
 
-  const temAmbos = !!lead.email && !!lead.phoneE164;
-  // Recalculado, não lido de `preferred_channel`: o campo guarda o que valia
-  // na última publicação, e um e-mail acrescentado depois muda o canal sem
-  // passar por lá. O brief precisa dizer ao gerador o canal de agora.
+  // O canal não decide mais o que escrever: as duas escadas vão no arquivo
+  // sempre, e o sistema coloca cada bloco no toque certo. O que ele decide é
+  // qual delas começa — e é isso que o gerador precisa saber para calibrar a
+  // primeira mensagem.
   const canalDaSequencia = canalDoLead(lead);
-  const canal = canalDaSequencia === "email" ? "e-mail" : "WhatsApp";
   linhas.push(
     "## Canal da abordagem",
     "",
-    temAmbos
-      ? "**WhatsApp e e-mail.** Os dois contatos costumam ser pessoas diferentes — o WhatsApp é a recepção, o e-mail chega mais perto de quem decide. Tendo o e-mail, não gaste toque perguntando com quem falar: toques 1 e 2 por e-mail com `{{link}}` no primeiro, e o WhatsApp entra só no toque 3, perguntando se o e-mail chegou. Nunca oito mensagens."
-      : `**${canal}.**`,
+    "**Escreva as duas escadas**, WhatsApp e e-mail, separadas por",
+    "`=== E-MAIL ===`. O canal de um toque muda no meio da sequência — é para",
+    "isso que o primeiro toque de WhatsApp pede o contato de quem decide —, e",
+    "sem as duas o card fica com o texto do canal errado.",
     "",
     canalDaSequencia === "email"
       ? [
-          "Link do protótipo no toque 1, que em e-mail é normal e esperado.",
-          "Cada bloco precisa da linha `Assunto:`.",
+          `**Começa por e-mail** (${lead.email}).`,
+          "Tendo o e-mail, não se gasta toque perguntando com quem falar: o",
+          "bloco 1 da parte de e-mail já entrega o protótipo, com `{{link}}`.",
+          "Link em e-mail é esperado e não custa reputação.",
         ].join(" ")
       : [
-          "**O toque 1 não vende: ele descobre com quem falar.** Este lead não tem",
-          "e-mail, e o WhatsApp do Google é quase sempre a recepção — que não",
-          "decide sobre site, mas sabe quem decide. Então o toque 1 se identifica",
-          "e pergunta *quem cuida do site e qual o e-mail dessa pessoa*, em duas",
-          "ou três linhas. Sem link, sem oferta e sem citar o defeito do site: o",
-          "argumento é para quem decide, não para quem atende. Mensagem fria com",
-          "link para quem não tem você nos contatos é o padrão que o WhatsApp",
-          "penaliza — restringiu o número da Arkeo mesmo com menos de vinte",
-          "envios por dia. O `{{link}}` e a entrega vão no toque 2. Ver",
-          "`references/abordagem.md`.",
+          "**Começa por WhatsApp**, e o primeiro toque não vende: ele descobre",
+          "com quem falar. Este lead não tem e-mail, e o WhatsApp do Google é",
+          "quase sempre a recepção — que não decide sobre site, mas sabe quem",
+          "decide. Então o bloco 1 de WhatsApp se identifica e pergunta *quem",
+          "cuida do site e qual o e-mail dessa pessoa*, em duas ou três linhas.",
+          "Sem link, sem oferta e sem citar o defeito: o argumento é para quem",
+          "decide, não para quem atende. Mensagem fria com link para quem não",
+          "tem você nos contatos é o padrão que restringiu o número da Arkeo,",
+          "mesmo com menos de vinte envios por dia. O `{{link}}` e a entrega vão",
+          "no bloco 2 de WhatsApp.",
         ].join(" "),
+    "",
+    lead.phoneE164 && lead.email
+      ? "Os dois contatos são pessoas diferentes: o WhatsApp é a recepção, o e-mail chega mais perto de quem decide. A sequência tem quatro toques no total, não quatro por canal."
+      : "",
+    "",
+    "Regras de tamanho, papel de cada bloco e a ordem das duas escadas em",
+    "`references/abordagem.md`. Não há teto que recuse — a entrega é a mensagem",
+    "longa, as outras encolhem a partir dela.",
     "",
     "## Quem assina a abordagem",
     "",

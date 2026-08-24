@@ -186,47 +186,64 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 ### 8. Escreva a abordagem
 
-`prototipos/<slug>/abordagem.txt` — **as duas redações**: quatro mensagens de WhatsApp separadas por `---`, uma linha `=== E-MAIL ===`, e as quatro de e-mail, também separadas por `---`.
+`prototipos/<slug>/abordagem.txt` — **as duas escadas**: quatro blocos de WhatsApp separados por `---`, uma linha `=== E-MAIL ===`, e os quatro de e-mail, também separados por `---`.
 
 ```
-Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — ...
+Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
+clínicas aqui no Ceará.
+
+Quem cuida do site de vocês? Queria falar com essa pessoa sobre uma coisa
+que reparei nele. Tem um e-mail dela?
 ---
-... (toque 2 de WhatsApp, com {{link}})
+... a entrega, com {{link}}
 ---
-...
+... insiste uma vez e propõe dez minutos
 ---
-...
+... encerra
 === E-MAIL ===
 Assunto: Uma prévia do site da Clínica X
-Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — ... {{link}} ...
+... a entrega, com {{link}}
 ---
 Assunto: Sobre a prévia que enviei
-...
+... retoma, com o argumento que ficou de fora
 ---
 Assunto: Dez minutos essa semana?
-...
+... a consequência específica + a proposta de conversa
 ---
 Assunto: Encerrando por aqui
-...
+... encerra
 ```
 
-**As duas redações do mesmo toque têm o mesmo papel.** Se o toque 2 entrega o protótipo no WhatsApp, o toque 2 de e-mail também entrega — é isso que faz a troca de canal no meio da sequência ser segura, e é para isso que as duas existem. O toque 1 é a única exceção: no WhatsApp ele pergunta com quem falar, e no e-mail já entrega, porque quem tem e-mail não precisa perguntar. Escreva as oito.
+**Cada escada tem a sua ordem, e ela não é a mesma.**
 
-Sem a parte de e-mail o sistema aceita, mas o card cai no texto de WhatsApp quando o canal virar e-mail — com o tamanho e o tom errados.
+| bloco | WhatsApp | e-mail |
+|---|---|---|
+| 1 | pergunta com quem falar — sem link, sem oferta | a entrega, com `{{link}}` |
+| 2 | a entrega, com `{{link}}` | retomada, com o argumento que ficou de fora |
+| 3 | insiste e propõe dez minutos | a consequência específica **e** a proposta de conversa |
+| 4 | encerra | encerra |
+
+A diferença vem de um fato só: em e-mail você já sabe para quem escrever, então entrega logo. No WhatsApp você fala com a recepção, que não decide — o primeiro toque descobre com quem falar, e tudo desce um degrau.
+
+**Você não precisa acertar o encaixe.** Escreva as duas escadas nessa ordem e o sistema coloca cada bloco no toque certo, conforme o lead tenha e-mail ou não. É por isso que o bloco 3 de e-mail traz a consequência junto com a proposta: num lead sem e-mail ele é o único degrau que sobra para os dois.
+
+**Escreva os oito.** Sem a parte de e-mail o sistema aceita, mas o card cai no texto de WhatsApp quando o canal virar — e o canal vira, porque é para isso que o toque 1 pede o contato.
 
 **Leia `references/abordagem.md` antes de escrever.** É onde estão a estrutura da mensagem de entrega, a tradução de achado técnico em consequência de negócio, e o CTA que abre a próxima conversa em vez de pedir opinião.
 
 **Quem assina.** O brief informa o nome de quem faz o atendimento e o nome da empresa. As mensagens vão em nome dessa pessoa, **representando a empresa** — não em nome de um profissional autônomo.
 
-**Os dois contatos são pessoas diferentes.** O WhatsApp do Google é quase sempre a recepção, que não decide sobre site; o e-mail do rodapé chega mais perto de quem decide. Quando o brief trouxer os dois, escreva pensando que o toque 1 vai por WhatsApp e o 2 por e-mail — e nunca proponha oito mensagens. Ver `references/abordagem.md`.
+**Cada bloco pode ser o primeiro que a pessoa lê.** O canal muda no meio da sequência, o sistema abre uma mensagem nova a cada toque em vez de responder à anterior, e os toques anteriores provavelmente não foram lidos — se tivessem sido, já teria havido resposta. Então todo bloco se identifica, e nenhum diz por onde a prévia foi: escreva *"mandei esta semana uma prévia do site de vocês"*, nunca *"a prévia que te mandei aqui"*. Nada de "conforme falamos" ou "sobre o que te mostrei".
 
-**O assunto.** Cada bloco **da parte de e-mail** abre com uma linha `Assunto: ...`, até 55 caracteres e diferente dos outros três. Os blocos de WhatsApp não levam assunto. Regras e exemplos em `references/abordagem.md`.
+**O assunto.** Cada bloco **da parte de e-mail** abre com uma linha `Assunto: ...`, até 55 caracteres e diferente dos outros três. Os blocos de WhatsApp não levam assunto.
 
-**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — **no toque 1 da parte de e-mail e no toque 2 da parte de WhatsApp**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 nem oferece: ele pergunta com quem falar sobre o site e qual o e-mail dessa pessoa, em três linhas. O sistema substitui na publicação e, sem o marcador, deposita o link no toque certo para o canal — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
+**O link.** Escreva `{{link}}` onde o endereço encaixa na frase — no **bloco 1 da parte de e-mail** e no **bloco 2 da de WhatsApp**. Mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. O sistema substitui na publicação e remove o marcador do primeiro toque de WhatsApp mesmo que ele apareça lá; sem marcador nenhum, deposita o link no fim do bloco certo — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
+
+**Tamanho.** Não há teto que recuse. Há proporção: a entrega é a mensagem longa, porque carrega o argumento; as outras são curtas porque só pedem uma coisa. Em e-mail cabe mais que no WhatsApp, onde texto longo é lido na diagonal e a parte que se pula é a pergunta do fim. Tabela orientativa em `references/abordagem.md`.
 
 #### O que a mensagem tem que fazer
 
-Ao terminar de ler a primeira, o dono precisa saber quatro coisas: **quem está falando e o que a empresa faz**, **o que ele ganha**, **o que foi feito para ele**, e **o que fazer em seguida**. Falhou em qualquer uma, a mensagem é ignorada.
+Ao terminar de ler **a mensagem de entrega** — bloco 1 no e-mail, bloco 2 no WhatsApp —, o dono precisa saber quatro coisas: **quem está falando e o que a empresa faz**, **o que ele ganha**, **o que foi feito para ele**, e **o que fazer em seguida**. Falhou em qualquer uma, a mensagem é ignorada.
 
 O erro mais comum — e o mais caro — é a mensagem simpática que elogia o site, manda o link e termina com "me diga o que achou". Ela nunca diz que existe um serviço à venda, e pede uma opinião em vez da próxima conversa. Educada e inútil.
 
@@ -247,27 +264,35 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - No máximo um emoji na conversa inteira, e só se cair natural. Zero é melhor que forçado.
 - Nenhum jargão: responsivo, SEO, conversão, otimizado, engajamento. O dono da clínica não usa nenhuma dessas palavras.
 - Nenhum superlativo sobre a própria empresa, nenhuma promessa de resultado.
-- Cada mensagem mais curta que a anterior. Abra com saudação.
+- Uma saudação por mensagem, no começo. Depois da entrega, cada uma é mais curta que a anterior.
 
 #### Antes de salvar
 
+**Estrutura do arquivo**
+- [ ] Duas partes separadas por `=== E-MAIL ===`, quatro blocos em cada, separados por `---`
+- [ ] Cada bloco da parte de e-mail abre com `Assunto:`, até 55 caracteres, diferente dos outros
+- [ ] `{{link}}` no bloco **1 da parte de e-mail** e no bloco **2 da de WhatsApp**
+- [ ] Cada escada na sua ordem: no WhatsApp o bloco 1 pergunta com quem falar e o 2 entrega; no e-mail o 1 já entrega
+
+**A entrega** — bloco 1 do e-mail, bloco 2 do WhatsApp
 - [ ] A primeira frase diz o nome, a empresa **e o que ela faz**
 - [ ] Há uma observação específica do negócio, com nome próprio
 - [ ] O ganho está dito em termos do negócio dele, não em termos técnicos
 - [ ] Está claro que o link é uma página funcionando, não um desenho
 - [ ] A gratuidade tem um motivo declarado
-- [ ] `{{link}}` no toque **1 se o canal é e-mail**, no toque **2 se é WhatsApp**
-- [ ] Canal WhatsApp: o toque 1 pergunta quem cuida do site e o e-mail dessa pessoa — sem link, sem oferta, sem citar o defeito
-- [ ] Canal WhatsApp: o toque 2 é autossuficiente — identifica, observa e explica o que é o link sem supor que o toque 1 foi respondido; nada de "segue a prévia" ou "conforme falamos"
-- [ ] A mensagem 1 termina com **uma** pergunta de sim ou não
-- [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
-- [ ] O arquivo tem as duas partes, separadas por `=== E-MAIL ===`, com quatro blocos cada
-- [ ] Bloco a bloco, as duas redações têm o mesmo papel — só o toque 1 diverge
-- [ ] Os toques 3 e 4 se identificam ("Aqui é a Sara, da Arkeo Sistemas") e não dizem por onde a prévia foi
-- [ ] Nenhum bloco abre duas vezes — uma saudação por mensagem
-- [ ] Cada bloco da parte de e-mail abre com `Assunto:`, até 55 caracteres, diferente dos outros
-- [ ] Quatro blocos separados por `---`, cada um menor que o anterior
-- [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. A mais longa é a que entrega o protótipo (até 750); as outras encolhem a partir dela. Tabela por canal em `references/abordagem.md`
+- [ ] Termina com **uma** pergunta de sim ou não
+- [ ] É autossuficiente: não supõe que o bloco anterior foi lido nem respondido — nada de "segue a prévia" ou "conforme falamos"
+
+**O primeiro toque de WhatsApp**
+- [ ] Pergunta quem cuida do site e o e-mail dessa pessoa — sem link, sem oferta, sem citar o defeito
+- [ ] Termina com **uma** pergunta, e o que ela pede é um nome ou um e-mail
+
+**Todos os blocos**
+- [ ] Cada um se identifica: quem fala e de que empresa
+- [ ] Nenhum diz por onde a prévia foi ("que te mandei aqui") — o canal muda no meio
+- [ ] Uma saudação por bloco, no começo
+- [ ] Depois da entrega, cada bloco é mais curto que o anterior
+- [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica na sequência inteira
 
 ### 9. Revise como especialista — duas passadas obrigatórias
 

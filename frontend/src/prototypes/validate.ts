@@ -252,8 +252,18 @@ export function parseAbordagem(
       `Esperava 4 mensagens separadas por uma linha com "---", encontrei ${messages.length}.`,
     );
   }
-  const longa = messages.findIndex((m) => m.length > 900);
-  if (longa >= 0) errors.push(`A mensagem ${longa + 1} tem mais de 900 caracteres.`);
+  // Sem teto duro. O que existe é uma proporção: no WhatsApp, texto longo é
+  // lido na diagonal e a parte que se pula costuma ser a pergunta do fim. Em
+  // e-mail o custo não é o mesmo — a mensagem de entrega precisa do espaço do
+  // argumento, e recusá-la por tamanho tirava do ar a abordagem certa.
+  messages.forEach((m, i) => {
+    if (m.length > 1000) {
+      warnings.push(
+        `A mensagem ${i + 1} de WhatsApp tem ${m.length} caracteres. Acima de ` +
+          "mil, ela é lida na diagonal e a pergunta do fim é o que se pula.",
+      );
+    }
+  });
 
   // Em que mensagem o link entra depende do canal. Em e-mail é a primeira: ali
   // link é esperado. No WhatsApp é a segunda — a primeira é fria, e mensagem

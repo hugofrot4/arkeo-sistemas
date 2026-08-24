@@ -53,7 +53,7 @@ Exemplos por toque: *"Uma prévia do site da Clínica Sorriso Vivo"* · *"Sobre 
 
 ## Tamanho
 
-O sistema **recusa mensagem acima de 900 caracteres** na conferência do upload. Mas 900 é o teto, não o alvo: mensagem de WhatsApp longa é lida na diagonal, e a parte que se pula costuma ser justamente a pergunta do fim.
+Não há teto que recuse — recusar por tamanho tirava do ar justamente a abordagem certa, que é a de entrega. O que há é proporção: a entrega carrega o argumento e precisa do espaço; as outras pedem uma coisa só e encolhem. Em e-mail cabe mais que no WhatsApp, onde texto longo é lido na diagonal e a parte que se pula costuma ser a pergunta do fim.
 
 O alvo depende de **qual toque entrega o protótipo** — que muda com o canal:
 
@@ -64,7 +64,7 @@ O alvo depende de **qual toque entrega o protótipo** — que muda com o canal:
 | toque 3 | até 350 | até 250 |
 | toque 4 | até 220 | até 220 |
 
-O teto acompanha o **papel**, não a posição: entrega tem espaço para o argumento, acompanhamento não.
+Os números são orientação, não trava. Eles acompanham o **papel**, não a posição: entrega tem espaço para o argumento, acompanhamento não.
 
 **A mensagem de entrega é a mais longa**, porque carrega a apresentação, a observação e o link. Da entrega em diante, cada uma menor que a anterior — quanto mais curto, mais responde.
 
@@ -156,20 +156,19 @@ Repare no padrão: **sim ou não**, e o "sim" já é o próximo passo. Nada de d
 
 Os dois contatos costumam ser **pessoas diferentes** — recepção no WhatsApp, quem decide no e-mail.
 
-Tendo os dois, **não gaste um toque perguntando com quem falar**: o e-mail já é o caminho. A sequência vai por e-mail, e o WhatsApp entra só como reforço em um toque do meio, quando o e-mail não teve resposta nenhuma:
+Tendo os dois, **não gaste um toque perguntando com quem falar**: o e-mail já é o caminho, e a sequência começa por lá, entregando o protótipo no primeiro toque.
 
-| Toque | Canal | Por quê |
-|---|---|---|
-| 1 | e-mail | entrega o protótipo direto a quem decide |
-| 2 | e-mail | retoma com o argumento de negócio |
-| 3 | WhatsApp | avisa que mandou e-mail e pede confirmação de que chegou |
-| 4 | qualquer um | encerramento, onde houve mais sinal |
+O card oferece os dois canais em todo toque, então a escolha é do operador, toque a toque. O que orienta a escolha:
 
-O toque 3 por WhatsApp funciona porque já não é frio: existe um e-mail enviado ao qual ele se refere. *"Mandei um e-mail para o contato de vocês na terça sobre o site — chegou?"* é uma pergunta legítima, não uma oferta.
+- **A entrega vai por e-mail.** É quem decide que precisa ver o protótipo, e a recepção não repassa link de desconhecido.
+- **Alterne no meio.** Se o e-mail não teve resposta nenhuma, o toque 3 por WhatsApp alcança outra pessoa e pode destravar pelo lado de dentro.
+- **Encerre onde houve mais sinal.** Se alguém abriu o protótipo, é ali que o último toque vale.
 
-Oito mensagens para um negócio que nunca respondeu não é persistência, é assédio — e é o comportamento que gera denúncia. Quatro toques bem distribuídos alcançam as duas pessoas sem esse custo.
+Isso funciona porque **os textos não dizem por onde vieram**. Um toque escrito com "conforme o e-mail que te mandei" quebra ao ser enviado por WhatsApp para a recepção, que não recebeu e-mail nenhum. Ver "Cada toque pode ser o primeiro que a pessoa lê".
 
-Se o lead só tem e-mail, a sequência inteira vai por e-mail. Se só tem WhatsApp, ela começa pelo toque de roteamento da seção anterior.
+Oito mensagens para um negócio que nunca respondeu não é persistência, é assédio — e é o comportamento que gera denúncia. **São quatro toques no total, não quatro por canal.**
+
+Se o lead só tem e-mail, tudo vai por e-mail. Se só tem WhatsApp, a sequência começa pelo toque de roteamento da seção anterior.
 
 ## O intervalo entre toques vale por pessoa, não por lead
 
@@ -239,47 +238,97 @@ Se você reservou dois parágrafos para dizer o que está bom e nenhum para dize
 
 ## Exemplo completo
 
-Policlínica com quatro unidades, site que esconde o contato no celular:
+Policlínica com quatro unidades, site que esconde o contato no celular. Sem e-mail conhecido, então a sequência começa pelo WhatsApp — mas as duas escadas vão no arquivo.
 
 ```
-Assunto: Uma prévia do site da Policlínica Quality
-Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
-clínicas aqui no Ceará.
+Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
+clínicas e policlínicas aqui no Ceará.
 
-Vi o site da Policlínica Quality e reparei numa coisa: no celular, quem quer
-marcar consulta precisa rolar bastante até achar o telefone da unidade certa.
-Como quase todo mundo procura clínica pelo telefone hoje, é provável que parte
-desses contatos esteja se perdendo no caminho.
+Quem cuida do site de vocês? Queria falar com essa pessoa sobre uma coisa
+que reparei nele. Tem um e-mail dela?
+---
+Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
+clínicas e policlínicas aqui no Ceará.
 
-Refiz a página inicial de vocês para mostrar como daria para resolver — as
-quatro unidades com o botão de WhatsApp direto, já na primeira tela:
+Vi o site de vocês e reparei numa coisa: no celular, a primeira tela abre
+num texto sobre clínico geral, e o telefone das unidades só aparece bem
+depois. Quem está com dor procura pelo telefone e decide em segundos —
+nesse tempo não achou como ligar para a unidade mais perto.
+
+Refiz a página inicial com as quatro unidades e o contato de cada uma
+logo no começo:
 
 {{link}}
 
-É uma prévia de verdade, dá para abrir no celular e clicar. Fiz sem custo
-justamente para você ver o resultado antes de decidir qualquer coisa.
+É uma prévia de verdade, abre no celular e clica. Fiz sem custo para você
+ver antes de decidir qualquer coisa.
 
-Faz sentido para vocês? Se sim, te mostro como ficaria o restante do site.
+Faz sentido para vocês? Se sim, te mostro o restante do site.
+---
+Oi! Aqui é a Sara, da Arkeo Sistemas. Mandei esta semana uma prévia do
+site de vocês, feita sem custo para mostrar como ficaria.
+
+Se ficar mais fácil conversar do que ler, te explico em dez minutos o
+processo e o prazo. Tem algum horário melhor essa semana?
+---
+Oi! Aqui é a Sara, da Arkeo Sistemas. Encerro o contato por aqui para não
+incomodar — a prévia fica no ar mais alguns dias, caso queira mostrar
+para a equipe.
+
+Se fizer sentido retomar, é só me chamar. Obrigada!
+=== E-MAIL ===
+Assunto: Uma prévia do site da Policlínica Quality
+Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
+clínicas e policlínicas aqui no Ceará.
+
+Vi o site de vocês e reparei numa coisa: no celular, a primeira tela abre
+num texto sobre clínico geral, e o telefone das unidades só aparece bem
+depois. Quem está com dor procura pelo telefone e decide em segundos —
+nesse tempo não achou como ligar para a unidade mais perto.
+
+Refiz a página inicial com as quatro unidades e o contato de cada uma
+logo no começo:
+
+{{link}}
+
+É uma prévia de verdade, abre no celular e clica. Fiz sem custo para você
+ver antes de decidir qualquer coisa.
+
+Faz sentido para vocês? Se sim, te mostro o restante do site.
 ---
 Assunto: Sobre a prévia que enviei
-Oi! Sara aqui, da Arkeo Sistemas. Um dado que costuma pesar nessa decisão:
-quando a página não se adapta ao celular, o Google reduz a exibição dela nas
-buscas locais — que é de onde vem a maior parte dos contatos de clínica.
+Oi! Aqui é a Sara, da Arkeo Sistemas. Um ponto que costuma pesar com mais
+de uma unidade: quem não sabe qual fica mais perto costuma desistir em vez
+de procurar. Na prévia a escolha da unidade é a primeira coisa da página.
 
-Chegou a abrir a prévia que mandei?
+Faz sentido para vocês?
 ---
 Assunto: Dez minutos essa semana?
-Oi! Se ficar mais fácil conversar do que ler, posso te explicar em uns dez
-minutos como seria o processo e o prazo — por aqui mesmo ou por ligação.
+Oi! Aqui é a Sara, da Arkeo Sistemas. Mandei esta semana uma prévia do
+site de vocês.
 
-Tem algum horário melhor essa semana?
+Um ponto que costuma pesar com mais de uma unidade: quem não sabe qual
+fica mais perto costuma desistir em vez de procurar. Na prévia a escolha
+da unidade é a primeira coisa da página.
+
+Se ficar mais fácil conversar do que ler, te explico em dez minutos o
+processo e o prazo. Tem algum horário melhor essa semana?
 ---
 Assunto: Encerrando por aqui
-Oi! Vou encerrar o contato por aqui para não incomodar. A prévia fica no ar
-por mais alguns dias, caso queira mostrar para alguém da equipe.
+Oi! Aqui é a Sara, da Arkeo Sistemas. Encerro o contato para não
+incomodar — a prévia fica no ar mais alguns dias, caso queira mostrar
+para a equipe.
 
-Se em algum momento fizer sentido retomar, é só me chamar. Obrigada!
+Se fizer sentido retomar, é só me chamar. Obrigada!
 ```
+
+Repare em três coisas.
+
+**O bloco 3 de e-mail repete o argumento do bloco 2 de propósito.** Num lead sem e-mail o bloco 2 nunca sai — o sistema usa a escada de e-mail um degrau à frente —, e o bloco 3 passa a ser o único lugar onde aquele argumento cabe. Escrever os dois é o que faz os dois caminhos funcionarem.
+
+**Nenhum bloco diz por onde a prévia foi.** "Mandei esta semana uma prévia do site de vocês" é verdadeiro tendo ela saído por WhatsApp ou por e-mail, para a recepção ou para quem decide.
+
+**Todos se identificam.** Inclusive o último. Quem lê o toque 4 pode não ter lido nenhum dos outros.
 
 Compare com o que **não** funciona:
 
@@ -295,6 +344,8 @@ Tudo ali é educado e nada vende: não diz que a Arkeo faz sites, não diz o que
 - [ ] Está claro que o link é uma página funcionando, não um desenho
 - [ ] A gratuidade tem um motivo declarado
 - [ ] Termina com **uma** pergunta, de sim ou não, que abre o próximo passo
-- [ ] Cada bloco abre com `Assunto:`, com até 55 caracteres e diferente dos outros
+- [ ] Cada bloco **da parte de e-mail** abre com `Assunto:`, até 55 caracteres e diferente dos outros
+- [ ] Cada bloco se identifica, e nenhum diz por onde a prévia foi
+- [ ] Uma saudação por bloco
 - [ ] Nenhum jargão, nenhuma promessa de resultado, nenhum "fico à disposição"
 - [ ] No máximo uma crítica nesta mensagem

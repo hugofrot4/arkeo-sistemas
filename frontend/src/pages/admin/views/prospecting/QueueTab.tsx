@@ -672,7 +672,7 @@ function TextoDoToque({
             Cancelar
           </button>
           <span className="text-text-muted ml-auto text-xs tabular-nums">
-            {corpo.length}/900
+            {corpo.length} no WhatsApp · {corpoEmail.length || corpo.length} no e-mail
           </span>
         </div>
       </div>

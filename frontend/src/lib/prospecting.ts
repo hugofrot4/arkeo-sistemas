@@ -1281,9 +1281,28 @@ export async function publishPrototype(
   const soEmail = !temParteEmail && canal === "email";
 
   const bodies = comLink(upload.messages, soEmail ? 0 : 1) as string[];
+
+  /**
+   * Onde cada bloco de e-mail cai depende de o lead ter e-mail.
+   *
+   * A escada de e-mail é escrita numa ordem só — entrega, retomada, proposta
+   * de conversa, encerramento. Mas quem já tem e-mail entrega no toque 1,
+   * enquanto quem não tem gasta o toque 1 perguntando com quem falar e só
+   * entrega no 2. Um toque à frente, portanto, e o resto acompanha.
+   *
+   * A entrega ocupa os dois primeiros toques no segundo caso porque só um
+   * deles chega a sair: o toque 1 vai por WhatsApp, e sua redação de e-mail
+   * fica de reserva para o lead que ganhar um e-mail antes da hora.
+   */
+  const escada = upload.emailMessages ?? [null, null, null, null];
   const emailBodies = soEmail
     ? bodies
-    : comLink(upload.emailMessages ?? [null, null, null, null], 0);
+    : comLink(
+        canal === "email"
+          ? escada
+          : [escada[0], escada[0], escada[2], escada[3]],
+        0,
+      );
 
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
     bodies.map((body, i) => ({
