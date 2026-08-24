@@ -5,6 +5,7 @@ import {
   publishPrototype,
   type Lead,
   type ProspectingSettings,
+  canalDoLead,
 } from "../../../../lib/prospecting";
 import { buildBrief, slugFor } from "../../../../prototypes/brief";
 import { parseAbordagem, validateHtml } from "../../../../prototypes/validate";
@@ -96,7 +97,9 @@ export default function GenerateModal({
   async function publicar() {
     if (!html) return;
     const conferido = validateHtml(html);
-    const mensagens = parseAbordagem(abordagem);
+    // O canal decide onde o link pode estar. Mesma regra que a publicação
+    // aplica — conferir com outra não avisaria do erro que importa.
+    const mensagens = parseAbordagem(abordagem, canalDoLead(lead));
     const problemas = [...conferido.errors, ...mensagens.errors];
     setAvisos([...conferido.warnings, ...mensagens.warnings]);
     if (problemas.length > 0) {

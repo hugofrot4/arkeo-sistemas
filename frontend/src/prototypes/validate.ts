@@ -144,7 +144,10 @@ export function validateHtml(html: string): HtmlValidation {
  * O endereço do protótipo entra como `{{link}}` no texto: o slug só é gerado
  * na publicação, então não há como escrevê-lo antes.
  */
-export function parseAbordagem(texto: string): {
+export function parseAbordagem(
+  texto: string,
+  canal: "whatsapp" | "email" = "whatsapp",
+): {
   messages: string[];
   subjects: (string | null)[];
   errors: string[];
@@ -180,16 +183,33 @@ export function parseAbordagem(texto: string): {
   const longa = messages.findIndex((m) => m.length > 900);
   if (longa >= 0) errors.push(`A mensagem ${longa + 1} tem mais de 900 caracteres.`);
 
-  if (messages.length > 0 && !messages[0].includes("{{link}}")) {
-    warnings.push(
-      "A primeira mensagem não tem o marcador {{link}}. O endereço do protótipo " +
-        "vai ser colado no fim dela — se preferir no meio da frase, escreva {{link}} onde quiser.",
+  // Em que mensagem o link entra depende do canal. Em e-mail é a primeira: ali
+  // link é esperado. No WhatsApp é a segunda — a primeira é fria, e mensagem
+  // fria com link para quem não tem você nos contatos é o padrão que restringiu
+  // o número da Arkeo, mesmo com menos de vinte envios por dia.
+  const indiceDoLink = canal === "whatsapp" ? 1 : 0;
+  const comLink = messages
+    .map((m, i) => (m.includes("{{link}}") ? i : -1))
+    .filter((i) => i >= 0);
+
+  if (canal === "whatsapp" && comLink.includes(0)) {
+    errors.push(
+      "A primeira mensagem tem o marcador {{link}}, e no WhatsApp ela não pode " +
+        "levar link: é a mensagem fria, e é esse padrão que faz a plataforma " +
+        "restringir o número. Mova o {{link}} para a segunda.",
     );
   }
-  const foraDoPrimeiro = messages.slice(1).findIndex((m) => m.includes("{{link}}"));
-  if (foraDoPrimeiro >= 0) {
+  if (messages.length > indiceDoLink && !comLink.includes(indiceDoLink)) {
     warnings.push(
-      `A mensagem ${foraDoPrimeiro + 2} também repete o link. Repetir em todo toque soa automatizado.`,
+      `A mensagem ${indiceDoLink + 1} não tem o marcador {{link}} — é ela que ` +
+        `entrega o protótipo neste canal. O endereço vai ser colado no fim dela; ` +
+        `se preferir no meio da frase, escreva {{link}} onde quiser.`,
+    );
+  }
+  const repetido = comLink.filter((i) => i !== indiceDoLink && i !== 0);
+  if (repetido.length > 0) {
+    warnings.push(
+      `A mensagem ${repetido[0] + 1} também repete o link. Repetir em todo toque soa automatizado.`,
     );
   }
 

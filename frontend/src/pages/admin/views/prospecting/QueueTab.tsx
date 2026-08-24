@@ -14,6 +14,7 @@ import {
   type HotLead,
   type QueueItem,
 } from "../../../../lib/prospecting";
+import { buildHotFollowUp, hotFollowUpSubject } from "../../../../lib/outreachOpener";
 import { SEGMENT_META, nicheLabel, relativeTime } from "./meta";
 import { formatarTelefoneBr, parseTelefoneBr } from "../../../../lib/phoneBr";
 import { Badge, ScoreDot } from "./ui";
@@ -129,7 +130,14 @@ export default function QueueTab({
   return (
     <div className="space-y-8">
       {quentesSemToque.length > 0 && (
-        <HotBlock hot={quentesSemToque} refresh={refresh} />
+        <HotBlock
+          hot={quentesSemToque}
+          refresh={refresh}
+          identity={{
+            senderName: data.settings?.outreachSenderName ?? "Sara",
+            agencyName: data.settings?.agencyName ?? "Arkeo Sistemas",
+          }}
+        />
       )}
 
       <section>
@@ -829,7 +837,15 @@ function WhatsAppDoLead({
  * agendada de propósito — o momento certo de falar é agora, não no dia que o
  * cronograma diz.
  */
-function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<void> }) {
+function HotBlock({
+  hot,
+  refresh,
+  identity,
+}: {
+  hot: HotLead[];
+  refresh: () => Promise<void>;
+  identity: { senderName: string; agencyName: string };
+}) {
   const { showToast } = useAdmin();
 
   // Abrir o protótipo não obriga a seguir. Aqui também é só sair da fila: o
@@ -844,17 +860,28 @@ function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<voi
     }
   }
 
+  /**
+   * Abre a conversa pelo canal que o lead tem.
+   *
+   * Antes ia sempre para o WhatsApp e, sem telefone, não abria nada: o botão
+   * ficava lá e o clique não fazia efeito nenhum. E o texto era o mesmo para
+   * todo mundo, terminado em "qualquer coisa que queira mudar, é só falar" —
+   * que não pede nada, então não recebe resposta.
+   */
   async function open(item: HotLead) {
-    if (item.lead.phoneE164) {
-      window.open(
-        whatsappLink(
-          item.lead.phoneE164,
-          `Oi! Vi que você deu uma olhada no protótipo. Qualquer coisa que queira mudar, é só falar.`,
-        ),
-        "_blank",
-        "noopener",
-      );
+    const corpo = buildHotFollowUp(item.lead.name, identity.senderName, identity.agencyName);
+    const destino = item.lead.phoneE164
+      ? whatsappLink(item.lead.phoneE164, corpo)
+      : item.lead.email
+        ? emailLink(item.lead.email, hotFollowUpSubject(item.lead.name), corpo)
+        : null;
+
+    if (!destino) {
+      showToast(`${item.lead.name} não tem telefone nem e-mail. Preencha em Leads → Editar.`);
+      return;
     }
+    window.open(destino, "_blank", "noopener");
+
     try {
       await markViewed(item.leadId);
       await refresh();
@@ -905,11 +932,15 @@ function HotBlock({ hot, refresh }: { hot: HotLead[]; refresh: () => Promise<voi
                 </button>
                 <button
                   onClick={() => open(item)}
-                  disabled={!item.lead.whatsappValid}
-                  title={item.lead.whatsappValid ? undefined : "Sem WhatsApp válido neste lead."}
+                  disabled={!item.lead.phoneE164 && !item.lead.email}
+                  title={
+                    item.lead.phoneE164 || item.lead.email
+                      ? undefined
+                      : "Sem telefone nem e-mail neste lead."
+                  }
                   className="bg-good rounded-lg px-3.5 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                 >
-                  Falar agora
+                  {item.lead.phoneE164 ? "Falar agora" : "Abrir e-mail"}
                 </button>
               </div>
             </div>

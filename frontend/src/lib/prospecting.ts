@@ -1023,7 +1023,10 @@ export async function cancelRemainingTouches(leadId: number) {
 }
 
 export interface HotLead extends PrototypeViewSummary {
-  lead: Pick<Lead, "id" | "name" | "niche" | "phoneE164" | "whatsappValid" | "score" | "stage">;
+  lead: Pick<
+    Lead,
+    "id" | "name" | "niche" | "phoneE164" | "whatsappValid" | "email" | "score" | "stage"
+  >;
 }
 
 /**
@@ -1037,7 +1040,9 @@ export async function listHotLeads(sinceDays = 14): Promise<HotLead[]> {
 
   const res = await supabase
     .from("leads")
-    .select("id, name, niche, phoneE164:phone_e164, whatsappValid:whatsapp_valid, score, stage")
+    .select(
+      "id, name, niche, phoneE164:phone_e164, whatsappValid:whatsapp_valid, email, score, stage",
+    )
     .in("id", views.map((v) => v.leadId))
     .not("stage", "in", "(ganho,perdido)");
   const leads = new Map(
