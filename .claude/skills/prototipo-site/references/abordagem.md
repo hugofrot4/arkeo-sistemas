@@ -148,6 +148,14 @@ Oito mensagens para um negócio que nunca respondeu não é persistência, é as
 
 Se o lead só tem e-mail, a sequência inteira vai por e-mail. Se só tem WhatsApp, ela começa pelo toque de roteamento da seção anterior.
 
+## O intervalo entre toques vale por pessoa, não por lead
+
+A sequência tem espaçamento — dia 0, +2, +5, +9 — porque duas mensagens seguidas para o mesmo número cansam, e cansar é o que faz bloquear.
+
+**Quando o toque seguinte muda de canal, esse intervalo não se aplica.** São duas pessoas: a recepção atende o WhatsApp, quem decide lê o e-mail. Fazer o e-mail esperar dois dias depois de a recepção ter respondido com o contato não poupa ninguém — só atrasa a chegada em quem decide, justamente no momento em que se acabou de conseguir o caminho até ele.
+
+O sistema faz isso sozinho: registrado o envio, se o próximo toque for de outro canal ele vem para hoje. Acrescentar um e-mail na fila tem o mesmo efeito, porque o contato novo veio para ser usado agora.
+
 ## A escada de compromisso
 
 Nenhuma mensagem pede mais do que a anterior conquistou.

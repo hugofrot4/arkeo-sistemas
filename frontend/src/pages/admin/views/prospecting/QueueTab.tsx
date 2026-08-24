@@ -75,11 +75,15 @@ export default function QueueTab({
           })
         : null;
       // O lead sai da fila de hoje ao ser marcado. Dizer quando ele volta evita
-      // a sensação de que sumiu.
+      // a sensação de que sumiu — e quando o próximo toque muda de canal ele
+      // não sai: já está de volta, agora, para outra pessoa.
+      const canal = resultado.nextChannel === "email" ? "e-mail" : "WhatsApp";
       showToast(
-        quando
-          ? `Toque ${item.step} registrado. ${item.lead.name} volta à fila em ${quando} para o toque ${resultado.nextStep}.`
-          : `Toque ${item.step} registrado. Era o último da sequência de ${item.lead.name}.`,
+        resultado.nextAntecipado
+          ? `Toque ${item.step} registrado. O toque ${resultado.nextStep} vai por ${canal}, para outra pessoa — já está na fila, pode mandar agora.`
+          : quando
+            ? `Toque ${item.step} registrado. ${item.lead.name} volta à fila em ${quando} para o toque ${resultado.nextStep}.`
+            : `Toque ${item.step} registrado. Era o último da sequência de ${item.lead.name}.`,
       );
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Falha ao registrar o envio.");

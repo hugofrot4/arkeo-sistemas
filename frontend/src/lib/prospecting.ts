@@ -147,6 +147,44 @@ export async function setLeadChannel(leadId: number, channel: "whatsapp" | "emai
     .eq("lead_id", leadId)
     .eq("status", "pending");
   if (error) throw new Error(error.message);
+  // Trocar de canal é trocar de destinatário, e o contato novo veio para ser
+  // usado agora. Ver `anteciparProximoToque`.
+  await anteciparProximoToque(leadId);
+}
+
+/**
+ * Traz o próximo toque pendente para hoje, se ele estava marcado para depois.
+ *
+ * O intervalo entre toques existe para não importunar **uma pessoa**: mandar
+ * duas mensagens seguidas para o mesmo número cansa, e é o que faz o lead
+ * bloquear. Mas os dois canais são duas pessoas diferentes — a recepção
+ * atende o WhatsApp, quem decide lê o e-mail —, e nesse caso a espera não
+ * poupa ninguém: só atrasa a chegada em quem decide, depois de a pergunta de
+ * roteamento já ter sido respondida.
+ *
+ * Devolve a data em que o toque ficou, ou null se não havia o que antecipar.
+ */
+async function anteciparProximoToque(leadId: number): Promise<string | null> {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const res = await supabase
+    .from("outreach_touches")
+    .select("id, scheduledFor:scheduled_for")
+    .eq("lead_id", leadId)
+    .eq("status", "pending")
+    .gt("scheduled_for", hoje)
+    .order("step", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (res.error) throw new Error(res.error.message);
+  const alvo = res.data as { id: number; scheduledFor: string } | null;
+  if (!alvo) return null;
+
+  const { error } = await supabase
+    .from("outreach_touches")
+    .update({ scheduled_for: hoje })
+    .eq("id", alvo.id);
+  if (error) throw new Error(error.message);
+  return hoje;
 }
 
 export async function updateLead(id: number, patch: Partial<Lead>) {
@@ -704,6 +742,22 @@ export function runWorker(kind?: string) {
 }
 
 
+/**
+ * Por onde a sequência sai.
+ *
+ * O e-mail ganha do telefone quando existe, e não o contrário. O WhatsApp que
+ * o Google traz é o da recepção, que não decide sobre site: ela repassa na
+ * melhor das hipóteses, e denuncia como propaganda na pior — foi o que
+ * restringiu o número. O e-mail do rodapé cai numa caixa que o dono lê.
+ *
+ * Sem e-mail, a sequência vai por WhatsApp e o primeiro toque serve para
+ * descobrir o e-mail de quem decide. Ver
+ * `.claude/skills/prototipo-site/references/abordagem.md`.
+ */
+export function canalDoLead(lead: Pick<Lead, "email">): "whatsapp" | "email" {
+  return lead.email ? "email" : "whatsapp";
+}
+
 // ── abordagem ────────────────────────────────────────────────────────────
 
 export interface OutreachTouch {
@@ -822,6 +876,9 @@ export interface TouchSentResult {
   /** Data do próximo toque agendado, se houver — para dizer ao operador o que vem. */
   nextTouchDate: string | null;
   nextStep: number | null;
+  nextChannel: "whatsapp" | "email" | null;
+  /** O próximo toque foi puxado para hoje por mudar de canal. */
+  nextAntecipado: boolean;
 }
 
 /**
@@ -846,18 +903,33 @@ export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> 
 
   const proximo = await supabase
     .from("outreach_touches")
-    .select("step, scheduledFor:scheduled_for")
+    .select("step, channel, scheduledFor:scheduled_for")
     .eq("lead_id", touch.leadId)
     .eq("status", "pending")
     .order("step", { ascending: true })
     .limit(1)
     .maybeSingle();
 
-  const seguinte = proximo.data as { step: number; scheduledFor: string } | null;
+  const seguinte = proximo.data as {
+    step: number;
+    channel: "whatsapp" | "email";
+    scheduledFor: string;
+  } | null;
+
+  // Este toque foi para uma pessoa; o próximo, em outro canal, vai para outra.
+  // O intervalo entre eles não protege ninguém — ver `anteciparProximoToque`.
+  const hoje = new Date().toISOString().slice(0, 10);
+  let antecipado = false;
+  if (seguinte && seguinte.channel !== touch.channel && seguinte.scheduledFor > hoje) {
+    antecipado = (await anteciparProximoToque(touch.leadId)) !== null;
+  }
+
   return {
     stage: (stage as string) ?? "contatado",
-    nextTouchDate: seguinte?.scheduledFor ?? null,
+    nextTouchDate: antecipado ? hoje : (seguinte?.scheduledFor ?? null),
     nextStep: seguinte?.step ?? null,
+    nextChannel: seguinte?.channel ?? null,
+    nextAntecipado: antecipado,
   };
 }
 
@@ -1101,11 +1173,7 @@ export async function publishPrototype(
   const link = `${window.location.origin}/p/${slug}`;
   const today = Date.now();
 
-  // Canal decidido pelo contato que existe: sem celular e com e-mail, a
-  // sequência já nasce por e-mail em vez de o lead ficar parado na fila
-  // esperando um número que ninguém vai conseguir.
-  const canal: "whatsapp" | "email" =
-    lead.whatsappValid || lead.phoneE164 ? "whatsapp" : lead.email ? "email" : "whatsapp";
+  const canal = canalDoLead(lead);
   if (canal !== lead.preferredChannel) {
     await supabase.from("leads").update({ preferred_channel: canal }).eq("id", lead.id);
   }

@@ -7,7 +7,7 @@
  * cores e serviços reais.
  */
 
-import type { Finding, Lead } from "../lib/prospecting";
+import { canalDoLead, type Finding, type Lead } from "../lib/prospecting";
 
 /** Nomes dos tipos da Places API em português. */
 const RAMOS: Record<string, string> = {
@@ -169,7 +169,11 @@ export function buildBrief({
   }
 
   const temAmbos = !!lead.email && !!lead.phoneE164;
-  const canal = lead.preferredChannel === "email" ? "e-mail" : "WhatsApp";
+  // Recalculado, não lido de `preferred_channel`: o campo guarda o que valia
+  // na última publicação, e um e-mail acrescentado depois muda o canal sem
+  // passar por lá. O brief precisa dizer ao gerador o canal de agora.
+  const canalDaSequencia = canalDoLead(lead);
+  const canal = canalDaSequencia === "email" ? "e-mail" : "WhatsApp";
   linhas.push(
     "## Canal da abordagem",
     "",
@@ -177,7 +181,7 @@ export function buildBrief({
       ? "**WhatsApp e e-mail.** Os dois contatos costumam ser pessoas diferentes — o WhatsApp é a recepção, o e-mail chega mais perto de quem decide. Tendo o e-mail, não gaste toque perguntando com quem falar: toques 1 e 2 por e-mail com `{{link}}` no primeiro, e o WhatsApp entra só no toque 3, perguntando se o e-mail chegou. Nunca oito mensagens."
       : `**${canal}.**`,
     "",
-    lead.preferredChannel === "email"
+    canalDaSequencia === "email"
       ? [
           "Link do protótipo no toque 1, que em e-mail é normal e esperado.",
           "Cada bloco precisa da linha `Assunto:`.",
