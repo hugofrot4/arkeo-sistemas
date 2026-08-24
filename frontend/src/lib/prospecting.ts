@@ -767,6 +767,12 @@ export interface OutreachTouch {
   channel: "whatsapp" | "email";
   subject: string | null;
   body: string;
+  /**
+   * Redação para o canal e-mail. As duas sequências estão deslocadas de um
+   * toque — em e-mail a entrega vai no 1, no WhatsApp no 2 —, então no mesmo
+   * slot moram mensagens de papéis diferentes. Nula quando não foi escrita.
+   */
+  bodyEmail: string | null;
   scheduledFor: string;
   sentAt: string | null;
   status: "pending" | "sent" | "skipped" | "cancelled";
@@ -785,7 +791,8 @@ export interface QueueItem extends OutreachTouch {
 }
 
 const TOUCH_SELECT =
-  "id,leadId:lead_id,step,channel,subject,body,scheduledFor:scheduled_for,sentAt:sent_at,status";
+  "id,leadId:lead_id,step,channel,subject,body,bodyEmail:body_email," +
+  "scheduledFor:scheduled_for,sentAt:sent_at,status";
 
 /**
  * Fila do dia: toques vencidos e ainda não enviados, do maior score para o
@@ -989,10 +996,16 @@ export async function reopenTouch(touch: OutreachTouch) {
  */
 export async function updateTouch(
   touchId: number,
-  campos: { body?: string; subject?: string | null; channel?: "whatsapp" | "email" },
+  campos: {
+    body?: string;
+    bodyEmail?: string | null;
+    subject?: string | null;
+    channel?: "whatsapp" | "email";
+  },
 ) {
   const payload: Record<string, unknown> = {};
   if (campos.body !== undefined) payload.body = campos.body;
+  if (campos.bodyEmail !== undefined) payload.body_email = campos.bodyEmail;
   if (campos.subject !== undefined) payload.subject = campos.subject;
   if (campos.channel !== undefined) payload.channel = campos.channel;
 
@@ -1086,6 +1099,17 @@ export function emailLink(para: string, assunto: string, corpo: string): string 
   return `mailto:${encodeURIComponent(para)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
 }
 
+/**
+ * O texto deste toque no canal em que ele vai sair.
+ *
+ * Cai no corpo de WhatsApp quando a versão de e-mail não foi escrita: é
+ * melhor mandar o texto do outro canal do que não ter o que mandar. O card
+ * avisa quando é esse o caso.
+ */
+export function corpoDoToque(toque: Pick<OutreachTouch, "channel" | "body" | "bodyEmail">) {
+  return toque.channel === "email" ? (toque.bodyEmail ?? toque.body) : toque.body;
+}
+
 /** Mensagem pronta para o wa.me, com o texto do toque já embutido. */
 export function whatsappLink(phoneE164: string, body: string): string {
   return `https://wa.me/${phoneE164.replace(/\D/g, "")}?text=${encodeURIComponent(body)}`;
@@ -1134,6 +1158,8 @@ export async function publishPrototype(
     html: string;
     pageTitle: string | null;
     messages: string[];
+    /** Redação de e-mail por toque, quando a abordagem trouxer as duas. */
+    emailMessages?: (string | null)[];
     /** Assunto por toque, quando a abordagem trouxer. Só usado no canal e-mail. */
     subjects?: (string | null)[];
   },
@@ -1192,19 +1218,41 @@ export async function publishPrototype(
   // restringiu o número mesmo com menos de vinte envios por dia. Lá o primeiro
   // toque pede permissão e o link vem no segundo. Em e-mail, link na primeira
   // é normal e esperado.
-  const temMarcador = upload.messages.some((m) => m.includes("{{link}}"));
-  const indiceDoLink = canal === "whatsapp" ? 1 : 0;
-  const bodies = upload.messages.map((body, i) => {
-    // No WhatsApp o toque 1 nunca leva link, mesmo que o texto peça. Confiar no
-    // marcador aqui seria deixar um erro de redação restringir o número: é o
-    // padrão que a plataforma penaliza, e ela penaliza na primeira mensagem.
-    if (canal === "whatsapp" && i === 0) {
-      return body.replaceAll("{{link}}", "").replace(/[ \t]+\n/g, "\n").trim();
-    }
-    if (body.includes("{{link}}")) return body.replaceAll("{{link}}", link);
-    if (!temMarcador && i === indiceDoLink) return `${body}\n\n${link}`;
-    return body;
-  });
+  /**
+   * Põe o endereço do protótipo no toque em que ele pertence.
+   *
+   * `indiceDoLink` muda por canal porque a entrega muda de toque: em e-mail
+   * ela é a primeira mensagem, onde link é esperado; no WhatsApp a primeira é
+   * fria, e link nela é o padrão que restringiu o número da Arkeo mesmo com
+   * menos de vinte envios por dia — lá a entrega desce para a segunda.
+   *
+   * No WhatsApp o marcador na primeira mensagem é removido em vez de
+   * substituído: confiar na redação seria deixar um erro de texto custar o
+   * número.
+   */
+  function comLink(textos: (string | null)[], indiceDoLink: number) {
+    const temMarcador = textos.some((t) => t?.includes("{{link}}"));
+    return textos.map((texto, i) => {
+      if (texto === null) return null;
+      if (indiceDoLink !== 0 && i === 0) {
+        return texto.replaceAll("{{link}}", "").replace(/[ \t]+\n/g, "\n").trim();
+      }
+      if (texto.includes("{{link}}")) return texto.replaceAll("{{link}}", link);
+      if (!temMarcador && i === indiceDoLink) return `${texto}\n\n${link}`;
+      return texto;
+    });
+  }
+
+  // Sem a parte "=== E-MAIL ===", os quatro blocos são a redação do canal do
+  // lead: é para ele que o brief mandou escrever. Num lead de e-mail, tratá-los
+  // como texto de WhatsApp poria o link no toque errado.
+  const temParteEmail = (upload.emailMessages ?? []).some(Boolean);
+  const soEmail = !temParteEmail && canal === "email";
+
+  const bodies = comLink(upload.messages, soEmail ? 0 : 1) as string[];
+  const emailBodies = soEmail
+    ? bodies
+    : comLink(upload.emailMessages ?? [null, null, null, null], 0);
 
   const { error: touchError } = await supabase.from("outreach_touches").upsert(
     bodies.map((body, i) => ({
@@ -1213,6 +1261,7 @@ export async function publishPrototype(
       channel: canal,
       subject: upload.subjects?.[i] ?? null,
       body,
+      body_email: emailBodies[i] ?? null,
       scheduled_for: new Date(today + TOUCH_SCHEDULE[i] * 86_400_000).toISOString().slice(0, 10),
       status: "pending",
       sent_at: null,

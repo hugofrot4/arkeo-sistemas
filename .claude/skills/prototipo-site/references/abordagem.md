@@ -17,7 +17,9 @@ Em e-mail essa é a primeira mensagem. **No WhatsApp é a segunda** — a primei
 
 ## Assunto: a mesma abordagem serve os dois canais
 
-O WhatsApp começou a marcar disparo de prospecção como spam, então parte dos leads é abordada por e-mail. Para não escrever duas versões, **cada bloco pode abrir com uma linha `Assunto:`**:
+O WhatsApp começou a marcar disparo de prospecção como spam, então parte dos leads é abordada por e-mail — e o canal de um toque muda no meio do caminho, quando a recepção responde com o contato de quem decide. Por isso **cada toque guarda as duas redações**, e o arquivo traz as duas partes separadas por `=== E-MAIL ===`.
+
+Na parte de e-mail, cada bloco abre com uma linha `Assunto:`:
 
 ```
 Assunto: Uma prévia do site da Clínica Sorriso Vivo

@@ -4,6 +4,7 @@ import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
   emailLink,
+  corpoDoToque,
   markTouchSent,
   setLeadChannel,
   updateLead,
@@ -463,6 +464,7 @@ function TextoDoToque({
   const { showToast } = useAdmin();
   const [editando, setEditando] = useState(false);
   const [corpo, setCorpo] = useState(item.body);
+  const [corpoEmail, setCorpoEmail] = useState(item.bodyEmail ?? "");
   const [assunto, setAssunto] = useState(item.subject ?? "");
   const [salvando, setSalvando] = useState(false);
 
@@ -472,9 +474,12 @@ function TextoDoToque({
   async function salvar() {
     setSalvando(true);
     try {
+      // Os três campos de uma vez: as duas redações vivem no mesmo toque, e
+      // abrir o editor duas vezes para trocar de canal era trabalho à toa.
       await updateTouch(item.id, {
         body: corpo,
-        subject: item.channel === "email" ? assunto.trim() || null : undefined,
+        bodyEmail: corpoEmail.trim() || null,
+        subject: assunto.trim() || null,
       });
       await refresh();
       setEditando(false);
@@ -488,22 +493,37 @@ function TextoDoToque({
 
   if (editando) {
     return (
-      <div className="mb-3">
-        {item.channel === "email" && (
+      <div className="mb-3 space-y-3">
+        <div>
+          <label className="text-text-muted mb-1 block text-xs font-semibold">
+            Texto para WhatsApp
+          </label>
+          <textarea
+            value={corpo}
+            onChange={(e) => setCorpo(e.target.value)}
+            rows={6}
+            className="border-border bg-bg w-full rounded-lg border p-3 text-sm leading-relaxed"
+          />
+        </div>
+        <div>
+          <label className="text-text-muted mb-1 block text-xs font-semibold">
+            Texto para e-mail
+          </label>
           <input
             value={assunto}
             onChange={(e) => setAssunto(e.target.value)}
             placeholder="Assunto do e-mail"
             className="border-border bg-bg mb-2 w-full rounded-lg border px-3 py-2 text-sm"
           />
-        )}
-        <textarea
-          value={corpo}
-          onChange={(e) => setCorpo(e.target.value)}
-          rows={7}
-          className="border-border bg-bg w-full rounded-lg border p-3 text-sm leading-relaxed"
-        />
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <textarea
+            value={corpoEmail}
+            onChange={(e) => setCorpoEmail(e.target.value)}
+            rows={7}
+            placeholder="Vazio: o card usa o texto de WhatsApp e avisa."
+            className="border-border bg-bg w-full rounded-lg border p-3 text-sm leading-relaxed"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={salvar}
             disabled={salvando || !corpo.trim()}
@@ -514,6 +534,7 @@ function TextoDoToque({
           <button
             onClick={() => {
               setCorpo(item.body);
+              setCorpoEmail(item.bodyEmail ?? "");
               setAssunto(item.subject ?? "");
               setEditando(false);
             }}
@@ -539,29 +560,97 @@ function TextoDoToque({
           acontece.
         </p>
       )}
-      {item.channel === "email" && item.subject && (
-        <p className="text-text-muted mb-1 flex items-center gap-2 text-xs">
-          <span className="min-w-0 truncate">
-            <strong>Assunto:</strong> {item.subject}
+      <CaixaDoCanal
+        titulo="WhatsApp"
+        destaque={item.channel === "whatsapp"}
+        corpo={item.body}
+        aoEditar={() => setEditando(true)}
+      />
+      <CaixaDoCanal
+        titulo="E-mail"
+        destaque={item.channel === "email"}
+        assunto={item.subject}
+        corpo={item.bodyEmail}
+        reserva={item.bodyEmail ? null : item.body}
+        aoEditar={() => setEditando(true)}
+      />
+    </div>
+  );
+}
+
+/**
+ * Uma das duas redações do toque, pronta para copiar.
+ *
+ * As duas ficam à vista ao mesmo tempo, e não só a do canal ativo. O canal de
+ * um toque muda no meio do caminho — a recepção responde com o e-mail de quem
+ * decide, e a entrega passa a sair por lá —, e antes disto o texto do outro
+ * canal simplesmente não existia na tela: era preciso trocar o canal do toque
+ * para vê-lo, ou reescrever à mão.
+ *
+ * `reserva` é o corpo de WhatsApp usado quando a versão de e-mail não foi
+ * escrita. Mandar o texto do outro canal é melhor que não ter o que mandar,
+ * mas o registro fica visível, porque o tamanho e o tom são de outro canal.
+ */
+function CaixaDoCanal({
+  titulo,
+  destaque,
+  assunto,
+  corpo,
+  reserva,
+  aoEditar,
+}: {
+  titulo: string;
+  destaque: boolean;
+  assunto?: string | null;
+  corpo: string | null;
+  reserva?: string | null;
+  aoEditar: () => void;
+}) {
+  const texto = corpo ?? reserva;
+  if (!texto) return null;
+
+  return (
+    <div className={`mb-2 rounded-lg border p-3 ${destaque ? "border-accent/40 bg-accent/5" : "border-border bg-bg"}`}>
+      <div className="mb-1.5 flex flex-wrap items-center gap-2">
+        <span className={`text-xs font-semibold ${destaque ? "text-accent" : "text-text-muted"}`}>
+          {titulo}
+        </span>
+        {destaque && (
+          <span className="bg-accent/15 text-accent rounded-full px-2 py-px text-[0.65rem] font-bold">
+            canal deste toque
           </span>
-          <Copiar texto={item.subject} rotulo="copiar assunto" />
-        </p>
-      )}
-      <div className="bg-bg relative rounded-lg p-3">
-        <p className="text-text-muted max-h-32 overflow-y-auto pr-30 text-sm leading-relaxed whitespace-pre-wrap">
-          {item.body}
-        </p>
-        <div className="absolute top-2 right-2 flex items-center gap-3">
-          <Copiar texto={item.body} rotulo="copiar" />
+        )}
+        <span className="ml-auto flex items-center gap-3">
+          <Copiar texto={texto} rotulo="copiar texto" />
           <button
-            onClick={() => setEditando(true)}
+            onClick={aoEditar}
             className="text-accent inline-flex items-center gap-1 text-xs underline underline-offset-2"
           >
             <Pencil size={11} aria-hidden />
             editar
           </button>
-        </div>
+        </span>
       </div>
+
+      {assunto && (
+        <p className="text-text-muted mb-1.5 flex items-center gap-2 text-xs">
+          <span className="min-w-0 truncate">
+            <strong>Assunto:</strong> {assunto}
+          </span>
+          <Copiar texto={assunto} rotulo="copiar assunto" />
+        </p>
+      )}
+
+      {!corpo && reserva && (
+        <p className="text-warning mb-1.5 text-xs">
+          Sem redação própria para e-mail — este é o texto de WhatsApp. Use o
+          editar para escrever a versão de e-mail.
+        </p>
+      )}
+
+      <p className="text-text-muted max-h-40 overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap">
+        {texto}
+      </p>
     </div>
   );
 }
@@ -612,6 +701,7 @@ function EmailDoLead({
 }) {
   const [aberto, setAberto] = useState(false);
   const assunto = item.subject ?? `Uma prévia do site da ${item.lead.name}`;
+  const texto = corpoDoToque(item);
 
   if (!item.lead.email) {
     return <AdicionarEmail item={item} onSalvo={onSalvo} />;
@@ -621,7 +711,7 @@ function EmailDoLead({
     <div className="flex w-full flex-wrap items-center gap-2">
       <button
         onClick={() => {
-          window.location.href = emailLink(item.lead.email!, assunto, item.body);
+          window.location.href = emailLink(item.lead.email!, assunto, texto);
           setAberto(true);
         }}
         disabled={busy}
@@ -638,7 +728,7 @@ function EmailDoLead({
           surgia depois de abrir o cliente. Copiar conta como ter começado. */}
       <button
         onClick={async () => {
-          await navigator.clipboard.writeText(item.body);
+          await navigator.clipboard.writeText(texto);
           setAberto(true);
         }}
         disabled={busy}

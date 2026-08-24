@@ -116,6 +116,7 @@ export default function GenerateModal({
           html,
           pageTitle: conferido.title,
           messages: mensagens.messages,
+          emailMessages: mensagens.emailMessages,
           subjects: mensagens.subjects,
         },
         { ttlDays: settings.prototypeTtlDays },

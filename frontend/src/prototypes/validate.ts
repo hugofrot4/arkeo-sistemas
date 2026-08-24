@@ -149,14 +149,26 @@ export function parseAbordagem(
   canal: "whatsapp" | "email" = "whatsapp",
 ): {
   messages: string[];
+  emailMessages: (string | null)[];
   subjects: (string | null)[];
   errors: string[];
   warnings: string[];
 } {
-  const blocos = texto
-    .split(/^\s*---\s*$/m)
-    .map((bloco) => bloco.trim())
-    .filter(Boolean);
+  // O arquivo pode trazer as duas redações: os quatro blocos de WhatsApp e,
+  // depois de uma linha `=== E-MAIL ===`, os quatro de e-mail. As sequências
+  // estão deslocadas de um toque — em e-mail a entrega vai no 1, no WhatsApp
+  // no 2 —, então não são a mesma frase em dois tamanhos: precisam ser
+  // escritas separadamente. Sem a segunda parte o card cai no texto de
+  // WhatsApp e avisa.
+  const [parteWa, parteEmail] = texto.split(/^\s*={3,}\s*E-?MAIL\s*={3,}\s*$/im);
+
+  const separar = (t: string) =>
+    t
+      .split(/^\s*---\s*$/m)
+      .map((bloco) => bloco.trim())
+      .filter(Boolean);
+
+  const blocos = separar(parteWa ?? "");
 
   // Um bloco pode abrir com "Assunto: ..." numa linha só. Serve ao canal
   // e-mail; no WhatsApp a linha é ignorada, então a mesma abordagem atende os
@@ -174,6 +186,40 @@ export function parseAbordagem(
 
   const errors: string[] = [];
   const warnings: string[] = [];
+
+  // A linha `Assunto:` só importa nos blocos de e-mail: é o canal que a usa.
+  const emailMessages: (string | null)[] = [null, null, null, null];
+  if (parteEmail !== undefined) {
+    separar(parteEmail).forEach((bloco, i) => {
+      if (i > 3) return;
+      const m = bloco.match(/^\s*assunto:\s*(.+?)\s*\n+([\s\S]*)$/i);
+      if (m) {
+        subjects[i] = m[1].trim();
+        emailMessages[i] = m[2].trim();
+      } else {
+        emailMessages[i] = bloco;
+      }
+    });
+    const n = emailMessages.filter(Boolean).length;
+    if (n !== 4) {
+      errors.push(
+        `A parte de e-mail tem ${n} mensagem(ns) — esperava 4, separadas por "---".`,
+      );
+    }
+    // Em e-mail a entrega vai no toque 1: link ali é esperado e não custa
+    // reputação, ao contrário do WhatsApp.
+    if (emailMessages[0] && !emailMessages[0].includes("{{link}}")) {
+      warnings.push(
+        "A primeira mensagem de e-mail não tem {{link}}. É ela que entrega o " +
+          "protótipo nesse canal — o endereço vai ser colado no fim dela.",
+      );
+    }
+  } else {
+    warnings.push(
+      'Sem a parte "=== E-MAIL ===". Se o canal do toque virar e-mail, o card ' +
+        "vai usar o texto de WhatsApp, que tem outro tamanho e outro tom.",
+    );
+  }
 
   if (messages.length !== 4) {
     errors.push(
@@ -220,5 +266,5 @@ export function parseAbordagem(
     );
   }
 
-  return { messages, subjects, errors, warnings };
+  return { messages, emailMessages, subjects, errors, warnings };
 }

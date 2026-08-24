@@ -186,7 +186,33 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 ### 8. Escreva a abordagem
 
-`prototipos/<slug>/abordagem.txt` — quatro mensagens separadas por uma linha com `---`.
+`prototipos/<slug>/abordagem.txt` — **as duas redações**: quatro mensagens de WhatsApp separadas por `---`, uma linha `=== E-MAIL ===`, e as quatro de e-mail, também separadas por `---`.
+
+```
+Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — ...
+---
+... (toque 2 de WhatsApp, com {{link}})
+---
+...
+---
+...
+=== E-MAIL ===
+Assunto: Uma prévia do site da Clínica X
+Oi, tudo bem? Aqui é a Sara, da Arkeo Sistemas — ... {{link}} ...
+---
+Assunto: Sobre a prévia que enviei
+...
+---
+Assunto: Dez minutos essa semana?
+...
+---
+Assunto: Encerrando por aqui
+...
+```
+
+**As duas não são a mesma frase em dois tamanhos.** As sequências estão deslocadas de um toque: em e-mail a entrega vai no toque 1, no WhatsApp no toque 2. Então no mesmo slot moram mensagens de papéis diferentes — o toque 1 de WhatsApp pergunta com quem falar enquanto o toque 1 de e-mail já entrega o protótipo. Escreva as oito.
+
+Sem a parte de e-mail o sistema aceita, mas o card cai no texto de WhatsApp quando o canal virar e-mail — com o tamanho e o tom errados.
 
 **Leia `references/abordagem.md` antes de escrever.** É onde estão a estrutura da mensagem de entrega, a tradução de achado técnico em consequência de negócio, e o CTA que abre a próxima conversa em vez de pedir opinião.
 
@@ -194,9 +220,9 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 **Os dois contatos são pessoas diferentes.** O WhatsApp do Google é quase sempre a recepção, que não decide sobre site; o e-mail do rodapé chega mais perto de quem decide. Quando o brief trouxer os dois, escreva pensando que o toque 1 vai por WhatsApp e o 2 por e-mail — e nunca proponha oito mensagens. Ver `references/abordagem.md`.
 
-**O assunto.** Cada bloco abre com uma linha `Assunto: ...`. No canal e-mail ela vira o assunto da mensagem; no WhatsApp é descartada. Escreva sempre — o canal é decidido no sistema, pelo contato que o lead tem. Regras e exemplos em `references/abordagem.md`.
+**O assunto.** Cada bloco **da parte de e-mail** abre com uma linha `Assunto: ...`, até 55 caracteres e diferente dos outros três. Os blocos de WhatsApp não levam assunto. Regras e exemplos em `references/abordagem.md`.
 
-**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 nem oferece: ele pergunta com quem falar sobre o site e qual o e-mail dessa pessoa, em três linhas. O sistema substitui na publicação e, sem o marcador, deposita o link no toque certo para o canal — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
+**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — **no toque 1 da parte de e-mail e no toque 2 da parte de WhatsApp**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 nem oferece: ele pergunta com quem falar sobre o site e qual o e-mail dessa pessoa, em três linhas. O sistema substitui na publicação e, sem o marcador, deposita o link no toque certo para o canal — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
 
 #### O que a mensagem tem que fazer
 
@@ -235,7 +261,8 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] Canal WhatsApp: o toque 2 é autossuficiente — identifica, observa e explica o que é o link sem supor que o toque 1 foi respondido; nada de "segue a prévia" ou "conforme falamos"
 - [ ] A mensagem 1 termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
-- [ ] Cada bloco abre com `Assunto:`, até 55 caracteres, diferente dos outros
+- [ ] O arquivo tem as duas partes, separadas por `=== E-MAIL ===`, com quatro blocos cada
+- [ ] Cada bloco da parte de e-mail abre com `Assunto:`, até 55 caracteres, diferente dos outros
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 - [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. A mais longa é a que entrega o protótipo (até 750); as outras encolhem a partir dela. Tabela por canal em `references/abordagem.md`
 
