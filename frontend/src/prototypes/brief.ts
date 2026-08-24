@@ -174,7 +174,7 @@ export function buildBrief({
     "## Canal da abordagem",
     "",
     temAmbos
-      ? "**WhatsApp e e-mail.** Os dois contatos costumam ser pessoas diferentes — o WhatsApp é a recepção, o e-mail chega mais perto de quem decide. Toque 1 por WhatsApp pedindo permissão e sem link; toque 2 por e-mail, com `{{link}}`. Nunca oito mensagens."
+      ? "**WhatsApp e e-mail.** Os dois contatos costumam ser pessoas diferentes — o WhatsApp é a recepção, o e-mail chega mais perto de quem decide. Tendo o e-mail, não gaste toque perguntando com quem falar: toques 1 e 2 por e-mail com `{{link}}` no primeiro, e o WhatsApp entra só no toque 3, perguntando se o e-mail chegou. Nunca oito mensagens."
       : `**${canal}.**`,
     "",
     lead.preferredChannel === "email"
@@ -183,11 +183,16 @@ export function buildBrief({
           "Cada bloco precisa da linha `Assunto:`.",
         ].join(" ")
       : [
-          "**Não coloque o link no toque 1.** Mensagem fria com link para quem não",
-          "tem você nos contatos é o padrão que o WhatsApp penaliza — restringiu o",
-          "número da Arkeo mesmo com menos de vinte envios por dia. O toque 1 pede",
-          "permissão em duas ou três linhas; o `{{link}}` vai no toque 2, depois da",
-          "resposta. Ver `references/abordagem.md`.",
+          "**O toque 1 não vende: ele descobre com quem falar.** Este lead não tem",
+          "e-mail, e o WhatsApp do Google é quase sempre a recepção — que não",
+          "decide sobre site, mas sabe quem decide. Então o toque 1 se identifica",
+          "e pergunta *quem cuida do site e qual o e-mail dessa pessoa*, em duas",
+          "ou três linhas. Sem link, sem oferta e sem citar o defeito do site: o",
+          "argumento é para quem decide, não para quem atende. Mensagem fria com",
+          "link para quem não tem você nos contatos é o padrão que o WhatsApp",
+          "penaliza — restringiu o número da Arkeo mesmo com menos de vinte",
+          "envios por dia. O `{{link}}` e a entrega vão no toque 2. Ver",
+          "`references/abordagem.md`.",
         ].join(" "),
     "",
     "## Quem assina a abordagem",

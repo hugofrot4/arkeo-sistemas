@@ -5,6 +5,7 @@ import {
   cancelRemainingTouches,
   emailLink,
   markTouchSent,
+  setLeadChannel,
   updateLead,
   updateTouch,
   markViewed,
@@ -228,7 +229,7 @@ function QueueCard({
 
       <div className="flex flex-wrap items-center gap-2">
         {item.channel === "email" ? (
-          <EmailDoLead item={item} busy={busy} onConfirm={onConfirm} />
+          <EmailDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
         ) : (
           <WhatsAppDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
         )}
@@ -267,6 +268,97 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Registra o e-mail que a recepção passou, sem sair da fila.
+ *
+ * É o fecho do caminho: o WhatsApp do Google atende à recepção, então o toque
+ * por lá pergunta com quem falar sobre o site. Veio o e-mail de quem decide,
+ * ele entra aqui e os toques que faltam passam a sair por lá — sem esse campo,
+ * a resposta obrigava a ir até a aba Leads e voltar.
+ */
+function AdicionarEmail({
+  item,
+  onSalvo,
+}: {
+  item: QueueItem;
+  onSalvo: () => Promise<void>;
+}) {
+  const { showToast } = useAdmin();
+  const [aberto, setAberto] = useState(false);
+  const [valor, setValor] = useState("");
+  const [salvando, setSalvando] = useState(false);
+
+  const valido = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(valor.trim());
+
+  async function salvar() {
+    if (!valido) return;
+    setSalvando(true);
+    try {
+      await updateLead(item.leadId, { email: valor.trim(), verifiedByHuman: true });
+      // Os toques que faltam passam a sair por e-mail: é o canal de quem
+      // decide, e foi por isso que se pediu o contato.
+      await setLeadChannel(item.leadId, "email");
+      await onSalvo();
+      showToast(`E-mail de ${item.lead.name} salvo. Os toques restantes vão por e-mail.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao salvar o e-mail.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  if (!aberto) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
+          Sem e-mail cadastrado.
+        </span>
+        <button
+          onClick={() => setAberto(true)}
+          className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white"
+        >
+          Adicionar e-mail
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full">
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          autoFocus
+          type="email"
+          value={valor}
+          onChange={(e) => setValor(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && valido) void salvar();
+            if (e.key === "Escape") setAberto(false);
+          }}
+          placeholder="responsavel@empresa.com.br"
+          className="border-border bg-bg w-64 rounded-lg border px-3 py-2 text-sm"
+        />
+        <button
+          onClick={salvar}
+          disabled={!valido || salvando}
+          className="bg-good rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+        >
+          {salvando ? "Salvando…" : "Salvar"}
+        </button>
+        <button
+          onClick={() => setAberto(false)}
+          className="text-text-muted hover:text-text px-2 py-2 text-sm"
+        >
+          Cancelar
+        </button>
+      </div>
+      <p className="text-text-muted mt-1.5 text-xs">
+        O e-mail de quem decide sobre o site. Os toques que faltam passam a sair por ele.
+      </p>
+    </div>
   );
 }
 
@@ -453,20 +545,18 @@ function EmailDoLead({
   item,
   busy,
   onConfirm,
+  onSalvo,
 }: {
   item: QueueItem;
   busy: boolean;
   onConfirm: () => void;
+  onSalvo: () => Promise<void>;
 }) {
   const [aberto, setAberto] = useState(false);
   const assunto = item.subject ?? `Uma prévia do site da ${item.lead.name}`;
 
   if (!item.lead.email) {
-    return (
-      <span className="border-warning/30 text-warning rounded-lg border px-3 py-2 text-xs">
-        Sem e-mail cadastrado. Adicione em Leads → Editar, ou troque o canal para WhatsApp.
-      </span>
-    );
+    return <AdicionarEmail item={item} onSalvo={onSalvo} />;
   }
 
   return (

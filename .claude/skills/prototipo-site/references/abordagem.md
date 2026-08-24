@@ -13,7 +13,7 @@ Ao terminar de ler a **mensagem que entrega o protótipo**, o dono precisa saber
 
 Falhou em qualquer um dos quatro, a mensagem é ignorada. O erro mais comum é falhar no 1 e no 4 ao mesmo tempo: a pessoa entende que alguém analisou o site dela e mandou um link, mas não entende que há um serviço sendo oferecido nem o que se espera dela.
 
-Em e-mail essa é a primeira mensagem. **No WhatsApp é a segunda** — a primeira só precisa dos itens 1 e 4, porque o objetivo dela é conseguir permissão, não convencer.
+Em e-mail essa é a primeira mensagem. **No WhatsApp é a segunda** — a primeira só identifica quem fala e pergunta com quem falar, porque o objetivo dela é achar o interlocutor, não convencer.
 
 ## Assunto: a mesma abordagem serve os dois canais
 
@@ -44,51 +44,50 @@ O alvo depende de **qual toque entrega o protótipo** — que muda com o canal:
 
 | | e-mail (entrega no 1) | WhatsApp (entrega no 2) |
 |---|---|---|
-| toque 1 | até 750 | até 380 — é só o pedido de permissão |
+| toque 1 | até 750 | até 320 — é só a pergunta de quem decide |
 | toque 2 | até 350 | até 750 — carrega o link e o argumento |
 | toque 3 | até 250 | até 250 |
 | toque 4 | até 220 | até 220 |
 
 **A mensagem de entrega é a mais longa**, porque carrega a apresentação, a observação e o link. Da entrega em diante, cada uma menor que a anterior — quanto mais curto, mais responde.
 
-No WhatsApp isso significa que o toque 1 é o mais curto de todos: três linhas e uma pergunta. Ele não precisa convencer de nada, só conseguir um "pode".
+No WhatsApp isso significa que o toque 1 é o mais curto de todos: três linhas e uma pergunta. Ele não precisa convencer de nada, só descobrir com quem falar.
 
 O `{{link}}` conta como oito caracteres na conferência, mas vira uma URL de uns sessenta na publicação — deixe essa folga.
 
 Se não couber, corte adjetivo e explicação, nunca a pergunta do fim.
 
-## O link no toque 1 depende do canal
+## O canal do toque 1 depende do contato que existe
 
-**No WhatsApp, não mande link na primeira mensagem.**
+**Tem e-mail: a sequência começa por e-mail, com a entrega no toque 1.** Link em e-mail é esperado, não custa reputação, e o e-mail do rodapé chega mais perto de quem decide do que o WhatsApp do Google.
 
-Mensagem fria com link para quem não tem você nos contatos é a assinatura que a plataforma reconhece como spam. Aconteceu com o número da Arkeo: restrição de 24 horas, e nova restrição na primeira mensagem enviada depois do desbloqueio — com menos de vinte envios por dia. Não é volume, é o padrão.
+**Não tem e-mail: o toque 1 vai por WhatsApp e serve para descobrir com quem falar.** Não para vender.
 
-O toque 1 no WhatsApp fica curto e pede permissão:
+Essa é a diferença que importa. O WhatsApp que aparece no Google de clínica, restaurante ou escritório é quase sempre **a recepção** — quem marca consulta e atende pedido. Essa pessoa não decide sobre site, então oferecer o serviço a ela desperdiça a mensagem, e mensagem fria com link para quem não tem você nos contatos é a assinatura que a plataforma reconhece como spam. Aconteceu com o número da Arkeo: restrição de 24 horas, e nova restrição na primeira mensagem depois do desbloqueio — com menos de vinte envios por dia. Não é volume, é o padrão.
+
+Mas a recepção **sabe** com quem falar, e responder isso não custa nada a ela. Então é isso que se pergunta:
 
 ```
-Assunto: Uma prévia do site da Clínica Sorriso Vivo
 Oi, bom dia! Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para
 clínicas aqui no Ceará.
 
-Reparei que o site de vocês não abre direito no celular e montei uma prévia
-de como ficaria resolvido. Posso te mandar para dar uma olhada?
+Quem cuida do site de vocês? Queria falar com essa pessoa sobre uma coisa
+que reparei no site. Tem um e-mail dela?
 ```
 
-Três linhas, sem link, com uma pergunta de sim ou não. Quem responde "pode"
-passa a ter você na conversa — e aí o link chega numa troca já aberta, que é
-outra coisa aos olhos da plataforma e do leitor.
+Três linhas, sem link, sem oferta, sem crítica. É uma pergunta administrativa, do tipo que a recepção responde no automático — e é justamente por não parecer venda que ela passa.
 
-O `{{link}}` vai no **toque 2**.
+**Por que não pedir permissão para mandar o link.** "Posso te mandar uma prévia?" põe a recepção numa decisão que não é dela: ela não sabe se o chefe quer, então o silêncio é a resposta segura. "Com quem eu falo?" não decide nada — só repassa. A taxa de resposta é outra.
 
-**No e-mail, o link vai no toque 1** normalmente: link em e-mail é esperado e não tem esse custo.
+**O que fazer com a resposta.** Veio o e-mail: registre no card da fila (botão *Adicionar e-mail*), e os toques restantes passam a sair por lá, com a entrega do protótipo no primeiro deles. Veio só um nome, sem e-mail: use o nome no próximo toque de WhatsApp — *"o pessoal me falou para procurar o Dr. Ricardo"* muda completamente o tom da mensagem. Não veio nada: o toque 2 vai por WhatsApp mesmo, aí sim com a entrega.
 
-O brief informa o canal do lead. Se ele não disser, assuma WhatsApp — errar para o lado cauteloso custa uma mensagem a mais; errar para o outro custa o número.
+**O elogio e a crítica ficam para depois.** No toque de roteamento, mencionar o defeito do site na frente da recepção é ruim duas vezes: soa como reclamação sobre o trabalho de alguém, e entrega o argumento à pessoa errada. Guarde para quem decide.
 
 ## A estrutura da mensagem de entrega
 
 É a que leva o protótipo: **toque 1 em e-mail, toque 2 em WhatsApp**. Seis blocos, nesta ordem, cada um em uma ou duas frases.
 
-No WhatsApp, o toque 1 que vem antes dela usa só os blocos 1, 2 e 6 — identificação, observação e a pergunta —, e nada mais. É o que cabe numa mensagem fria sem parecer anúncio.
+No WhatsApp, o toque 1 que vem antes dela usa só os blocos 1 e 6 — identificação e pergunta —, e a pergunta é *com quem eu falo*, não a oferta. A observação sobre o site fica de fora: ela é para quem decide.
 
 **1. Identificação com a oferta embutida.**
 Nome, empresa e o que a empresa faz — na mesma frase. *"Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para clínicas aqui no Ceará."* Sem isso, tudo o que vem depois é um estranho comentando o negócio alheio.
@@ -132,26 +131,22 @@ Repare no padrão: **sim ou não**, e o "sim" já é o próximo passo. Nada de d
 
 ## Quando o lead tem WhatsApp e e-mail
 
-Os dois contatos costumam ser **pessoas diferentes**, e isso decide a estratégia.
+Os dois contatos costumam ser **pessoas diferentes** — recepção no WhatsApp, quem decide no e-mail.
 
-O WhatsApp que aparece no Google de clínica, restaurante ou escritório é quase sempre **a recepção**: quem marca consulta, atende pedido, tira dúvida. Essa pessoa não decide sobre site. Na melhor das hipóteses ela repassa; na pior, ignora — e se achar que é propaganda, denuncia, que é o que derruba o número.
-
-O e-mail do rodapé (`contato@`, `administrativo@`) chega mais perto de quem decide, ou pelo menos cai numa caixa que o dono lê.
-
-**Alterne os canais dentro dos mesmos quatro toques**, em vez de fazer quatro de cada:
+Tendo os dois, **não gaste um toque perguntando com quem falar**: o e-mail já é o caminho. A sequência vai por e-mail, e o WhatsApp entra só como reforço em um toque do meio, quando o e-mail não teve resposta nenhuma:
 
 | Toque | Canal | Por quê |
 |---|---|---|
-| 1 | WhatsApp | pede permissão; se a recepção repassar, ótimo |
-| 2 | e-mail | leva o link direto a quem decide, sem depender do repasse |
-| 3 | e-mail | retoma onde a conversa tem mais chance de existir |
+| 1 | e-mail | entrega o protótipo direto a quem decide |
+| 2 | e-mail | retoma com o argumento de negócio |
+| 3 | WhatsApp | avisa que mandou e-mail e pede confirmação de que chegou |
 | 4 | qualquer um | encerramento, onde houve mais sinal |
+
+O toque 3 por WhatsApp funciona porque já não é frio: existe um e-mail enviado ao qual ele se refere. *"Mandei um e-mail para o contato de vocês na terça sobre o site — chegou?"* é uma pergunta legítima, não uma oferta.
 
 Oito mensagens para um negócio que nunca respondeu não é persistência, é assédio — e é o comportamento que gera denúncia. Quatro toques bem distribuídos alcançam as duas pessoas sem esse custo.
 
-Se o lead só tem um dos dois contatos, a sequência inteira vai por ele.
-
-**No toque de WhatsApp que pede repasse**, diga isso abertamente: *"Se não for você quem cuida do site, pode me dizer com quem eu falo?"* — é uma pergunta fácil de responder, e a recepção costuma responder porque não custa nada a ela.
+Se o lead só tem e-mail, a sequência inteira vai por e-mail. Se só tem WhatsApp, ela começa pelo toque de roteamento da seção anterior.
 
 ## A escada de compromisso
 
@@ -166,14 +161,16 @@ Nenhuma mensagem pede mais do que a anterior conquistou.
 | 3 | tirar a conversa do e-mail | dez minutos |
 | 4 | encerrar deixando a porta aberta | nada |
 
-**Por WhatsApp**, onde o toque 1 só abre a porta:
+**Por WhatsApp**, quando não há e-mail e o toque 1 só descobre com quem falar:
 
 | Toque | Objetivo | O que pede |
 |---|---|---|
-| 1 | conseguir permissão para mandar o link | um "pode" |
+| 1 | descobrir quem decide e como chegar nele | um nome ou um e-mail |
 | 2 | entregar o protótipo com o argumento | um sim ou não |
 | 3 | tirar a conversa do WhatsApp | dez minutos |
 | 4 | encerrar deixando a porta aberta | nada |
+
+Se o toque 1 devolver um e-mail, o toque 2 sai por e-mail e a escada segue igual — o degrau é o mesmo, muda o canal.
 
 Pedir reunião na primeira mensagem queima o lead. Não pedir nada em nenhuma delas também.
 

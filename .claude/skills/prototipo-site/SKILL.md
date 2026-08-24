@@ -196,7 +196,7 @@ Contrato de layout — container único, grade que fecha a base, imagem com prop
 
 **O assunto.** Cada bloco abre com uma linha `Assunto: ...`. No canal e-mail ela vira o assunto da mensagem; no WhatsApp é descartada. Escreva sempre — o canal é decidido no sistema, pelo contato que o lead tem. Regras e exemplos em `references/abordagem.md`.
 
-**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 pede permissão em três linhas. O sistema substitui na publicação e, sem o marcador, deposita o link no toque certo para o canal — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
+**O link, e onde ele entra.** Escreva `{{link}}` onde o endereço encaixa na frase — mas **em qual toque depende do canal**, que o brief informa. Em e-mail, no toque 1. No WhatsApp, **no toque 2**: mensagem fria com link para quem não tem você nos contatos é o padrão que restringiu o número da Arkeo, mesmo com menos de vinte envios por dia. Lá o toque 1 nem oferece: ele pergunta com quem falar sobre o site e qual o e-mail dessa pessoa, em três linhas. O sistema substitui na publicação e, sem o marcador, deposita o link no toque certo para o canal — mas escreva o marcador, porque colado no fim a frase em volta não o apresenta.
 
 #### O que a mensagem tem que fazer
 
@@ -231,7 +231,7 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] Está claro que o link é uma página funcionando, não um desenho
 - [ ] A gratuidade tem um motivo declarado
 - [ ] `{{link}}` no toque **1 se o canal é e-mail**, no toque **2 se é WhatsApp**
-- [ ] Canal WhatsApp: o toque 1 pede permissão em três linhas, sem link
+- [ ] Canal WhatsApp: o toque 1 pergunta quem cuida do site e o e-mail dessa pessoa — sem link, sem oferta, sem citar o defeito
 - [ ] A mensagem 1 termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] Cada bloco abre com `Assunto:`, até 55 caracteres, diferente dos outros
