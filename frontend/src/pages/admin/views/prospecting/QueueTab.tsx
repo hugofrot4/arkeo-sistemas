@@ -10,6 +10,7 @@ import {
   updateLead,
   updateTouch,
   markViewed,
+  restartOutreach,
   skipTouch,
   whatsappLink,
   type HotLead,
@@ -35,6 +36,10 @@ export default function QueueTab({
   const { showToast } = useAdmin();
   const [busy, setBusy] = useState<number | null>(null);
 
+  const identidade = {
+    senderName: data.settings?.outreachSenderName ?? "Sara",
+    agencyName: data.settings?.agencyName ?? "Arkeo Sistemas",
+  };
   const cap = data.settings?.dailyOutreachCap ?? 40;
   const remaining = Math.max(0, cap - data.sentToday);
 
@@ -134,10 +139,7 @@ export default function QueueTab({
         <HotBlock
           hot={quentesSemToque}
           refresh={refresh}
-          identity={{
-            senderName: data.settings?.outreachSenderName ?? "Sara",
-            agencyName: data.settings?.agencyName ?? "Arkeo Sistemas",
-          }}
+          identity={identidade}
         />
       )}
 
@@ -172,6 +174,7 @@ export default function QueueTab({
               <QueueCard
                 key={item.id}
                 item={item}
+                identity={identidade}
                 visita={visitasPorLead.get(item.leadId)}
                 busy={busy === item.id}
                 onConfirm={() => handleConfirm(item)}
@@ -205,6 +208,7 @@ function QueueCard({
   item,
   busy,
   visita,
+  identity,
   onConfirm,
   onSkip,
   onRemove,
@@ -213,6 +217,7 @@ function QueueCard({
   item: QueueItem;
   visita?: HotLead;
   busy: boolean;
+  identity: { senderName: string; agencyName: string };
   onConfirm: () => void;
   onSkip: () => void;
   onRemove: () => void;
@@ -282,6 +287,7 @@ function QueueCard({
             <SkipForward size={15} aria-hidden />
             Pular
           </button>
+          <ReiniciarSequencia item={item} identity={identity} refresh={refresh} />
           <button
             onClick={onRemove}
             disabled={busy}
@@ -294,6 +300,84 @@ function QueueCard({
         </div>
       </div>
     </li>
+  );
+}
+
+/**
+ * Devolve o lead ao toque 1, do card.
+ *
+ * Existia só em lote, na aba Hoje, e uma vez por lead: quem já tinha sido
+ * reiniciado saía da lista de candidatos e não voltava. Mas recomeçar é
+ * rotina, não migração — a conversa esfria, o texto muda, o número errado
+ * aparece —, e sem isto cada recomeço virava uma edição no banco.
+ *
+ * Confirma antes porque apaga o histórico de envio da sequência.
+ */
+function ReiniciarSequencia({
+  item,
+  identity,
+  refresh,
+}: {
+  item: QueueItem;
+  identity: { senderName: string; agencyName: string };
+  refresh: () => Promise<void>;
+}) {
+  const { showToast } = useAdmin();
+  const [confirmando, setConfirmando] = useState(false);
+  const [rodando, setRodando] = useState(false);
+
+  async function reiniciar() {
+    setRodando(true);
+    try {
+      await restartOutreach(
+        {
+          leadId: item.leadId,
+          name: item.lead.name,
+          niche: item.lead.niche,
+          segment: item.lead.segment,
+          channel: item.channel,
+        },
+        identity,
+      );
+      await refresh();
+      showToast(`Sequência de ${item.lead.name} reiniciada no toque 1.`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Falha ao reiniciar.");
+    } finally {
+      setRodando(false);
+      setConfirmando(false);
+    }
+  }
+
+  if (confirmando) {
+    return (
+      <span className="flex items-center gap-1">
+        <button
+          onClick={reiniciar}
+          disabled={rodando}
+          className="text-warning px-2 py-2 text-sm font-semibold disabled:opacity-50"
+        >
+          {rodando ? "Reiniciando…" : "Confirmar reinício"}
+        </button>
+        <button
+          onClick={() => setConfirmando(false)}
+          className="text-text-muted hover:text-text px-2 py-2 text-sm"
+        >
+          Cancelar
+        </button>
+      </span>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setConfirmando(true)}
+      title="Volta ao toque 1 e reagenda a sequência a partir de hoje. Apaga o histórico de envio."
+      className="text-text-muted hover:text-text inline-flex items-center gap-1.5 px-2 py-2 text-sm"
+    >
+      <History size={15} aria-hidden />
+      Reiniciar
+    </button>
   );
 }
 
