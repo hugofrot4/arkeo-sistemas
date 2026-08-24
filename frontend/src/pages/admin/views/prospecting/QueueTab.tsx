@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Ban, Check, ExternalLink, Flame, History, Mail, MessageCircle, Pencil, SkipForward } from "lucide-react";
+import { Ban, Check, ClipboardCopy, ExternalLink, Flame, History, Mail, MessageCircle, Pencil, SkipForward } from "lucide-react";
 import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
@@ -533,29 +533,62 @@ function TextoDoToque({
     <div className="mb-3">
       {alertaLink && (
         <p className="border-warning/30 bg-warning/8 text-warning mb-2 rounded-lg border px-3 py-2 text-xs">
-          Esta mensagem foi gerada antes da correção e leva o link já no primeiro
-          toque — é o padrão que faz o WhatsApp restringir o número. Reescreva
-          pedindo permissão e deixe o link para o toque 2.
+          Esta mensagem leva o link já no primeiro toque — é o padrão que faz o
+          WhatsApp restringir o número. O primeiro toque só pergunta com quem
+          falar sobre o site; o link entra no toque 2, que é onde a entrega
+          acontece.
         </p>
       )}
       {item.channel === "email" && item.subject && (
-        <p className="text-text-muted mb-1 text-xs">
-          <strong>Assunto:</strong> {item.subject}
+        <p className="text-text-muted mb-1 flex items-center gap-2 text-xs">
+          <span className="min-w-0 truncate">
+            <strong>Assunto:</strong> {item.subject}
+          </span>
+          <Copiar texto={item.subject} rotulo="copiar assunto" />
         </p>
       )}
       <div className="bg-bg relative rounded-lg p-3">
-        <p className="text-text-muted max-h-32 overflow-y-auto pr-16 text-sm leading-relaxed whitespace-pre-wrap">
+        <p className="text-text-muted max-h-32 overflow-y-auto pr-30 text-sm leading-relaxed whitespace-pre-wrap">
           {item.body}
         </p>
-        <button
-          onClick={() => setEditando(true)}
-          className="text-accent absolute top-2 right-2 inline-flex items-center gap-1 text-xs underline underline-offset-2"
-        >
-          <Pencil size={11} aria-hidden />
-          editar
-        </button>
+        <div className="absolute top-2 right-2 flex items-center gap-3">
+          <Copiar texto={item.body} rotulo="copiar" />
+          <button
+            onClick={() => setEditando(true)}
+            className="text-accent inline-flex items-center gap-1 text-xs underline underline-offset-2"
+          >
+            <Pencil size={11} aria-hidden />
+            editar
+          </button>
+        </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Copia o texto para a área de transferência.
+ *
+ * O `mailto:` do "Abrir e-mail" resolve para quem usa cliente instalado, mas
+ * não para quem escreve no Gmail pelo navegador — lá o link ou não abre nada
+ * ou abre uma janela que perde a formatação de corpos longos. Copiar e colar
+ * funciona em qualquer caixa, e assunto e corpo vão separados porque é em
+ * campos separados que eles são colados.
+ */
+function Copiar({ texto, rotulo }: { texto: string; rotulo: string }) {
+  const [copiado, setCopiado] = useState(false);
+  return (
+    <button
+      onClick={async () => {
+        await navigator.clipboard.writeText(texto);
+        setCopiado(true);
+        setTimeout(() => setCopiado(false), 2000);
+      }}
+      className="text-text-muted hover:text-text inline-flex shrink-0 items-center gap-1 text-xs underline underline-offset-2"
+    >
+      {copiado ? <Check size={11} aria-hidden /> : <ClipboardCopy size={11} aria-hidden />}
+      {copiado ? "copiado" : rotulo}
+    </button>
   );
 }
 
@@ -600,6 +633,21 @@ function EmailDoLead({
         {aberto ? "Abrir de novo" : "Abrir e-mail"}
       </button>
 
+      {/* Quem escreve no Gmail pelo navegador não passa pelo `mailto:`, e sem
+          isto o "Confirmar envio" nunca aparecia para essa pessoa: ele só
+          surgia depois de abrir o cliente. Copiar conta como ter começado. */}
+      <button
+        onClick={async () => {
+          await navigator.clipboard.writeText(item.body);
+          setAberto(true);
+        }}
+        disabled={busy}
+        className="border-border hover:bg-surface-hover inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold disabled:opacity-50"
+      >
+        <ClipboardCopy size={16} aria-hidden />
+        Copiar texto
+      </button>
+
       {aberto && (
         <>
           <button
@@ -624,8 +672,9 @@ function EmailDoLead({
 
       {aberto && (
         <p className="text-text-muted w-full text-xs">
-          Confira o texto no seu cliente de e-mail antes de mandar. O toque só é
-          registrado depois da confirmação.
+          Mande de uma caixa sua e volte aqui para confirmar. O assunto tem o
+          próprio "copiar" logo acima do texto. O toque só é registrado depois
+          da confirmação.
         </p>
       )}
     </div>
