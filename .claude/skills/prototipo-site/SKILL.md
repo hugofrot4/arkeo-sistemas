@@ -210,7 +210,7 @@ Assunto: Encerrando por aqui
 ...
 ```
 
-**As duas não são a mesma frase em dois tamanhos.** As sequências estão deslocadas de um toque: em e-mail a entrega vai no toque 1, no WhatsApp no toque 2. Então no mesmo slot moram mensagens de papéis diferentes — o toque 1 de WhatsApp pergunta com quem falar enquanto o toque 1 de e-mail já entrega o protótipo. Escreva as oito.
+**As duas redações do mesmo toque têm o mesmo papel.** Se o toque 2 entrega o protótipo no WhatsApp, o toque 2 de e-mail também entrega — é isso que faz a troca de canal no meio da sequência ser segura, e é para isso que as duas existem. O toque 1 é a única exceção: no WhatsApp ele pergunta com quem falar, e no e-mail já entrega, porque quem tem e-mail não precisa perguntar. Escreva as oito.
 
 Sem a parte de e-mail o sistema aceita, mas o card cai no texto de WhatsApp quando o canal virar e-mail — com o tamanho e o tom errados.
 
@@ -262,6 +262,7 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] A mensagem 1 termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] O arquivo tem as duas partes, separadas por `=== E-MAIL ===`, com quatro blocos cada
+- [ ] Bloco a bloco, as duas redações têm o mesmo papel — só o toque 1 diverge
 - [ ] Cada bloco da parte de e-mail abre com `Assunto:`, até 55 caracteres, diferente dos outros
 - [ ] Quatro blocos separados por `---`, cada um menor que o anterior
 - [ ] **Nenhuma mensagem passa de 900 caracteres** — o sistema recusa. A mais longa é a que entrega o protótipo (até 750); as outras encolhem a partir dela. Tabela por canal em `references/abordagem.md`

@@ -19,6 +19,19 @@ Em e-mail essa é a primeira mensagem. **No WhatsApp é a segunda** — a primei
 
 O WhatsApp começou a marcar disparo de prospecção como spam, então parte dos leads é abordada por e-mail — e o canal de um toque muda no meio do caminho, quando a recepção responde com o contato de quem decide. Por isso **cada toque guarda as duas redações**, e o arquivo traz as duas partes separadas por `=== E-MAIL ===`.
 
+**As duas redações do mesmo toque têm o mesmo papel.** É a regra que faz a troca de canal no meio da sequência ser segura, e é para isso que as duas existem: se o toque 2 entrega o protótipo no WhatsApp, o toque 2 de e-mail também entrega. Escrever ali o "chegou a abrir a prévia?" — que faria sentido numa sequência que entregou no toque 1 — manda cobrar resposta sobre algo que nunca foi enviado, porque no caminho do WhatsApp o toque 1 foi a pergunta de roteamento.
+
+Quando existe a pergunta de roteamento, os papéis ficam assim:
+
+| toque | papel | WhatsApp | e-mail |
+|---|---|---|---|
+| 1 | abrir a porta | quem cuida do site? | a entrega, se o e-mail já é conhecido |
+| 2 | entregar | a entrega, com o link | a entrega, com o link |
+| 3 | insistir uma vez e propor conversa | dez minutos | dez minutos |
+| 4 | encerrar | encerramento | encerramento |
+
+O toque 1 é o único em que as duas colunas divergem, e por um motivo só: quem tem e-mail não precisa perguntar com quem falar.
+
 Na parte de e-mail, cada bloco abre com uma linha `Assunto:`:
 
 ```
@@ -47,9 +60,11 @@ O alvo depende de **qual toque entrega o protótipo** — que muda com o canal:
 | | e-mail (entrega no 1) | WhatsApp (entrega no 2) |
 |---|---|---|
 | toque 1 | até 750 | até 320 — é só a pergunta de quem decide |
-| toque 2 | até 350 | até 750 — carrega o link e o argumento |
-| toque 3 | até 250 | até 250 |
+| toque 2 | até 750 — é a entrega também aqui | até 750 — carrega o link e o argumento |
+| toque 3 | até 350 | até 250 |
 | toque 4 | até 220 | até 220 |
+
+O teto acompanha o **papel**, não a posição: entrega tem espaço para o argumento, acompanhamento não.
 
 **A mensagem de entrega é a mais longa**, porque carrega a apresentação, a observação e o link. Da entrega em diante, cada uma menor que a anterior — quanto mais curto, mais responde.
 

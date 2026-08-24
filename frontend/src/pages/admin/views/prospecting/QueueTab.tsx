@@ -86,11 +86,13 @@ export default function QueueTab({
       // não sai: já está de volta, agora, para outra pessoa.
       const canal = resultado.nextChannel === "email" ? "e-mail" : "WhatsApp";
       showToast(
-        resultado.nextAntecipado
-          ? `Toque ${item.step} registrado. O toque ${resultado.nextStep} vai por ${canal}, para outra pessoa — já está na fila, pode mandar agora.`
-          : quando
-            ? `Toque ${item.step} registrado. ${item.lead.name} volta à fila em ${quando} para o toque ${resultado.nextStep}.`
-            : `Toque ${item.step} registrado. Era o último da sequência de ${item.lead.name}.`,
+        resultado.eraRoteamento && resultado.nextAntecipado
+          ? `Pergunta enviada. A entrega já está na fila: veio o e-mail, use "Adicionar e-mail" e mande por lá. Sem resposta, espere um dia antes de mandar pelo WhatsApp.`
+          : resultado.nextAntecipado
+            ? `Toque ${item.step} registrado. O toque ${resultado.nextStep} vai por ${canal}, para outra pessoa — já está na fila, pode mandar agora.`
+            : quando
+              ? `Toque ${item.step} registrado. ${item.lead.name} volta à fila em ${quando} para o toque ${resultado.nextStep}.`
+              : `Toque ${item.step} registrado. Era o último da sequência de ${item.lead.name}.`,
       );
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Falha ao registrar o envio.");

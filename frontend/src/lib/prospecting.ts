@@ -884,8 +884,10 @@ export interface TouchSentResult {
   nextTouchDate: string | null;
   nextStep: number | null;
   nextChannel: "whatsapp" | "email" | null;
-  /** O próximo toque foi puxado para hoje por mudar de canal. */
+  /** O próximo toque foi puxado para hoje: mudou de canal, ou este era o roteamento. */
   nextAntecipado: boolean;
+  /** Este toque era a pergunta de roteamento — o que vem é a entrega. */
+  eraRoteamento: boolean;
 }
 
 /**
@@ -925,9 +927,18 @@ export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> 
 
   // Este toque foi para uma pessoa; o próximo, em outro canal, vai para outra.
   // O intervalo entre eles não protege ninguém — ver `anteciparProximoToque`.
+  const trocaDeCanal = !!seguinte && seguinte.channel !== touch.channel;
+
+  // A pergunta de roteamento também não abre intervalo. Ela não ofereceu nada
+  // — perguntou com quem falar —, e a recepção responde em minutos, não em
+  // dois dias. Esperar aí é perder a resposta enquanto ela ainda está quente:
+  // é justamente quando o e-mail chega que a entrega deve sair.
+  const eraRoteamento =
+    touch.step === 1 && touch.channel === "whatsapp" && !/\/p\//.test(touch.body);
+
   const hoje = new Date().toISOString().slice(0, 10);
   let antecipado = false;
-  if (seguinte && seguinte.channel !== touch.channel && seguinte.scheduledFor > hoje) {
+  if (seguinte && (trocaDeCanal || eraRoteamento) && seguinte.scheduledFor > hoje) {
     antecipado = (await anteciparProximoToque(touch.leadId)) !== null;
   }
 
@@ -937,6 +948,7 @@ export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> 
     nextStep: seguinte?.step ?? null,
     nextChannel: seguinte?.channel ?? null,
     nextAntecipado: antecipado,
+    eraRoteamento,
   };
 }
 
