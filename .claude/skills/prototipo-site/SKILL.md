@@ -232,6 +232,7 @@ Primeira pessoa do plural para a empresa, singular para o que a pessoa fez: *"a 
 - [ ] A gratuidade tem um motivo declarado
 - [ ] `{{link}}` no toque **1 se o canal é e-mail**, no toque **2 se é WhatsApp**
 - [ ] Canal WhatsApp: o toque 1 pergunta quem cuida do site e o e-mail dessa pessoa — sem link, sem oferta, sem citar o defeito
+- [ ] Canal WhatsApp: o toque 2 é autossuficiente — identifica, observa e explica o que é o link sem supor que o toque 1 foi respondido; nada de "segue a prévia" ou "conforme falamos"
 - [ ] A mensagem 1 termina com **uma** pergunta de sim ou não
 - [ ] Nenhum jargão, nenhum "fico à disposição", no máximo uma crítica por mensagem
 - [ ] Cada bloco abre com `Assunto:`, até 55 caracteres, diferente dos outros

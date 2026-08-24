@@ -89,6 +89,12 @@ Três linhas, sem link, sem oferta, sem crítica. É uma pergunta administrativa
 
 No WhatsApp, o toque 1 que vem antes dela usa só os blocos 1 e 6 — identificação e pergunta —, e a pergunta é *com quem eu falo*, não a oferta. A observação sobre o site fica de fora: ela é para quem decide.
 
+**No WhatsApp ela não pode presumir que o toque 1 foi respondido.** O toque 1 não ofereceu nada — perguntou com quem falar. Então quem recebe a entrega pode ser a mesma recepção que não respondeu, ou quem decide, que nunca ouviu falar de você. Nos dois casos a mensagem chega a alguém que não sabe o que é a prévia nem por que ela existe.
+
+Isso torna a entrega **autossuficiente**: ela se identifica de novo, repete a observação sobre o negócio e explica o que é o link, como se fosse o primeiro contato — porque para quem lê, é. Escrever "segue a prévia" ou "conforme falamos" transforma o link em anexo sem contexto, que é o que ninguém abre.
+
+É a mesma mensagem que serviria de toque 1 em e-mail. A diferença é só o teto de tamanho.
+
 **1. Identificação com a oferta embutida.**
 Nome, empresa e o que a empresa faz — na mesma frase. *"Aqui é a Sara, da Arkeo Sistemas — a gente cria sites para clínicas aqui no Ceará."* Sem isso, tudo o que vem depois é um estranho comentando o negócio alheio.
 
