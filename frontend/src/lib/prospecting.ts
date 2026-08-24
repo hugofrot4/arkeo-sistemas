@@ -109,6 +109,8 @@ export interface LeadFilter {
   niche?: string;
   minScore?: number;
   search?: string;
+  /** Só quem não tem protótipo publicado. É a fila de geração. */
+  semPrototipo?: boolean;
   limit?: number;
 }
 
@@ -126,6 +128,18 @@ export async function listLeads(filter: LeadFilter = {}) {
     .limit(filter.limit ?? 100);
 
   if (filter.stages?.length) query = query.in("stage", filter.stages);
+  if (filter.semPrototipo) {
+    // Não há como pedir "sem linha em prototypes" numa consulta só pelo
+    // construtor. A lista de exclusão é curta na prática — um protótipo
+    // publicado por lead, e só leads efetivamente trabalhados têm um.
+    const publicados = await supabase
+      .from("prototypes")
+      .select("lead_id")
+      .eq("published", true)
+      .limit(5000);
+    const ids = unwrap<{ lead_id: number }[]>(publicados).map((p) => p.lead_id);
+    if (ids.length > 0) query = query.not("id", "in", `(${ids.join(",")})`);
+  }
   if (filter.segments?.length) query = query.in("segment", filter.segments);
   if (filter.niche) query = query.eq("niche", filter.niche);
   if (filter.minScore !== undefined) query = query.gte("score", filter.minScore);

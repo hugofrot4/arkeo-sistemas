@@ -41,6 +41,15 @@ const ACTIVE_STAGES: LeadStage[] = [
   "proposta",
 ];
 
+/**
+ * Antes de qualquer mensagem ter saído.
+ *
+ * `prototipo_pronto` entra porque o estágio só avança: um lead cujo protótipo
+ * foi despublicado continua marcado assim, e é justamente ele que precisa
+ * voltar para a fila de geração.
+ */
+const ANTES_DO_CONTATO: LeadStage[] = ["novo", "qualificado", "prototipo_pronto"];
+
 export default function LeadsTab({
   onChanged,
   settings,
@@ -56,7 +65,11 @@ export default function LeadsTab({
   // "ativos" é o padrão de trabalho; "todos" inclui ganhos e perdidos; e cada
   // estágio isolado responde "quem está parado em contatado?", que é a
   // pergunta que faz alguém abrir esta aba.
-  const [stage, setStage] = useState<LeadStage | "ativos" | "todos">("ativos");
+  // "a_gerar" cruza duas coisas que o estágio sozinho não responde: sem
+  // protótipo no ar e ainda sem contato. É a pergunta "com quem eu trabalho
+  // agora?", e ela precisa do protótipo porque o estágio só avança — um lead
+  // fica em `prototipo_pronto` mesmo depois de o protótipo sair do ar.
+  const [stage, setStage] = useState<LeadStage | "ativos" | "todos" | "a_gerar">("ativos");
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<number | null>(null);
   const [generating, setGenerating] = useState<Lead | null>(null);
@@ -73,7 +86,14 @@ export default function LeadsTab({
           search: search.trim() || undefined,
           minScore: minScore || undefined,
           stages:
-            stage === "todos" ? undefined : stage === "ativos" ? ACTIVE_STAGES : [stage],
+            stage === "todos"
+              ? undefined
+              : stage === "ativos"
+                ? ACTIVE_STAGES
+                : stage === "a_gerar"
+                  ? ANTES_DO_CONTATO
+                  : [stage],
+          semPrototipo: stage === "a_gerar",
           limit: 100,
         }),
       );
@@ -129,11 +149,14 @@ export default function LeadsTab({
 
         <select
           value={stage}
-          onChange={(e) => setStage(e.target.value as LeadStage | "ativos" | "todos")}
+          onChange={(e) =>
+            setStage(e.target.value as LeadStage | "ativos" | "todos" | "a_gerar")
+          }
           aria-label="Filtrar por estágio"
           className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
         >
           <option value="ativos">Em andamento</option>
+          <option value="a_gerar">Sem protótipo no ar e ainda sem abordagem</option>
           <option value="todos">Todos os estágios</option>
           {STAGE_ORDER.map((valor) => (
             <option key={valor} value={valor}>
@@ -147,7 +170,9 @@ export default function LeadsTab({
         <p className="text-text-muted py-8 text-center text-sm">Carregando…</p>
       ) : leads.length === 0 ? (
         <p className="border-border text-text-muted rounded-xl border border-dashed py-10 text-center text-sm">
-          Nenhum lead com esses filtros.
+          {stage === "a_gerar"
+            ? "Nenhum lead nessa situação: quem ainda não foi abordado já tem protótipo no ar."
+            : "Nenhum lead com esses filtros."}
         </p>
       ) : (
         <ul className="space-y-2">
