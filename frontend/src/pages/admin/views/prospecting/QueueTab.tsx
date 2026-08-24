@@ -4,7 +4,6 @@ import { useAdmin } from "../../context";
 import {
   cancelRemainingTouches,
   emailLink,
-  corpoDoToque,
   markTouchSent,
   setLeadChannel,
   updateLead,
@@ -17,7 +16,7 @@ import {
   type QueueItem,
 } from "../../../../lib/prospecting";
 import { buildHotFollowUp, hotFollowUpSubject } from "../../../../lib/outreachOpener";
-import { SEGMENT_META, nicheLabel, relativeTime } from "./meta";
+import { FASES, SEGMENT_META, nicheLabel, relativeTime } from "./meta";
 import { formatarTelefoneBr, parseTelefoneBr } from "../../../../lib/phoneBr";
 import { Badge, ScoreDot } from "./ui";
 import type { ProspectingData } from "./useProspecting";
@@ -65,15 +64,17 @@ export default function QueueTab({
     return b.lead.score - a.lead.score;
   });
 
+  const visiveis = fila.slice(0, remaining || undefined);
+
   /**
    * Registra o envio. Só roda depois de o operador confirmar que mandou —
    * abrir a conversa não é enviar, e marcar no clique registrava envio que
    * podia não ter acontecido (pop-up bloqueado, número sem WhatsApp, desistiu).
    */
-  async function handleConfirm(item: QueueItem) {
+  async function handleConfirm(item: QueueItem, canal: "whatsapp" | "email") {
     setBusy(item.id);
     try {
-      const resultado = await markTouchSent(item);
+      const resultado = await markTouchSent(item, canal);
       await refresh();
       const quando = resultado.nextTouchDate
         ? new Date(`${resultado.nextTouchDate}T12:00:00`).toLocaleDateString("pt-BR", {
@@ -84,12 +85,12 @@ export default function QueueTab({
       // O lead sai da fila de hoje ao ser marcado. Dizer quando ele volta evita
       // a sensação de que sumiu — e quando o próximo toque muda de canal ele
       // não sai: já está de volta, agora, para outra pessoa.
-      const canal = resultado.nextChannel === "email" ? "e-mail" : "WhatsApp";
+      const proximoCanal = resultado.nextChannel === "email" ? "e-mail" : "WhatsApp";
       showToast(
         resultado.eraRoteamento && resultado.nextAntecipado
           ? `Pergunta enviada. A entrega já está na fila: veio o e-mail, use "Adicionar e-mail" e mande por lá. Sem resposta, espere um dia antes de mandar pelo WhatsApp.`
           : resultado.nextAntecipado
-            ? `Toque ${item.step} registrado. O toque ${resultado.nextStep} vai por ${canal}, para outra pessoa — já está na fila, pode mandar agora.`
+            ? `Toque ${item.step} registrado. O toque ${resultado.nextStep} vai por ${proximoCanal}, para outra pessoa — já está na fila, pode mandar agora.`
             : quando
               ? `Toque ${item.step} registrado. ${item.lead.name} volta à fila em ${quando} para o toque ${resultado.nextStep}.`
               : `Toque ${item.step} registrado. Era o último da sequência de ${item.lead.name}.`,
@@ -150,7 +151,8 @@ export default function QueueTab({
           <div>
             <h2 className="font-family-display text-lg font-bold">Fila de hoje</h2>
             <p className="text-text-muted text-sm">
-              Ordenada por score. Envie de cima para baixo e pare quando a régua acabar.
+              Agrupada pela fase da conversa. Dentro de cada uma, do maior score
+              para o menor.
             </p>
           </div>
           <div className="text-right">
@@ -171,23 +173,47 @@ export default function QueueTab({
         {fila.length === 0 ? (
           <EmptyQueue />
         ) : (
-          <ul className="space-y-3">
-            {fila.slice(0, remaining || undefined).map((item) => (
-              <QueueCard
-                key={item.id}
-                item={item}
-                identity={identidade}
-                visita={visitasPorLead.get(item.leadId)}
-                busy={busy === item.id}
-                onConfirm={() => handleConfirm(item)}
-                onSkip={() => handleSkip(item)}
-                onRemove={() =>
-                  handleRemoveFromQueue(item.leadId, item.lead.name, item.id)
-                }
-                refresh={refresh}
-              />
-            ))}
-          </ul>
+          <div className="space-y-5">
+            {FASES.map((fase) => {
+              const daFase = visiveis.filter((t) => t.step === fase.step);
+              if (daFase.length === 0) return null;
+              return (
+                <section
+                  key={fase.step}
+                  className={`rounded-xl border p-3 sm:p-4 ${fase.className}`}
+                >
+                  <header className="mb-3 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <h3 className={`font-family-display font-bold ${fase.texto}`}>
+                      {fase.step}. {fase.titulo}
+                    </h3>
+                    <span className={`text-xs font-bold tabular-nums ${fase.texto}`}>
+                      {daFase.length}
+                    </span>
+                    <p className="text-text-muted w-full text-xs sm:w-auto sm:flex-1">
+                      {fase.objetivo} Pede <strong>{fase.pede}</strong>.
+                    </p>
+                  </header>
+                  <ul className="space-y-3">
+                    {daFase.map((item) => (
+                      <QueueCard
+                        key={item.id}
+                        item={item}
+                        identity={identidade}
+                        visita={visitasPorLead.get(item.leadId)}
+                        busy={busy === item.id}
+                        onConfirm={(canal) => handleConfirm(item, canal)}
+                        onSkip={() => handleSkip(item)}
+                        onRemove={() =>
+                          handleRemoveFromQueue(item.leadId, item.lead.name, item.id)
+                        }
+                        refresh={refresh}
+                      />
+                    ))}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
         )}
       </section>
     </div>
@@ -220,7 +246,7 @@ function QueueCard({
   visita?: HotLead;
   busy: boolean;
   identity: { senderName: string; agencyName: string };
-  onConfirm: () => void;
+  onConfirm: (canal: "whatsapp" | "email") => void;
   onSkip: () => void;
   onRemove: () => void;
   refresh: () => Promise<void>;
@@ -258,15 +284,22 @@ function QueueCard({
         </div>
       </div>
 
-      <TextoDoToque item={item} refresh={refresh} />
+      {/* Texto e botões do mesmo canal moram na mesma caixa: é uma decisão só
+          — mandar por aqui ou por ali —, e ela se toma lendo o texto. Os dois
+          canais aparecem sempre, porque o canal do toque é uma sugestão: quem
+          responde decide por onde a conversa segue. */}
+      <TextoDoToque
+        item={item}
+        refresh={refresh}
+        acaoWhatsapp={
+          <WhatsAppDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
+        }
+        acaoEmail={
+          <EmailDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-2">
-        {item.channel === "email" ? (
-          <EmailDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
-        ) : (
-          <WhatsAppDoLead item={item} busy={busy} onConfirm={onConfirm} onSalvo={refresh} />
-        )}
-
         {item.prototypeSlug && (
           <a
             href={`/p/${item.prototypeSlug}`}
@@ -543,9 +576,13 @@ function CanalDoToque({
 function TextoDoToque({
   item,
   refresh,
+  acaoWhatsapp,
+  acaoEmail,
 }: {
   item: QueueItem;
   refresh: () => Promise<void>;
+  acaoWhatsapp: React.ReactNode;
+  acaoEmail: React.ReactNode;
 }) {
   const { showToast } = useAdmin();
   const [editando, setEditando] = useState(false);
@@ -651,6 +688,7 @@ function TextoDoToque({
         destaque={item.channel === "whatsapp"}
         corpo={item.body}
         aoEditar={() => setEditando(true)}
+        acao={acaoWhatsapp}
       />
       <CaixaDoCanal
         titulo="E-mail"
@@ -659,6 +697,7 @@ function TextoDoToque({
         corpo={item.bodyEmail}
         reserva={item.bodyEmail ? null : item.body}
         aoEditar={() => setEditando(true)}
+        acao={acaoEmail}
       />
     </div>
   );
@@ -684,6 +723,7 @@ function CaixaDoCanal({
   corpo,
   reserva,
   aoEditar,
+  acao,
 }: {
   titulo: string;
   destaque: boolean;
@@ -691,6 +731,7 @@ function CaixaDoCanal({
   corpo: string | null;
   reserva?: string | null;
   aoEditar: () => void;
+  acao: React.ReactNode;
 }) {
   const texto = corpo ?? reserva;
   if (!texto) return null;
@@ -737,6 +778,10 @@ function CaixaDoCanal({
       <p className="text-text-muted max-h-40 overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap">
         {texto}
       </p>
+
+      <div className="border-border/60 mt-3 flex flex-wrap items-center gap-2 border-t pt-3">
+        {acao}
+      </div>
     </div>
   );
 }
@@ -782,12 +827,16 @@ function EmailDoLead({
 }: {
   item: QueueItem;
   busy: boolean;
-  onConfirm: () => void;
+  onConfirm: (canal: "whatsapp" | "email") => void;
   onSalvo: () => Promise<void>;
 }) {
   const [aberto, setAberto] = useState(false);
   const assunto = item.subject ?? `Uma prévia do site da ${item.lead.name}`;
-  const texto = corpoDoToque(item);
+  // A redação de e-mail, sempre — este botão é o do canal e-mail, e o canal
+  // gravado no toque é só a sugestão de por onde começar. Cai no corpo de
+  // WhatsApp apenas quando a versão de e-mail não foi escrita, que é o mesmo
+  // que a caixa acima mostra.
+  const texto = item.bodyEmail ?? item.body;
 
   if (!item.lead.email) {
     return <AdicionarEmail item={item} onSalvo={onSalvo} />;
@@ -827,7 +876,7 @@ function EmailDoLead({
       {aberto && (
         <>
           <button
-            onClick={onConfirm}
+            onClick={() => onConfirm("email")}
             disabled={busy}
             className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
@@ -876,7 +925,7 @@ function WhatsAppDoLead({
 }: {
   item: QueueItem;
   busy: boolean;
-  onConfirm: () => void;
+  onConfirm: (canal: "whatsapp" | "email") => void;
   onSalvo: () => Promise<void>;
 }) {
   const { showToast } = useAdmin();
@@ -998,7 +1047,7 @@ function WhatsAppDoLead({
         {conversaAberta && (
           <>
             <button
-              onClick={onConfirm}
+              onClick={() => onConfirm("whatsapp")}
               disabled={busy}
               className="bg-accent rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
             >

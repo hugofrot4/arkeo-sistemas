@@ -897,10 +897,16 @@ export interface TouchSentResult {
  * sumir sem explicação é desorientador. Com a data do próximo toque dá para
  * dizer exatamente quando ele volta.
  */
-export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> {
+export async function markTouchSent(
+  touch: QueueItem,
+  canal: "whatsapp" | "email" = touch.channel,
+): Promise<TouchSentResult> {
+  // Grava o canal que foi de fato usado. O card oferece os dois, então o
+  // canal do toque é uma sugestão até o envio acontecer — e é do canal usado
+  // que depende a decisão de antecipar o próximo.
   const { error } = await supabase
     .from("outreach_touches")
-    .update({ status: "sent", sent_at: new Date().toISOString() })
+    .update({ status: "sent", sent_at: new Date().toISOString(), channel: canal })
     .eq("id", touch.id);
   if (error) throw new Error(error.message);
 
@@ -927,14 +933,14 @@ export async function markTouchSent(touch: QueueItem): Promise<TouchSentResult> 
 
   // Este toque foi para uma pessoa; o próximo, em outro canal, vai para outra.
   // O intervalo entre eles não protege ninguém — ver `anteciparProximoToque`.
-  const trocaDeCanal = !!seguinte && seguinte.channel !== touch.channel;
+  const trocaDeCanal = !!seguinte && seguinte.channel !== canal;
 
   // A pergunta de roteamento também não abre intervalo. Ela não ofereceu nada
   // — perguntou com quem falar —, e a recepção responde em minutos, não em
   // dois dias. Esperar aí é perder a resposta enquanto ela ainda está quente:
   // é justamente quando o e-mail chega que a entrega deve sair.
   const eraRoteamento =
-    touch.step === 1 && touch.channel === "whatsapp" && !/\/p\//.test(touch.body);
+    touch.step === 1 && canal === "whatsapp" && !/\/p\//.test(touch.body);
 
   const hoje = new Date().toISOString().slice(0, 10);
   let antecipado = false;
@@ -1109,17 +1115,6 @@ export async function closeLead(leadId: number, won: boolean, reason?: LostReaso
  */
 export function emailLink(para: string, assunto: string, corpo: string): string {
   return `mailto:${encodeURIComponent(para)}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
-}
-
-/**
- * O texto deste toque no canal em que ele vai sair.
- *
- * Cai no corpo de WhatsApp quando a versão de e-mail não foi escrita: é
- * melhor mandar o texto do outro canal do que não ter o que mandar. O card
- * avisa quando é esse o caso.
- */
-export function corpoDoToque(toque: Pick<OutreachTouch, "channel" | "body" | "bodyEmail">) {
-  return toque.channel === "email" ? (toque.bodyEmail ?? toque.body) : toque.body;
 }
 
 /** Mensagem pronta para o wa.me, com o texto do toque já embutido. */

@@ -105,3 +105,55 @@ export function relativeTime(iso: string): string {
   const days = Math.round(hours / 24);
   return days === 1 ? "ontem" : `há ${days} dias`;
 }
+
+/**
+ * O papel de cada toque da sequência.
+ *
+ * A fila era uma lista só, ordenada por score, e o estágio de cada lead vinha
+ * num crachá "Toque 3" que não diz nada: quem olhava não sabia se aquele card
+ * era para abrir conversa ou para encerrar. Agrupada por fase, a fila mostra
+ * o funil — e cada bloco pode dizer o que aquela mensagem tem que conseguir,
+ * que é o que decide se o texto está certo.
+ *
+ * Os papéis são os mesmos nos dois canais, de propósito: é o que permite
+ * trocar de canal no meio da sequência sem mandar a mensagem errada. Ver
+ * `.claude/skills/prototipo-site/references/abordagem.md`.
+ */
+export const FASES = [
+  {
+    step: 1,
+    titulo: "Abrir a porta",
+    objetivo: "Descobrir quem decide sobre o site — e o e-mail dessa pessoa.",
+    pede: "um nome ou um e-mail",
+    className: "border-accent/35 bg-accent/6",
+    texto: "text-accent",
+  },
+  {
+    step: 2,
+    titulo: "Entregar o protótipo",
+    objetivo: "Mostrar o que foi feito e por que importa para o negócio dele.",
+    pede: "um sim ou não",
+    className: "border-good/35 bg-good/6",
+    texto: "text-good",
+  },
+  {
+    step: 3,
+    titulo: "Propor conversa",
+    objetivo: "Insistir uma vez e tirar a conversa da mensagem escrita.",
+    pede: "dez minutos",
+    className: "border-warning/35 bg-warning/6",
+    texto: "text-warning",
+  },
+  {
+    step: 4,
+    titulo: "Encerrar",
+    objetivo: "Sair sem queimar a ponte. Quem encerra bem é rechamado depois.",
+    pede: "nada",
+    className: "border-border bg-surface",
+    texto: "text-text-muted",
+  },
+] as const;
+
+export function faseDoToque(step: number) {
+  return FASES.find((f) => f.step === step) ?? FASES[FASES.length - 1];
+}
