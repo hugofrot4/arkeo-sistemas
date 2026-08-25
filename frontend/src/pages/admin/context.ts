@@ -122,11 +122,6 @@ export const viewMeta: Record<ViewKey, { title: string; subtitle: string }> = {
     title: "Mensagens",
     subtitle: "Leads recebidos pelo formulário de contato.",
   },
-  prospects: {
-    title: "Prospecção",
-    subtitle:
-      "Encontrar, auditar e abordar negócios locais com um protótipo do site pronto.",
-  },
   settings: {
     title: "Configurações",
     subtitle: "Identidade, contato e preferências gerais do site.",

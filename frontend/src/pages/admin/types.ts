@@ -60,5 +60,4 @@ export type ViewKey =
   | "portfolio"
   | "faq"
   | "messages"
-  | "prospects"
   | "settings";

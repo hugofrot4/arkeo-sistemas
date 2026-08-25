@@ -1,9 +1,0 @@
-{
-  "name": "prototipo-site-scripts",
-  "private": true,
-  "type": "module",
-  "description": "Ferramentas da skill prototipo-site. Isolado do app de propósito: o frontend não deve carregar playwright.",
-  "dependencies": {
-    "playwright": "1.62.1"
-  }
-}

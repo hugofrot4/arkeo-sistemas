@@ -78,7 +78,7 @@ const listApis: Partial<Record<EntityKey, ListApiAdapter>> = {
 /** Endereço desconhecido cai no dashboard em vez de renderizar tela vazia. */
 const VIEWS_VALIDAS = new Set<ViewKey>([
   "dashboard", "hero", "metrics", "services", "process", "differentials",
-  "portfolio", "faq", "messages", "prospects", "settings",
+  "portfolio", "faq", "messages", "settings",
 ]);
 
 export function AdminProvider({ children }: { children: ReactNode }) {

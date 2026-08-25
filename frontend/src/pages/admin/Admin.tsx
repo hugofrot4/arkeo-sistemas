@@ -11,7 +11,6 @@ import Dashboard from "./views/Dashboard";
 import EntityListView from "./views/EntityListView";
 import Hero from "./views/Hero";
 import Messages from "./views/Messages";
-import Prospecting from "./views/prospecting/Prospecting";
 import Settings from "./views/Settings";
 import type { EntityKey } from "./types";
 
@@ -38,7 +37,6 @@ function AdminContent() {
           {view === "dashboard" && <Dashboard />}
           {view === "hero" && <Hero />}
           {view === "messages" && <Messages />}
-          {view === "prospects" && <Prospecting />}
           {view === "settings" && <Settings />}
           {entityViews.includes(view as EntityKey) && (
             <EntityListView entityKey={view as EntityKey} />

@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   ListChecks,
   LogOut,
-  Radar,
   Settings,
   Sparkles,
   X,
@@ -18,7 +17,6 @@ import {
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearToken, getMe } from "../../../lib/api";
-import { listHotLeads, listOutreachQueue } from "../../../lib/prospecting";
 import { useAdmin, viewMeta } from "../context";
 import { iconBtnClass } from "../ui";
 import { initials } from "../utils";
@@ -54,7 +52,6 @@ function NavButton({ view, icon: Icon }: NavItem) {
       <Icon size={18} className="shrink-0" aria-hidden="true" />
       {viewMeta[view].title}
       {view === "messages" && <MessageBadge />}
-      {view === "prospects" && <ProspectBadge />}
     </button>
   );
 }
@@ -62,28 +59,6 @@ function NavButton({ view, icon: Icon }: NavItem) {
 function MessageBadge() {
   const { state } = useAdmin();
   const count = state.messages.filter((m) => m.status === "novo").length;
-  if (!count) return null;
-  return (
-    <span className="bg-accent ml-auto rounded-full px-1.75 py-0.25 text-[0.68rem] font-bold text-white">
-      {count}
-    </span>
-  );
-}
-
-/**
- * Conta o que está esperando ação hoje: toques vencidos mais quem abriu o
- * protótipo. Consulta própria de propósito — a lista de leads não fica no
- * AdminContext, e carregá-la só para desenhar um número seria desperdício.
- */
-function ProspectBadge() {
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    Promise.all([listOutreachQueue(), listHotLeads()])
-      .then(([queue, hot]) => setCount(queue.length + hot.length))
-      .catch(() => setCount(0));
-  }, []);
-
   if (!count) return null;
   return (
     <span className="bg-accent ml-auto rounded-full px-1.75 py-0.25 text-[0.68rem] font-bold text-white">
@@ -153,7 +128,6 @@ function Sidebar() {
             Gestão
           </p>
           <NavButton view="messages" icon={Inbox} />
-          <NavButton view="prospects" icon={Radar} />
           <NavButton view="settings" icon={Settings} />
         </nav>
 
