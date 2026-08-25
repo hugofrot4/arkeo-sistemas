@@ -12,12 +12,14 @@ O sistema serve esse HTML dentro de um **iframe isolado** em `arkeosistemas.com.
 - **Material Symbols** — a biblioteca de ícones do Google, servida por `fonts.googleapis.com`. É a forma padrão de colocar ícone no protótipo. Ver **Ícones** abaixo.
 - **SVG inline** e `data:` URI para texturas pequenas e marcas de rede social.
 - **JS baunilha** — `IntersectionObserver`, `querySelector`, listeners. Roda normalmente.
+- **CSS moderno** — `backdrop-filter` (com o prefixo `-webkit-`), `color-mix()`, `clamp()`, `@supports`, `@media (prefers-reduced-motion)`, animações e transições. Tudo nativo, nada a carregar.
 - `target="_blank"` em links — abre certo.
 
 ### Proibido
 
 - **Qualquer outro host externo** — sem CDN, sem Tailwind por CDN, sem Font Awesome, sem Lucide, sem Iconify, sem imagem de Unsplash. Não carrega e a página quebra.
 - **Ícone desenhado à mão em SVG** quando existe equivalente no Material Symbols. Ver **Ícones**.
+- **`opacity: 0` de partida escrito direto no CSS** — se o script não rodar, a seção nunca aparece e a página fica em branco. Prenda o estado escondido a uma classe que o JS acrescenta. Ver `design.md`, seção *Movimento*.
 - **`localStorage` e `sessionStorage`** — o iframe roda em origem opaca e o acesso **lança exceção**. Se usar, envolva em `try/catch` — ou melhor, não use.
 - **`<form>` que submete** — o envio é bloqueado. O CTA é sempre um link `wa.me`.
 - **Framework** — sem React, sem Vue, sem build. É um arquivo estático.
@@ -132,6 +134,13 @@ Para **cada** afirmação sobre o negócio na página, uma de duas coisas tem qu
 - [ ] Havendo logo, a paleta veio dela — não da referência nem do padrão do ramo
 - [ ] Contraste do corpo ≥ 4.5:1; botões e texto grande ≥ 3:1
 - [ ] Nenhuma foto de banco de imagens
+- [ ] Há **2 ou 3 superfícies de vidro**, cada uma com fundo que valha desfocar por trás
+- [ ] O texto sobre vidro passa em 4.5:1 **contra o ponto mais claro** que rola por trás — conferido no print, não no código
+- [ ] Existe `@supports not (backdrop-filter: ...)` com fundo opaco de reserva
+- [ ] Há **2 ou 3 efeitos de movimento**, nomeados no passo 4, nenhum deles em texto de corpo
+- [ ] O revelar ao rolar escalona os itens da grade, em vez de disparar todos juntos
+- [ ] `@media (prefers-reduced-motion: reduce)` está no arquivo
+- [ ] Com o JS desligado a página aparece inteira — o estado escondido depende de classe posta por script
 
 ### Funcionamento
 

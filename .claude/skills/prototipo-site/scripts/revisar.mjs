@@ -312,6 +312,41 @@ const auditoria = ({ MIN_FONT, MIN_TOQUE }) => {
   };
 };
 
+/**
+ * Dispara o revelar-ao-rolar antes de fotografar.
+ *
+ * A página anima a entrada das seções: elas nascem em `opacity: 0` e só
+ * aparecem quando o `IntersectionObserver` as alcança. Fotografar a página
+ * inteira sem rolar por ela antes devolve um print com metade em branco — e o
+ * relatório passa a acusar defeito onde há animação funcionando.
+ *
+ * Rola até o fim em passos, volta ao topo, e depois força a aparecer o que
+ * ainda tiver ficado invisível: observer com margem estranha, script que
+ * falhou, seção fora do caminho da rolagem. Sem depender de nome de classe,
+ * que muda a cada protótipo.
+ */
+async function revelarTudo(pagina) {
+  await pagina.evaluate(async () => {
+    const passo = window.innerHeight * 0.8;
+    for (let y = 0; y < document.body.scrollHeight; y += passo) {
+      window.scrollTo(0, y);
+      await new Promise((r) => setTimeout(r, 90));
+    }
+    window.scrollTo(0, document.body.scrollHeight);
+    await new Promise((r) => setTimeout(r, 250));
+    window.scrollTo(0, 0);
+
+    for (const el of document.querySelectorAll("body *")) {
+      const s = getComputedStyle(el);
+      if (parseFloat(s.opacity) === 0 && el.getBoundingClientRect().width > 0) {
+        el.style.setProperty("opacity", "1", "important");
+        el.style.setProperty("transform", "none", "important");
+      }
+    }
+    await new Promise((r) => setTimeout(r, 120));
+  });
+}
+
 async function main() {
   const alvo = process.argv[2];
   if (!alvo) {
@@ -336,6 +371,7 @@ async function main() {
     // Espera as fontes assentarem: medir antes disso dá altura errada.
     await pagina.evaluate(() => document.fonts?.ready);
     await pagina.waitForTimeout(350);
+    await revelarTudo(pagina).catch(() => {});
 
     const print = join(saida, `${largura.nome}.png`);
     await pagina.screenshot({ path: print, fullPage: true });

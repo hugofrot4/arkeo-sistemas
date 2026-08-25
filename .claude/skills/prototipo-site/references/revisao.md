@@ -28,6 +28,10 @@ O que ele mede, com o seletor do elemento culpado e a diferença em pixels:
 | Conteúdo | texto vazando de caixa com altura fixa |
 | Console | erro de JavaScript na página |
 
+**O que ele não mede, e por quê.** O inspetor lê a cor **declarada**, não o que o desfoque produz — então texto sobre vidro pode passar no relatório e estar ilegível na tela. Essa conferência é sua, no print, contra o ponto mais claro que passa por trás.
+
+**Antes de fotografar ele rola a página inteira** e força a aparecer o que ficou invisível, para o revelar-ao-rolar não devolver um print com metade em branco. Duas consequências ao olhar a imagem: o escalonamento da animação não aparece — julgue-o abrindo o arquivo no navegador —, e camada de fundo `position: fixed` é fotografada **uma vez só**, o que faz o resto da página parecer chapado. Não é defeito: confira o fundo na parte de cima do print.
+
 **Todo `ERRO` é corrigido antes de seguir.** Não há "depois eu vejo": o inspetor aponta o seletor e o número, então o conserto é direto.
 
 `aviso` é julgamento — corrija salvo motivo claro, e diga qual foi o motivo.
@@ -69,6 +73,16 @@ Liste **pelo menos três** melhorias concretas, cada uma com o elemento e a muda
 Depois aplique as que valem a pena e rode a passada 1 de novo, porque mudança de layout costuma criar problema novo.
 
 ---
+
+### Vidro e movimento, no print e no navegador
+
+Estas quatro só se respondem olhando, e nenhuma delas o inspetor cobre:
+
+- **O vidro tem o que desfocar?** Se por trás houver branco chapado, não é vidro: é um retângulo cinza. Ou dá fundo à camada de baixo, ou tira o efeito.
+- **O texto sobre vidro se lê no pior ponto?** Role até onde o fundo estiver mais claro. Se apertar os olhos, sobe a opacidade do vidro.
+- **A animação escalona?** Abra o arquivo no navegador e role. Itens de grade aparecendo todos no mesmo quadro é o que faz parecer disparado em vez de coreografado.
+- **Com o JS desligado, a página aparece?** Se ficar em branco, o `opacity: 0` está no CSS em vez de depender da classe posta por script. É o defeito mais caro da lista: o protótipo abre vazio para o cliente.
+
 
 ## Quando parar
 

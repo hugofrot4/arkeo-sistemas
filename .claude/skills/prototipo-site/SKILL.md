@@ -128,17 +128,25 @@ Para cada imagem enviada, extraia e anote:
 
 Você empresta **estrutura, ritmo e clima**. Nunca copia conteúdo, marca, foto ou texto da referência.
 
+**Vindo referência ou não, busque o repertório atual antes de decidir.** Leia a seção *Vocabulário visual atual* de `references/design.md` — fundos, superfícies, tipografia e a lista do que datou. Havendo acesso à web, olhe também dois ou três sites recentes do ramo ou de ramo vizinho e anote o que neles é de agora; sem acesso, a seção basta. A referência que o usuário mandou dá o clima; o repertório impede que a execução saia com cara de 2016.
+
 ### 4. Declare a direção antes de escrever código
 
-Escreva 5 linhas, mostre ao usuário e siga em frente — não espere aprovação:
+Escreva estas linhas, mostre ao usuário e siga em frente — não espere aprovação:
 
 ```
 Ideia estrutural: <a ÚNICA ideia que organiza a página>
 Paleta:           <4 hexadecimais — da logo, se houver logo>
 Tipografia:       <par de fontes do Google Fonts + por quê>
-Movimento:        <o detalhe que diferencia>
+Fundo:            <o que fica atrás e dá o que desfocar — malha, foto, gradiente>
+Vidro:            <as 2 ou 3 superfícies translúcidas, e o que passa por trás de cada uma>
+Movimento:        <2 ou 3 efeitos nomeados, do repertório de design.md>
 Risco:            <o que pode não funcionar>
 ```
+
+**Vidro e movimento não são opcionais.** Toda página leva superfície de vidro e leva animação — é o que separa um protótipo que impressiona de um que parece modelo pronto, e impressionar é o produto aqui. O que varia é **quais** e **onde**: as regras de ofício, os limites de contraste e a lista do que é proibido estão em `references/design.md`, seções *Vidro* e *Movimento*.
+
+O vidro exige planejar o fundo **antes**: vidro sobre branco chapado é um retângulo cinza. Por isso a linha `Fundo` vem antes da linha `Vidro`.
 
 Este passo existe para impedir o padrão automático. Se a direção couber em "hero centrado, três cards com ícone, rodapé escuro", **descarte e escolha outra**.
 

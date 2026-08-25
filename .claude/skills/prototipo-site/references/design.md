@@ -207,13 +207,87 @@ Base de 8px, espaçamento generoso entre seções, largura de leitura em torno d
 
 Os valores concretos e o contrato que impede o desalinhamento estão em `composicao.md` — escreva os tokens antes da primeira seção, não depois.
 
+## Vidro
+
+Superfície translúcida que desfoca o que passa por trás. É o efeito que mais barato dá ar de site caro — e o que mais rápido vira retângulo cinza ilegível quando feito pela metade.
+
+**Só existe se houver algo atrás que valha desfocar.** Vidro sobre branco chapado não é vidro, é um cinza. Antes de aplicar, garanta a camada de baixo: foto, gradiente de malha, manchas de cor desfocadas, textura.
+
+A receita mínima tem quatro camadas e nenhuma é dispensável:
+
+```css
+.vidro {
+  background: color-mix(in srgb, var(--surface) 62%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in srgb, #fff 45%, transparent);
+  box-shadow:
+    0 8px 32px rgb(0 0 0 / 0.12),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
+}
+```
+
+O `saturate` é o que separa vidro de fumaça: sem ele a cor de trás morre e sobra névoa. A borda clara e o `inset` do topo são a luz batendo na quina — é o que o olho lê como "vidro" em vez de "sobreposição".
+
+**O contraste manda, e ele se mede no pior caso.** Não contra a média do que está atrás: contra o ponto mais claro que pode passar por ali quando a página rola. Se o texto cair abaixo de 4.5:1 nesse ponto, suba a opacidade do vidro até passar. Vidro ilegível é defeito, não estilo — e `scripts/revisar.mjs` **não pega**, porque lê a cor declarada e não o que o desfoque produz. Esta conferência é sua, olhando o print.
+
+| Cabe | Não cabe |
+|---|---|
+| cabeçalho fixo, com conteúdo rolando por baixo | bloco de texto corrido — leitura longa pede fundo opaco |
+| CTA flutuante do WhatsApp | sobre foto ocupada, de contraste alto |
+| cards sobre o hero com foto | a página inteira |
+| faixa de números sobre imagem | formulário ou qualquer coisa com campo |
+
+**Duas ou três superfícies de vidro na página.** A partir daí vira estética de tela de celular e cansa — e o custo aparece: `backdrop-filter` recompõe o que está atrás a cada quadro. Nunca num elemento que também anima posição, nunca cobrindo área grande no celular.
+
+```css
+@supports not (backdrop-filter: blur(4px)) {
+  .vidro { background: var(--surface); }
+}
+```
+
+**A camada de baixo em `position: fixed` fotografa uma vez só.** No navegador ela fica parada atrás do conteúdo, que é o efeito desejado; no print de página inteira ela aparece no topo e o resto sai chapado. Não conserte o que não está quebrado — mas se quiser que o fundo acompanhe a página toda, use uma camada `position: absolute` com a altura do documento em vez de `fixed`.
+
+Em fundo escuro o vidro escurece em vez de clarear, e a borda cai para `rgb(255 255 255 / 0.14)` — borda branca forte sobre escuro parece contorno, não luz.
+
+---
+
 ## Movimento
 
-Um efeito, no máximo dois. Sugerido: revelar ao rolar via `IntersectionObserver`, com `translateY(16px)` e `opacity`, 500ms.
+Animação não é enfeite: é o que diz que alguém cuidou da página. Site parado parece template comprado. Mas movimento que atrasa a leitura custa a venda, e são quatro segundos.
 
-Proibido: carrossel · contador animado · texto que digita sozinho · paralaxe · qualquer coisa que atrase a leitura.
+A regra que separa os dois: **anima o que entra, nunca o que a pessoa está lendo.**
 
-Respeite `@media (prefers-reduced-motion: reduce)`.
+**Use dois ou três destes.** Menos que isso a página fica inerte; mais e ela disputa atenção consigo mesma.
+
+1. **Revelar ao rolar.** `IntersectionObserver`, `translateY(20px)` + `opacity`, 500ms, `cubic-bezier(.2,.7,.3,1)`. Em grade, **escalone 60ms por item** — é esse detalhe que faz parecer coreografado em vez de disparado.
+2. **Fundo que respira.** Gradiente de malha ou manchas desfocadas atrás do hero, deslocando-se em 20 a 40 segundos, em laço. Só `transform` e `opacity`. É o que dá vida ao vidro que está por cima.
+3. **Cabeçalho que condensa.** Passados uns 80px de rolagem, encolhe a altura, ganha vidro e sombra. Transição de 200ms.
+4. **Elevação no hover.** O card sobe de 2 a 4px e a sombra abre, em 150ms. No toque não existe — então nunca esconda informação atrás disso.
+5. **Micro-interação no CTA.** Um brilho que atravessa, a seta que avança, escala de 1.02. **Uma** coisa, não três.
+6. **Números que sobem.** Só sobre número verificado — nota do Google, contagem de avaliações. O valor final fica escrito no HTML e o script anima a partir dele: se o JS não rodar, o número certo está lá.
+7. **Paralaxe contido.** Só na camada de fundo do hero, por `translate3d`, amplitude até 40px, desligado no celular. Nunca em texto.
+
+**Proibido, e o motivo**
+
+- **Carrossel** — esconde conteúdo atrás de um clique que ninguém dá.
+- **Texto que digita sozinho** — atrasa justamente a frase que precisa ser lida em quatro segundos.
+- **Animação em texto de corpo** — dificulta a leitura, e não há segunda chance.
+- **Qualquer coisa que mova o layout depois da primeira pintura** — o dedo já está a caminho do botão.
+
+**Duas salvaguardas, sempre.**
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+```
+
+E **o estado escondido do revelar entra por JS, não por CSS**. Se o observer não rodar — erro de script, navegador antigo, print automatizado —, uma página com `opacity: 0` no CSS fica em branco. Marque `document.documentElement.classList.add('js')` na primeira linha do script e prenda o `opacity: 0` a `.js`. Página sem animação é aceitável; página em branco não.
 
 ---
 
@@ -225,6 +299,37 @@ O dono do negócio vai abrir no celular, provavelmente por link de WhatsApp. Con
 - o WhatsApp precisa estar alcançável sem rolar até o fim — botão fixo ou repetido
 - nada de rolagem horizontal, nunca
 - teste mentalmente em 360px, 390px e 430px
+
+---
+
+## Vocabulário visual atual
+
+O que faz uma página parecer de agora, e não de 2016. Nenhum item é obrigatório — a lista existe para você escolher com intenção em vez de cair no padrão, e para ter de onde partir quando não vier referência nenhuma.
+
+**Fundo**
+- Gradiente de malha: três ou quatro manchas de cor em `radial-gradient`, muito desfocadas, sobre a cor de base. É o que dá o que desfocar para o vidro.
+- Grade ou pontos sutis em `background-image` com `linear-gradient`, opacidade abaixo de 0.06.
+- Ruído leve por `data:` URI de SVG — tira o aspecto plástico de gradiente puro.
+- Vinheta: `radial-gradient` escurecendo as bordas, para o conteúdo central respirar.
+
+**Superfície**
+- Vidro, conforme a seção acima.
+- Borda de gradiente: `border: 1px solid transparent` com `background-clip: padding-box, border-box` e dois planos de fundo.
+- Cantos generosos — 16 a 24px em card, 999px em pílula. Canto de 4px envelheceu.
+- Sombra em duas camadas: uma curta e densa para o contato, uma longa e difusa para a altura. Sombra única de `0 2px 4px` é a assinatura do template.
+
+**Tipografia**
+- Título grande de verdade: `clamp(2.5rem, 6vw, 4.5rem)`, peso 600 ou 700, `letter-spacing: -0.03em`. Título grande sem apertar o espaçamento parece esticado.
+- Kicker: rótulo curto, caixa alta, 12px, `letter-spacing: 0.12em`, na cor de acento.
+- Peso variável do Google Fonts quando a família tiver — a transição de peso no hover é barata e elegante.
+
+**Cor**
+- Acento único e usado com parcimônia: CTA, kicker, um detalhe. Três acentos é nenhum.
+- Texto de gradiente **só em uma palavra ou uma linha**, nunca num parágrafo.
+- `color-mix(in srgb, ...)` para derivar tons do acento em vez de escolher hexadecimais soltos que não conversam.
+
+**O que datou**
+Sombra dura de 4px sem desfoque · gradiente de dois tons em diagonal ocupando a tela inteira · ícone dentro de círculo colorido em cada card · seção de "números" com quatro caixas iguais · foto de banco de imagens com pessoas sorrindo de terno.
 
 ---
 
