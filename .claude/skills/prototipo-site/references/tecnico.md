@@ -12,14 +12,15 @@ O sistema serve esse HTML dentro de um **iframe isolado** em `arkeosistemas.com.
 - **Material Symbols** — a biblioteca de ícones do Google, servida por `fonts.googleapis.com`. É a forma padrão de colocar ícone no protótipo. Ver **Ícones** abaixo.
 - **SVG inline** e `data:` URI para texturas pequenas e marcas de rede social.
 - **JS baunilha** — `IntersectionObserver`, `querySelector`, listeners. Roda normalmente.
-- **CSS moderno** — `backdrop-filter` (com o prefixo `-webkit-`), `color-mix()`, `clamp()`, `@supports`, `@media (prefers-reduced-motion)`, animações e transições. Tudo nativo, nada a carregar.
+- **CSS moderno** — conferido no Chromium que gera os prints: `backdrop-filter` (com `-webkit-`), `color-mix()`, `oklch()`, `clamp()`, `@supports`, `@property`, `animation-timeline: view()`, `text-wrap: balance|pretty`, `container-type` e `@container`, `:has()`, `subgrid`, `mask-image`, `light-dark()`, `@starting-style`. Receitas em `design.md`, seção *Repertório técnico*.
 - `target="_blank"` em links — abre certo.
 
 ### Proibido
 
 - **Qualquer outro host externo** — sem CDN, sem Tailwind por CDN, sem Font Awesome, sem Lucide, sem Iconify, sem imagem de Unsplash. Não carrega e a página quebra.
 - **Ícone desenhado à mão em SVG** quando existe equivalente no Material Symbols. Ver **Ícones**.
-- **`opacity: 0` de partida escrito direto no CSS** — se o script não rodar, a seção nunca aparece e a página fica em branco. Prenda o estado escondido a uma classe que o JS acrescenta. Ver `design.md`, seção *Movimento*.
+- **`opacity: 0` de partida solto no CSS** — se o script não rodar, a seção nunca aparece e a página fica em branco. Ou `animation-timeline: view()` dentro de `@supports`, ou o estado escondido preso a uma classe que o JS acrescenta. Ver `design.md`, seção *Movimento*.
+- **Biblioteca 3D ou WebGL** — não carrega, e drena desempenho onde carrega.
 - **`localStorage` e `sessionStorage`** — o iframe roda em origem opaca e o acesso **lança exceção**. Se usar, envolva em `try/catch` — ou melhor, não use.
 - **`<form>` que submete** — o envio é bloqueado. O CTA é sempre um link `wa.me`.
 - **Framework** — sem React, sem Vue, sem build. É um arquivo estático.
@@ -137,10 +138,12 @@ Para **cada** afirmação sobre o negócio na página, uma de duas coisas tem qu
 - [ ] Há **2 ou 3 superfícies de vidro**, cada uma com fundo que valha desfocar por trás
 - [ ] O texto sobre vidro passa em 4.5:1 **contra o ponto mais claro** que rola por trás — conferido no print, não no código
 - [ ] Existe `@supports not (backdrop-filter: ...)` com fundo opaco de reserva
+- [ ] Há **3 ou 4 técnicas do repertório**, diferentes das do protótipo anterior
+- [ ] Títulos com `text-wrap: balance`, corpo com `pretty`
 - [ ] Há **2 ou 3 efeitos de movimento**, nomeados no passo 4, nenhum deles em texto de corpo
 - [ ] O revelar ao rolar escalona os itens da grade, em vez de disparar todos juntos
 - [ ] `@media (prefers-reduced-motion: reduce)` está no arquivo
-- [ ] Com o JS desligado a página aparece inteira — o estado escondido depende de classe posta por script
+- [ ] Com o JS desligado a página aparece inteira — o revelar está em `@supports`, ou preso a classe posta por script
 
 ### Funcionamento
 

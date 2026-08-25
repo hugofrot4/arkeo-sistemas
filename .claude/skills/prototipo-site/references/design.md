@@ -260,7 +260,7 @@ A regra que separa os dois: **anima o que entra, nunca o que a pessoa está lend
 
 **Use dois ou três destes.** Menos que isso a página fica inerte; mais e ela disputa atenção consigo mesma.
 
-1. **Revelar ao rolar.** `IntersectionObserver`, `translateY(20px)` + `opacity`, 500ms, `cubic-bezier(.2,.7,.3,1)`. Em grade, **escalone 60ms por item** — é esse detalhe que faz parecer coreografado em vez de disparado.
+1. **Revelar ao rolar.** Prefira `animation-timeline: view()`, que é CSS puro e não deixa a página em branco se algo falhar — receita em *Repertório técnico*. Pela via do `IntersectionObserver`, use `translateY(20px)` + `opacity`, 500ms, `cubic-bezier(.2,.7,.3,1)`, e **escalone 60ms por item** na grade: é esse detalhe que faz parecer coreografado em vez de disparado.
 2. **Fundo que respira.** Gradiente de malha ou manchas desfocadas atrás do hero, deslocando-se em 20 a 40 segundos, em laço. Só `transform` e `opacity`. É o que dá vida ao vidro que está por cima.
 3. **Cabeçalho que condensa.** Passados uns 80px de rolagem, encolhe a altura, ganha vidro e sombra. Transição de 200ms.
 4. **Elevação no hover.** O card sobe de 2 a 4px e a sombra abre, em 150ms. No toque não existe — então nunca esconda informação atrás disso.
@@ -287,7 +287,12 @@ A regra que separa os dois: **anima o que entra, nunca o que a pessoa está lend
 }
 ```
 
-E **o estado escondido do revelar entra por JS, não por CSS**. Se o observer não rodar — erro de script, navegador antigo, print automatizado —, uma página com `opacity: 0` no CSS fica em branco. Marque `document.documentElement.classList.add('js')` na primeira linha do script e prenda o `opacity: 0` a `.js`. Página sem animação é aceitável; página em branco não.
+E **nada pode deixar a página em branco quando o movimento não roda.** É o defeito mais caro do fluxo: o cliente abre o link e vê o nada. Dois caminhos, escolha um:
+
+- `animation-timeline: view()` **dentro de `@supports`** — sem suporte, a regra inteira não se aplica e o elemento aparece. É o caminho preferido, porque não depende de JavaScript nenhum.
+- Pelo `IntersectionObserver`, o `opacity: 0` tem de estar preso a uma classe que o script acrescenta: `document.documentElement.classList.add('js')` na primeira linha, e a regra escrita como `.js .rev { opacity: 0 }`.
+
+Nunca `opacity: 0` solto no CSS. Página sem animação é aceitável; página em branco não.
 
 ---
 
@@ -299,6 +304,123 @@ O dono do negócio vai abrir no celular, provavelmente por link de WhatsApp. Con
 - o WhatsApp precisa estar alcançável sem rolar até o fim — botão fixo ou repetido
 - nada de rolagem horizontal, nunca
 - teste mentalmente em 360px, 390px e 430px
+
+---
+
+## Repertório técnico
+
+Tudo aqui é CSS ou JS baunilha, roda no arquivo único e foi conferido no Chromium que gera os prints. Nenhum item é obrigatório — **escolha três ou quatro por página**, diferentes dos do protótipo anterior. É daqui que vem a variação entre um lead e outro.
+
+### Revelar sem JavaScript
+
+Substitui o `IntersectionObserver` e elimina o risco mais caro do fluxo: página que abre em branco porque o script falhou.
+
+```css
+@supports (animation-timeline: view()) {
+  .rev {
+    animation: sobe linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 28%;
+  }
+  @keyframes sobe { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: none } }
+}
+```
+
+Dentro do `@supports`, então sem suporte o elemento simplesmente aparece. Para escalonar a grade, varie o `animation-range` item a item em vez de usar `delay` — a linha do tempo é a rolagem, não o relógio.
+
+### Texto que quebra bem
+
+Duas linhas de CSS, e é a diferença mais barata entre página cuidada e página gerada.
+
+```css
+h1, h2, h3 { text-wrap: balance; }   /* distribui as linhas do título */
+p, li      { text-wrap: pretty; }    /* evita a palavra órfã no fim */
+```
+
+`balance` só age até umas seis linhas, que é exatamente o caso de título.
+
+### Gradiente que se move
+
+O "gradiente cinético" de 2026. Variável de CSS não interpola sozinha — `@property` a tipa e aí ela anima.
+
+```css
+@property --g { syntax: '<percentage>'; inherits: false; initial-value: 0% }
+.faixa {
+  background: linear-gradient(100deg, var(--a), var(--b) var(--g), var(--a));
+  animation: desliza 14s linear infinite;
+}
+@keyframes desliza { to { --g: 100% } }
+```
+
+Devagar — 12 a 20 segundos. Rápido vira letreiro de loja.
+
+### Bento
+
+Grade de blocos de tamanhos diferentes, cada um com uma informação. Aguentou o ano onde a tipografia cinética não aguentou, porque resolve um problema real: dá hierarquia sem exigir que o visitante leia na ordem.
+
+```css
+.bento { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); grid-auto-rows: 120px }
+.bento > :nth-child(1) { grid-column: span 2; grid-row: span 2 }
+```
+
+No celular vira uma coluna. Serve para serviços, diferenciais, unidades — **não** para texto corrido.
+
+### O bloco que se adapta ao espaço, não à tela
+
+```css
+.caixa { container-type: inline-size }
+@container (min-width: 480px) { .dentro { grid-template-columns: 120px 1fr } }
+```
+
+O mesmo card fica empilhado na coluna estreita e lado a lado na larga, sem `@media` e sem duplicar marcação.
+
+### Layout que reage ao conteúdo
+
+```css
+.card:has(img)      { grid-column: span 2 }   /* card com foto ocupa o dobro */
+.grade:has(:only-child) { grid-template-columns: 1fr }
+```
+
+Útil quando o número de fotos varia por lead — a página se acomoda em vez de abrir buraco.
+
+### Grão
+
+Tira o aspecto plástico do gradiente puro. SVG embutido, sem arquivo.
+
+```css
+.grao { position: relative; overflow: hidden }
+.grao::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .3;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence baseFrequency='.8'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='.5'/></svg>");
+}
+```
+
+Opacidade entre 0.15 e 0.35. Acima disso suja o texto.
+
+### Borda que desaparece
+
+`mask-image` para dissolver a beirada de uma foto ou de uma faixa no fundo, em vez de cortá-la com uma linha dura.
+
+```css
+.foto { mask-image: linear-gradient(to bottom, #000 70%, transparent) }
+```
+
+### Modo escuro
+
+Aguentou o ano. Só vale se a paleta for pensada nos dois — escuro mal feito é pior que claro bem feito.
+
+```css
+:root { color-scheme: light dark }
+body { background: light-dark(#f7f5f2, #0f1216); color: light-dark(#14181d, #e8eaed) }
+```
+
+No escuro, o vidro **escurece** e a borda cai para `rgb(255 255 255 / 0.14)`.
+
+### O que não usar
+
+- **3D e WebGL** — drenam o orçamento de desempenho e, aqui, nem carregam: biblioteca externa é proibida.
+- **Tipografia cinética** — título que se deforma com o cursor rende demonstração e não venda. Se o hero precisa de movimento, use o gradiente.
+- **View Transitions e anchor positioning** — resolvem navegação entre páginas e posicionamento de popover. O protótipo é uma página só, sem nenhum dos dois.
 
 ---
 

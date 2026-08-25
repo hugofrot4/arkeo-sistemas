@@ -104,7 +104,22 @@ async function revelarTudo(pagina) {
 
     for (const el of document.querySelectorAll("body *")) {
       const s = getComputedStyle(el);
-      if (parseFloat(s.opacity) === 0 && el.getBoundingClientRect().width > 0) {
+      const visivel = el.getBoundingClientRect().width > 0;
+      if (!visivel) continue;
+
+      // Animação presa à rolagem (`animation-timeline: view()`) fica no meio do
+      // caminho na foto de página inteira: o quadro capturado é o do progresso
+      // naquela posição, então as seções de baixo saem esmaecidas e o relatório
+      // acusa contraste e vazamento onde há animação funcionando. Desligar a
+      // linha do tempo devolve o elemento ao estado final.
+      if (s.animationTimeline && s.animationTimeline !== "auto") {
+        el.style.setProperty("animation", "none", "important");
+        el.style.setProperty("opacity", "1", "important");
+        el.style.setProperty("transform", "none", "important");
+        continue;
+      }
+
+      if (parseFloat(s.opacity) === 0) {
         el.style.setProperty("opacity", "1", "important");
         el.style.setProperty("transform", "none", "important");
       }

@@ -28,7 +28,7 @@ O que ele mede, com o seletor do elemento culpado e a diferença em pixels:
 | Conteúdo | texto vazando de caixa com altura fixa |
 | Console | erro de JavaScript na página |
 
-**O que ele não mede, e por quê.** O inspetor lê a cor **declarada**, não o que o desfoque produz — então texto sobre vidro pode passar no relatório e estar ilegível na tela. Essa conferência é sua, no print, contra o ponto mais claro que passa por trás.
+**O que ele não mede, e por quê.** O contraste só é medido onde o fundo é **cor chapada**. Sobre gradiente, foto ou vidro ele se cala, porque a cor declarada não é o que fica atrás do texto — medir contra ela produzia número inventado, do tipo "branco sobre gradiente escuro: 1.10:1". Nesses casos a conferência é sua, no print, contra o ponto mais claro que passa por trás.
 
 **Antes de fotografar ele rola a página inteira** e força a aparecer o que ficou invisível, para o revelar-ao-rolar não devolver um print com metade em branco. Duas consequências ao olhar a imagem: o escalonamento da animação não aparece — julgue-o abrindo o arquivo no navegador —, e camada de fundo `position: fixed` é fotografada **uma vez só**, o que faz o resto da página parecer chapado. Não é defeito: confira o fundo na parte de cima do print.
 

@@ -128,7 +128,7 @@ Para cada imagem enviada, extraia e anote:
 
 Você empresta **estrutura, ritmo e clima**. Nunca copia conteúdo, marca, foto ou texto da referência.
 
-**Vindo referência ou não, busque o repertório atual antes de decidir.** Leia a seção *Vocabulário visual atual* de `references/design.md` — fundos, superfícies, tipografia e a lista do que datou. Havendo acesso à web, olhe também dois ou três sites recentes do ramo ou de ramo vizinho e anote o que neles é de agora; sem acesso, a seção basta. A referência que o usuário mandou dá o clima; o repertório impede que a execução saia com cara de 2016.
+**Vindo referência ou não, busque o repertório atual antes de decidir.** Leia as seções *Repertório técnico* e *Vocabulário visual atual* de `references/design.md` — fundos, superfícies, tipografia e a lista do que datou. Havendo acesso à web, olhe também dois ou três sites recentes do ramo ou de ramo vizinho e anote o que neles é de agora; sem acesso, a seção basta. A referência que o usuário mandou dá o clima; o repertório impede que a execução saia com cara de 2016.
 
 ### 4. Declare a direção antes de escrever código
 
@@ -141,12 +141,15 @@ Tipografia:       <par de fontes do Google Fonts + por quê>
 Fundo:            <o que fica atrás e dá o que desfocar — malha, foto, gradiente>
 Vidro:            <as 2 ou 3 superfícies translúcidas, e o que passa por trás de cada uma>
 Movimento:        <2 ou 3 efeitos nomeados, do repertório de design.md>
+Técnicas:         <3 ou 4 do Repertório técnico, diferentes das do último protótipo>
 Risco:            <o que pode não funcionar>
 ```
 
 **Vidro e movimento não são opcionais.** Toda página leva superfície de vidro e leva animação — é o que separa um protótipo que impressiona de um que parece modelo pronto, e impressionar é o produto aqui. O que varia é **quais** e **onde**: as regras de ofício, os limites de contraste e a lista do que é proibido estão em `references/design.md`, seções *Vidro* e *Movimento*.
 
 O vidro exige planejar o fundo **antes**: vidro sobre branco chapado é um retângulo cinza. Por isso a linha `Fundo` vem antes da linha `Vidro`.
+
+A linha `Técnicas` é o que faz dois leads do mesmo ramo saírem diferentes. `references/design.md`, seção *Repertório técnico*, lista onze recursos conferidos no navegador que gera os prints — bento, container query, `:has()`, gradiente animado por `@property`, grão, modo escuro, revelar sem JavaScript. Escolha por adequação ao conteúdo, não por novidade, e **nunca repita o conjunto do protótipo anterior**.
 
 Este passo existe para impedir o padrão automático. Se a direção couber em "hero centrado, três cards com ícone, rodapé escuro", **descarte e escolha outra**.
 

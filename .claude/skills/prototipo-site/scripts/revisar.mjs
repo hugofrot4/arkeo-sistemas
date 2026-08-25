@@ -235,7 +235,13 @@ const auditoria = ({ MIN_FONT, MIN_TOQUE }) => {
   const fundoDe = (el) => {
     let atual = el;
     while (atual && atual !== document.documentElement) {
-      const bg = getComputedStyle(atual).backgroundColor;
+      const cs = getComputedStyle(atual);
+      // Gradiente, foto ou vidro: a cor de fundo declarada não é o que fica
+      // atrás do texto, e medir contra ela produz um número inventado — foi
+      // assim que branco sobre gradiente escuro apareceu como 1.10:1. Devolve
+      // nulo e a conferência passa a ser humana, no print.
+      if (cs.backgroundImage !== "none" || cs.backdropFilter !== "none") return null;
+      const bg = cs.backgroundColor;
       const m = bg.match(/[\d.]+/g);
       if (m && (m[3] === undefined || Number(m[3]) > 0.95)) return bg;
       atual = atual.parentElement;
@@ -249,18 +255,20 @@ const auditoria = ({ MIN_FONT, MIN_TOQUE }) => {
     const texto = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent.trim()).join("");
     if (texto.length < 4) continue;
     const s = getComputedStyle(el);
-    const lf = lum(s.color), lb = lum(fundoDe(el));
+    const fundo = fundoDe(el);
+    if (fundo === null) continue; // fundo pintado: ver `fundoDe`
+    const lf = lum(s.color), lb = lum(fundo);
     if (lf === null || lb === null) continue;
     const razao = (Math.max(lf, lb) + 0.05) / (Math.min(lf, lb) + 0.05);
     const tamanho = parseFloat(s.fontSize);
     const grande = tamanho >= 24 || (tamanho >= 18.66 && parseInt(s.fontWeight) >= 700);
     const minimo = grande ? 3 : 4.5;
     if (razao < minimo) {
-      const chave = `${s.color}|${fundoDe(el)}`;
+      const chave = `${s.color}|${fundo}`;
       if (vistos.has(chave)) continue;
       vistos.add(chave);
       anota("erro", "contraste-baixo", seletor(el),
-        `${razao.toFixed(2)}:1 (${s.color} sobre ${fundoDe(el)}), mínimo ${minimo}:1. ` +
+        `${razao.toFixed(2)}:1 (${s.color} sobre ${fundo}), mínimo ${minimo}:1. ` +
         `No celular sob sol isso some.`);
     }
   }
@@ -338,7 +346,22 @@ async function revelarTudo(pagina) {
 
     for (const el of document.querySelectorAll("body *")) {
       const s = getComputedStyle(el);
-      if (parseFloat(s.opacity) === 0 && el.getBoundingClientRect().width > 0) {
+      const visivel = el.getBoundingClientRect().width > 0;
+      if (!visivel) continue;
+
+      // Animação presa à rolagem (`animation-timeline: view()`) fica no meio do
+      // caminho na foto de página inteira: o quadro capturado é o do progresso
+      // naquela posição, então as seções de baixo saem esmaecidas e o relatório
+      // acusa contraste e vazamento onde há animação funcionando. Desligar a
+      // linha do tempo devolve o elemento ao estado final.
+      if (s.animationTimeline && s.animationTimeline !== "auto") {
+        el.style.setProperty("animation", "none", "important");
+        el.style.setProperty("opacity", "1", "important");
+        el.style.setProperty("transform", "none", "important");
+        continue;
+      }
+
+      if (parseFloat(s.opacity) === 0) {
         el.style.setProperty("opacity", "1", "important");
         el.style.setProperty("transform", "none", "important");
       }
